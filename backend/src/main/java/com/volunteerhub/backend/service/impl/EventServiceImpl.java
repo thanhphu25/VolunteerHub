@@ -1,10 +1,17 @@
 package com.volunteerhub.backend.service.impl;
 
+import com.volunteerhub.backend.dto.EventCreateRequest;
 import com.volunteerhub.backend.dto.EventDto;
+import com.volunteerhub.backend.dto.EventUpdateRequest;
+import com.volunteerhub.backend.exception.ResourceNotFoundException;
 import com.volunteerhub.backend.model.Event;
+import com.volunteerhub.backend.model.User;
 import com.volunteerhub.backend.repository.EventRepository;
+import com.volunteerhub.backend.repository.UserRepository;
 import com.volunteerhub.backend.service.EventService;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -13,9 +20,11 @@ import java.util.stream.Collectors;
 public class EventServiceImpl implements EventService {
 
     private final EventRepository eventRepository;
+    private final UserRepository userRepository; // optional: to set createdBy
 
-    public EventServiceImpl(EventRepository eventRepository) {
+    public EventServiceImpl(EventRepository eventRepository, UserRepository userRepository) {
         this.eventRepository = eventRepository;
+        this.userRepository = userRepository;
     }
 
     private EventDto toDto(Event e) {
@@ -28,20 +37,64 @@ public class EventServiceImpl implements EventService {
         d.setStartTime(e.getStartTime());
         d.setEndTime(e.getEndTime());
         d.setStatus(e.getStatus());
-        if (e.getCreatedBy() != null) {
-            d.setCreatedById(e.getCreatedBy().getId());
-        }
+        if (e.getCreatedBy() != null) d.setCreatedById(e.getCreatedBy().getId());
         return d;
     }
 
     @Override
     public List<EventDto> findAll() {
-        List<Event> events = eventRepository.findAll();
-        return events.stream().map(this::toDto).collect(Collectors.toList());
+        return eventRepository.findAll().stream().map(this::toDto).collect(Collectors.toList());
     }
 
     @Override
     public Optional<EventDto> findById(Long id) {
         return eventRepository.findById(id).map(this::toDto);
+    }
+
+    @Override
+    @Transactional
+    public EventDto create(EventCreateRequest req) {
+        // basic business validation
+        if (req.getEndTime().isBefore(req.getStartTime())) {
+            throw new IllegalArgumentException("End time must be after start time");
+        }
+        Event e = new Event();
+        e.setTitle(req.getTitle());
+        e.setDescription(req.getDescription());
+        e.setCategory(req.getCategory());
+        e.setLocation(req.getLocation());
+        e.setStartTime(req.getStartTime());
+        e.setEndTime(req.getEndTime());
+        e.setStatus("PENDING"); // newly created events require approval
+        // optionally set createdBy if provided in future
+        eventRepository.save(e);
+        return toDto(e);
+    }
+
+    @Override
+    @Transactional
+    public EventDto update(Long id, EventUpdateRequest req) {
+        Event e = eventRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Event not found with id " + id));
+        if (req.getEndTime().isBefore(req.getStartTime())) {
+            throw new IllegalArgumentException("End time must be after start time");
+        }
+        e.setTitle(req.getTitle());
+        e.setDescription(req.getDescription());
+        e.setCategory(req.getCategory());
+        e.setLocation(req.getLocation());
+        e.setStartTime(req.getStartTime());
+        e.setEndTime(req.getEndTime());
+        if (req.getStatus() != null) e.setStatus(req.getStatus());
+        eventRepository.save(e);
+        return toDto(e);
+    }
+
+    @Override
+    @Transactional
+    public void delete(Long id) {
+        Event e = eventRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Event not found with id " + id));
+        eventRepository.delete(e);
     }
 }
