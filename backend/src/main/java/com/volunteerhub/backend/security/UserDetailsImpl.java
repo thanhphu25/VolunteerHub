@@ -17,10 +17,13 @@ public class UserDetailsImpl implements UserDetails {
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         if (user.getRole() != null) {
-            return List.of(new SimpleGrantedAuthority(user.getRole().getName()));
+            String authority = "ROLE_" + user.getRole().toUpperCase(); // 'volunteer' -> 'ROLE_VOLUNTEER'
+            return List.of(new SimpleGrantedAuthority(authority));
         }
         return List.of();
     }
+
+
 
     @Override public String getPassword() { return user.getPassword(); }
     @Override public String getUsername() { return user.getEmail(); }

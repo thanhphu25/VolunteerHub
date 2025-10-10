@@ -1,7 +1,6 @@
 package com.volunteerhub.backend.service.impl;
 
 import com.volunteerhub.backend.dto.RegistrationDto;
-import com.volunteerhub.backend.dto.RegistrationRequest;
 import com.volunteerhub.backend.exception.ResourceNotFoundException;
 import com.volunteerhub.backend.model.Event;
 import com.volunteerhub.backend.model.Registration;
@@ -44,18 +43,16 @@ public class RegistrationServiceImpl implements RegistrationService {
 
     @Override
     @Transactional
-    public RegistrationDto register(Long eventId, RegistrationRequest req) {
+    public RegistrationDto registerByUserId(Long eventId, Long userId) {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new ResourceNotFoundException("Event not found: " + eventId));
-        User user = userRepository.findById(req.getUserId())
-                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + req.getUserId()));
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + userId));
 
-        // Prevent duplicate registration
-        if (registrationRepository.findByEventIdAndUserId(eventId, req.getUserId()).isPresent()) {
+        if (registrationRepository.findByEventIdAndUserId(eventId, userId).isPresent()) {
             throw new IllegalArgumentException("User already registered for this event");
         }
 
-        // Business rule: cannot register after event end
         if (event.getEndTime() != null && event.getEndTime().isBefore(LocalDateTime.now())) {
             throw new IllegalArgumentException("Cannot register for past event");
         }
@@ -72,16 +69,15 @@ public class RegistrationServiceImpl implements RegistrationService {
 
     @Override
     @Transactional
-    public void unregister(Long eventId, RegistrationRequest req) {
-        Registration reg = registrationRepository.findByEventIdAndUserId(eventId, req.getUserId())
+    public void unregisterByUserId(Long eventId, Long userId) {
+        Registration reg = registrationRepository.findByEventIdAndUserId(eventId, userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Registration not found"));
 
-        // business: can't unregister after completed or if event already happened
         Event event = reg.getEvent();
         if (event.getStartTime() != null && event.getStartTime().isBefore(LocalDateTime.now())) {
             throw new IllegalArgumentException("Cannot unregister after event has started");
         }
-        // allow unregister if PENDING or APPROVED
+
         reg.setStatus("CANCELLED");
         registrationRepository.save(reg);
     }

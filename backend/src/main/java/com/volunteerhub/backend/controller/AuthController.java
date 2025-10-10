@@ -3,9 +3,7 @@ package com.volunteerhub.backend.controller;
 import com.volunteerhub.backend.dto.AuthResponse;
 import com.volunteerhub.backend.dto.LoginRequest;
 import com.volunteerhub.backend.dto.RegisterRequest;
-import com.volunteerhub.backend.model.Role;
 import com.volunteerhub.backend.model.User;
-import com.volunteerhub.backend.repository.RoleRepository;
 import com.volunteerhub.backend.repository.UserRepository;
 import com.volunteerhub.backend.security.JwtUtil;
 import com.volunteerhub.backend.security.UserDetailsImpl;
@@ -21,18 +19,15 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final UserRepository userRepository;
-    private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final JwtUtil jwtUtil;
 
     public AuthController(UserRepository userRepository,
-                          RoleRepository roleRepository,
                           PasswordEncoder passwordEncoder,
                           AuthenticationManager authenticationManager,
                           JwtUtil jwtUtil) {
         this.userRepository = userRepository;
-        this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;
         this.authenticationManager = authenticationManager;
         this.jwtUtil = jwtUtil;
@@ -48,9 +43,8 @@ public class AuthController {
         user.setEmail(req.getEmail());
         user.setPassword(passwordEncoder.encode(req.getPassword()));
 
-        // default role = ROLE_VOLUNTEER (create it in DB via Flyway seed)
-        Role role = roleRepository.findByName("ROLE_VOLUNTEER").orElse(null);
-        user.setRole(role);
+        // default role in DB enum is 'volunteer' (V1). Store that string.
+        user.setRole("volunteer");
 
         userRepository.save(user);
         return ResponseEntity.ok("User registered");

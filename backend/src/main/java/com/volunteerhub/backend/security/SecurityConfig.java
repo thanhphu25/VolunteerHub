@@ -50,6 +50,7 @@ public class SecurityConfig {
                                 "/actuator/**",
                                 "/static/**", "/assets/**", "/css/**", "/js/**"
                         ).permitAll()
+                        .requestMatchers("api/user/me").authenticated()
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS));

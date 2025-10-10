@@ -12,5 +12,6 @@ public interface EventService {
 
     EventDto create(EventCreateRequest req);
     EventDto update(Long id, EventUpdateRequest req);
+    EventDto createWithUser(EventCreateRequest req, Long userId);
     void delete(Long id);
 }

@@ -97,4 +97,27 @@ public class EventServiceImpl implements EventService {
                 .orElseThrow(() -> new ResourceNotFoundException("Event not found with id " + id));
         eventRepository.delete(e);
     }
+
+    @Override
+    @Transactional
+    public EventDto createWithUser(EventCreateRequest req, Long userId) {
+        if (req.getEndTime().isBefore(req.getStartTime())) {
+            throw new IllegalArgumentException("End time must be after start time");
+        }
+        Event e = new Event();
+        e.setTitle(req.getTitle());
+        e.setDescription(req.getDescription());
+        e.setCategory(req.getCategory());
+        e.setLocation(req.getLocation());
+        e.setStartTime(req.getStartTime());
+        e.setEndTime(req.getEndTime());
+        e.setStatus("PENDING");
+        if (userId != null) {
+            User u = userRepository.findById(userId).orElse(null);
+            e.setCreatedBy(u);
+        }
+        eventRepository.save(e);
+        return toDto(e);
+    }
+
 }

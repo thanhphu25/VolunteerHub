@@ -13,13 +13,28 @@ public class Registration {
     @JoinColumn(name = "event_id")
     private Event event;
 
+    // DB column volunteer_id -> map to user
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
+    @JoinColumn(name = "volunteer_id")
     private User user;
 
-    private String status = "PENDING"; // PENDING | APPROVED | CANCELLED | COMPLETED
+    // DB uses ENUM values; map to String
+    @Column(name = "status")
+    private String status = "pending";
 
-    @Column(name = "registered_at", columnDefinition = "DATETIME")
+    @Column(name = "note", columnDefinition = "TEXT")
+    private String note;
+
+    @Column(name = "organizer_note", columnDefinition = "TEXT")
+    private String organizerNote;
+
+    @Column(name = "attendance_status")
+    private String attendanceStatus;
+
+    @Column(name = "completion_note", columnDefinition = "TEXT")
+    private String completionNote;
+
+    @Column(name = "registered_at", columnDefinition = "TIMESTAMP")
     private LocalDateTime registeredAt = LocalDateTime.now();
 
     public Registration() {}
@@ -36,6 +51,18 @@ public class Registration {
 
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
+
+    public String getNote() { return note; }
+    public void setNote(String note) { this.note = note; }
+
+    public String getOrganizerNote() { return organizerNote; }
+    public void setOrganizerNote(String organizerNote) { this.organizerNote = organizerNote; }
+
+    public String getAttendanceStatus() { return attendanceStatus; }
+    public void setAttendanceStatus(String attendanceStatus) { this.attendanceStatus = attendanceStatus; }
+
+    public String getCompletionNote() { return completionNote; }
+    public void setCompletionNote(String completionNote) { this.completionNote = completionNote; }
 
     public LocalDateTime getRegisteredAt() { return registeredAt; }
     public void setRegisteredAt(LocalDateTime registeredAt) { this.registeredAt = registeredAt; }
