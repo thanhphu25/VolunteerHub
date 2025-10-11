@@ -9,11 +9,9 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -48,7 +46,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                .cors().and()                    // <-- enable CORS support
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
@@ -59,7 +57,6 @@ public class SecurityConfig {
                                 "/actuator/**",
                                 "/static/**", "/assets/**", "/css/**", "/js/**"
                         ).permitAll()
-                        // note: ensure leading slash
                         .requestMatchers("/api/user/me").authenticated()
                         .anyRequest().authenticated()
                 );
@@ -68,23 +65,12 @@ public class SecurityConfig {
         return http.build();
     }
 
-    /**
-     * CORS configuration source.
-     * - Dev: allow frontend dev origin(s) such as http://localhost:5173
-     * - For production, replace with your frontend domain(s).
-     */
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-
-        // Allowed origins for dev - add your frontend origin(s) here
         config.setAllowedOrigins(List.of("http://localhost:5173", "http://127.0.0.1:5173"));
-
-        // If you'd like to allow any origin pattern (less strict), you can use:
-        // config.setAllowedOriginPatterns(List.of("*"));
-
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
-        config.setAllowedHeaders(List.of("*")); // or be specific: List.of("Authorization","Content-Type")
+        config.setAllowedHeaders(List.of("*"));
         config.setExposedHeaders(List.of("Authorization", "Content-Type"));
         config.setAllowCredentials(true);
         config.setMaxAge(3600L);
