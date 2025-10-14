@@ -1,26 +1,18 @@
-import React from 'react'
-import { Routes, Route, Link } from 'react-router-dom'
-import Login from './pages/Login'
-import Dashboard from './pages/Dashboard'
-import PrivateRoute from './components/PrivateRoute'
+import {Route, Routes} from "react-router-dom";
+import Home from "./pages/Home";
+import Register from "./pages/Register";
+import NavBar from "./components/NavBar";
 
-export default function App() {
-    return (
-        <div>
-            <header style={{ padding: 12, borderBottom: '1px solid #eee' }}>
-                <Link to="/">VolunteerHub</Link>
-            </header>
-
-            <main style={{ padding: 12 }}>
-                <Routes>
-                    <Route path="/" element={<Login />} />
-                    <Route path="/login" element={<Login />} />
-                    <Route
-                        path="/dashboard"
-                        element={<PrivateRoute><Dashboard /></PrivateRoute>}
-                    />
-                </Routes>
-            </main>
-        </div>
-    )
+function App() {
+  return (
+      <>
+        <NavBar/>
+        <Routes>
+          <Route path="/" element={<Home/>}/>
+          <Route path="/register" element={<Register/>}/>
+        </Routes>
+      </>
+  );
 }
+
+export default App;
