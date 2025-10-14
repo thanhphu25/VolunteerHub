@@ -39,6 +39,7 @@ public class AuthController {
 
     // Register (unchanged)
     @PostMapping("/register")
+    @CrossOrigin(origins = {"http://localhost:5174"})
     public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest req) {
         if (userRepository.existsByEmail(req.getEmail())) {
             return ResponseEntity.status(409).body(new ApiError(false, "Email already exists", null));
