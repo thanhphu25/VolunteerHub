@@ -1,6 +1,7 @@
 package com.volunteerhub.backend.security;
 
 import com.volunteerhub.backend.model.User;
+import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -8,31 +9,35 @@ import org.springframework.security.core.userdetails.UserDetails;
 import java.util.Collection;
 import java.util.List;
 
+@Getter
 public class UserDetailsImpl implements UserDetails {
-    private final User user;
+
+    private final Long id;
+    private final String username;
+    private final String password;
+    private final Collection<? extends GrantedAuthority> authorities;
+    private final boolean enabled;
+    private final boolean accountNonLocked;
+
     public UserDetailsImpl(User user) {
-        this.user = user;
+        this.id = user.getId();
+        this.username = user.getEmail();
+        this.password = user.getPasswordHash();
+        String role = (user.getRole() != null) ? user.getRole().name().toUpperCase() : "VOLUNTEER";
+        this.authorities = List.of(new SimpleGrantedAuthority("ROLE_" + role));
+        this.enabled = !(user.getIsDeleted() != null && user.getIsDeleted());
+        this.accountNonLocked = user.getStatus() != User.Status.locked;
     }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        if (user.getRole() != null) {
-            String authority = "ROLE_" + user.getRole().toUpperCase(); // 'volunteer' -> 'ROLE_VOLUNTEER'
-            return List.of(new SimpleGrantedAuthority(authority));
-        }
-        return List.of();
+        return authorities;
     }
 
-
-
-    @Override public String getPassword() { return user.getPassword(); }
-    @Override public String getUsername() { return user.getEmail(); }
+    @Override public String getPassword() { return password; }
+    @Override public String getUsername() { return username; }
     @Override public boolean isAccountNonExpired() { return true; }
-    @Override public boolean isAccountNonLocked() { return !user.isLocked(); }
+    @Override public boolean isAccountNonLocked() { return accountNonLocked; }
     @Override public boolean isCredentialsNonExpired() { return true; }
-    @Override public boolean isEnabled() { return true; }
-
-    // convenience
-    public Long getId() { return user.getId(); }
-    public User getUser() { return user; }
+    @Override public boolean isEnabled() { return enabled; }
 }

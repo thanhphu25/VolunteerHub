@@ -3,12 +3,12 @@ package com.volunteerhub.backend.dto;
 import jakarta.validation.constraints.NotNull;
 
 public class RegistrationRequest {
-    @NotNull(message = "userId is required")
-    private Long userId;
+    @NotNull
+    private Long eventId;
+    private String note;
 
-    public RegistrationRequest() {}
-    public RegistrationRequest(Long userId) { this.userId = userId; }
-
-    public Long getUserId() { return userId; }
-    public void setUserId(Long userId) { this.userId = userId; }
+    public Long getEventId() { return eventId; }
+    public void setEventId(Long eventId) { this.eventId = eventId; }
+    public String getNote() { return note; }
+    public void setNote(String note) { this.note = note; }
 }

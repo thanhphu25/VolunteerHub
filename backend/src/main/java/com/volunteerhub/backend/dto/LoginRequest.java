@@ -1,7 +1,6 @@
 package com.volunteerhub.backend.dto;
 
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.*;
 
 public class LoginRequest {
     @NotBlank @Email
@@ -9,7 +8,6 @@ public class LoginRequest {
     @NotBlank
     private String password;
 
-    // getters/setters
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }
     public String getPassword() { return password; }

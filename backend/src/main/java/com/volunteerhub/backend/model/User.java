@@ -3,83 +3,99 @@ package com.volunteerhub.backend.model;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
+/**
+ * Explicit POJO User with manual Builder to guarantee builder() exists.
+ */
 @Entity
 @Table(name = "users")
 public class User {
+
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "full_name", nullable = true)
-    private String fullName;
-
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false, unique = true, length = 255)
     private String email;
 
-    // map vào cột password_hash trong DB
-    @Column(name = "password_hash", nullable = false)
-    private String password; // store hashed password
+    @Column(name = "password_hash", nullable = false, length = 255)
+    private String passwordHash;
 
-    // The DB currently stores role as ENUM('volunteer','organizer','admin')
-    // We'll keep it as String in the entity to match DB
-    @Column(name = "role", nullable = false)
-    private String role;
+    @Column(name = "full_name", nullable = false, length = 255)
+    private String fullName;
 
-    // status column in DB: 'active' or 'locked'
-    @Column(name = "status", nullable = false)
-    private String status = "active";
-
-    @Column(name = "phone")
+    @Column(length = 50)
     private String phone;
 
-    @Column(name = "avatar_url")
+    @Enumerated(EnumType.STRING)
+    @Column(length = 20, nullable = false)
+    private Role role = Role.volunteer;
+
+    @Enumerated(EnumType.STRING)
+    @Column(length = 20, nullable = false)
+    private Status status = Status.active;
+
+    @Column(name = "avatar_url", length = 500)
     private String avatarUrl;
 
-    @Column(name = "bio", columnDefinition = "TEXT")
+    @Column(columnDefinition = "TEXT")
     private String bio;
 
-    @Column(name = "created_at", columnDefinition = "TIMESTAMP")
-    private LocalDateTime createdAt = LocalDateTime.now();
+    @Column(name = "is_deleted", nullable = false)
+    private Boolean isDeleted = false;
 
-    @Column(name = "updated_at", columnDefinition = "TIMESTAMP")
+    private LocalDateTime deletedAt;
+    @Column(name = "created_at", nullable = false)
+    private LocalDateTime createdAt;
+    @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
-
-    @Column(name = "last_login", columnDefinition = "TIMESTAMP")
     private LocalDateTime lastLogin;
+
+    public enum Role { volunteer, organizer, admin }
+    public enum Status { active, locked }
 
     public User() {}
 
-    // Convenience: return boolean locked based on status column
-    public boolean isLocked() {
-        return "locked".equalsIgnoreCase(this.status);
+    // Full constructor (optional)
+    public User(Long id, String email, String passwordHash, String fullName, String phone, Role role, Status status,
+                String avatarUrl, String bio, Boolean isDeleted, LocalDateTime deletedAt,
+                LocalDateTime createdAt, LocalDateTime updatedAt, LocalDateTime lastLogin) {
+        this.id = id; this.email = email; this.passwordHash = passwordHash; this.fullName = fullName; this.phone = phone;
+        this.role = role; this.status = status; this.avatarUrl = avatarUrl; this.bio = bio; this.isDeleted = isDeleted;
+        this.deletedAt = deletedAt; this.createdAt = createdAt; this.updatedAt = updatedAt; this.lastLogin = lastLogin;
     }
 
-    // getters & setters
+    // --- Getters/Setters ---
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
-
-    public String getFullName() { return fullName; }
-    public void setFullName(String fullName) { this.fullName = fullName; }
 
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }
 
-    public String getPassword() { return password; }
-    public void setPassword(String password) { this.password = password; }
+    public String getPasswordHash() { return passwordHash; }
+    public void setPasswordHash(String passwordHash) { this.passwordHash = passwordHash; }
 
-    public String getRole() { return role; }
-    public void setRole(String role) { this.role = role; }
-
-    public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
+    public String getFullName() { return fullName; }
+    public void setFullName(String fullName) { this.fullName = fullName; }
 
     public String getPhone() { return phone; }
     public void setPhone(String phone) { this.phone = phone; }
+
+    public Role getRole() { return role; }
+    public void setRole(Role role) { this.role = role; }
+
+    public Status getStatus() { return status; }
+    public void setStatus(Status status) { this.status = status; }
 
     public String getAvatarUrl() { return avatarUrl; }
     public void setAvatarUrl(String avatarUrl) { this.avatarUrl = avatarUrl; }
 
     public String getBio() { return bio; }
     public void setBio(String bio) { this.bio = bio; }
+
+    public Boolean getIsDeleted() { return isDeleted; }
+    public void setIsDeleted(Boolean isDeleted) { this.isDeleted = isDeleted; }
+
+    public LocalDateTime getDeletedAt() { return deletedAt; }
+    public void setDeletedAt(LocalDateTime deletedAt) { this.deletedAt = deletedAt; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
@@ -89,4 +105,56 @@ public class User {
 
     public LocalDateTime getLastLogin() { return lastLogin; }
     public void setLastLogin(LocalDateTime lastLogin) { this.lastLogin = lastLogin; }
+
+    @PrePersist
+    public void prePersist() {
+        createdAt = LocalDateTime.now();
+        updatedAt = createdAt;
+    }
+
+    @PreUpdate
+    public void preUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
+
+    // Manual builder implementation so code using User.builder() will compile
+    public static Builder builder() { return new Builder(); }
+
+    public static class Builder {
+        private Long id;
+        private String email;
+        private String passwordHash;
+        private String fullName;
+        private String phone;
+        private Role role;
+        private Status status;
+        private String avatarUrl;
+        private String bio;
+        private Boolean isDeleted;
+        private LocalDateTime deletedAt;
+        private LocalDateTime createdAt;
+        private LocalDateTime updatedAt;
+        private LocalDateTime lastLogin;
+
+        public Builder id(Long id) { this.id = id; return this; }
+        public Builder email(String email) { this.email = email; return this; }
+        public Builder passwordHash(String passwordHash) { this.passwordHash = passwordHash; return this; }
+        public Builder fullName(String fullName) { this.fullName = fullName; return this; }
+        public Builder phone(String phone) { this.phone = phone; return this; }
+        public Builder role(Role role) { this.role = role; return this; }
+        public Builder status(Status status) { this.status = status; return this; }
+        public Builder avatarUrl(String avatarUrl) { this.avatarUrl = avatarUrl; return this; }
+        public Builder bio(String bio) { this.bio = bio; return this; }
+        public Builder isDeleted(Boolean isDeleted) { this.isDeleted = isDeleted; return this; }
+        public Builder deletedAt(LocalDateTime deletedAt) { this.deletedAt = deletedAt; return this; }
+        public Builder createdAt(LocalDateTime createdAt) { this.createdAt = createdAt; return this; }
+        public Builder updatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; return this; }
+        public Builder lastLogin(LocalDateTime lastLogin) { this.lastLogin = lastLogin; return this; }
+
+        public User build() {
+            return new User(id, email, passwordHash, fullName, phone, role == null ? Role.volunteer : role,
+                    status == null ? Status.active : status, avatarUrl, bio, isDeleted == null ? false : isDeleted,
+                    deletedAt, createdAt, updatedAt, lastLogin);
+        }
+    }
 }

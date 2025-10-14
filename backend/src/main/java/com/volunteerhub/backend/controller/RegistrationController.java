@@ -1,70 +1,90 @@
 package com.volunteerhub.backend.controller;
 
-import com.volunteerhub.backend.dto.RegistrationDto;
+import com.volunteerhub.backend.dto.*;
 import com.volunteerhub.backend.service.RegistrationService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
-import com.volunteerhub.backend.security.UserDetailsImpl;
-
-import java.util.List;
-
 @RestController
+@RequestMapping("/api/v1/registrations")
 public class RegistrationController {
 
     private final RegistrationService registrationService;
+
     public RegistrationController(RegistrationService registrationService) {
         this.registrationService = registrationService;
     }
 
-    // Volunteer registers for event — uses authenticated user
-    @PostMapping("/api/events/{eventId}/register")
-    public ResponseEntity<RegistrationDto> register(@PathVariable Long eventId,
-                                                    @AuthenticationPrincipal UserDetailsImpl userDetails) {
-        RegistrationDto dto = registrationService.registerByUserId(eventId, userDetails.getId());
-        return ResponseEntity.status(201).body(dto);
+    // POST /api/v1/registrations  (volunteer)
+    @PostMapping
+    public ResponseEntity<?> register(@Valid @RequestBody RegistrationRequest req, Authentication auth) {
+        if (auth == null || !auth.isAuthenticated()) {
+            return ResponseEntity.status(401).body(new ApiError(false, "Unauthorized", null));
+        }
+        String email = auth.getName();
+        var resp = registrationService.registerForEvent(req, email);
+        return ResponseEntity.status(201).body(new ApiSuccess(true, resp, "Registered (pending)"));
     }
 
-    // Volunteer unregisters (authenticated)
-    @PostMapping("/api/events/{eventId}/unregister")
-    public ResponseEntity<Void> unregister(@PathVariable Long eventId,
-                                           @AuthenticationPrincipal UserDetailsImpl userDetails) {
-        registrationService.unregisterByUserId(eventId, userDetails.getId());
-        return ResponseEntity.noContent().build();
+    // DELETE /api/v1/registrations/:id  (volunteer cancel)
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> cancel(@PathVariable Long id, Authentication auth) {
+        if (auth == null || !auth.isAuthenticated()) {
+            return ResponseEntity.status(401).body(new ApiError(false, "Unauthorized", null));
+        }
+        String email = auth.getName();
+        registrationService.cancelRegistration(id, email);
+        return ResponseEntity.ok(new ApiSuccess(true, null, "Registration cancelled"));
     }
 
-    // Manager/Admin views event registrations
-    @GetMapping("/api/events/{eventId}/registrations")
-    @PreAuthorize("hasAuthority('ROLE_MANAGER') or hasAuthority('ROLE_ADMIN')")
-    public ResponseEntity<List<RegistrationDto>> listByEvent(@PathVariable Long eventId) {
-        return ResponseEntity.ok(registrationService.listByEvent(eventId));
+    // GET /api/v1/registrations/my-registrations
+    @GetMapping("/my-registrations")
+    public ResponseEntity<?> myRegistrations(
+            Authentication auth,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int limit,
+            @RequestParam(required = false) String status
+    ) {
+        if (auth == null || !auth.isAuthenticated()) {
+            return ResponseEntity.status(401).body(new ApiError(false, "Unauthorized", null));
+        }
+        String email = auth.getName();
+        var resp = registrationService.myRegistrations(email, page, limit, status);
+        return ResponseEntity.ok(resp);
     }
 
-    // Volunteer views own registrations
-    @GetMapping("/api/users/me/registrations")
-    public ResponseEntity<List<RegistrationDto>> listByMe(@AuthenticationPrincipal UserDetailsImpl userDetails) {
-        return ResponseEntity.ok(registrationService.listByUser(userDetails.getId()));
+    // Approve registration (organizer)
+    @PutMapping("/{id}/approve")
+    public ResponseEntity<?> approve(@PathVariable Long id, @Valid @RequestBody ApproveRequest req, Authentication auth) {
+        if (auth == null || !auth.isAuthenticated()) {
+            return ResponseEntity.status(401).body(new ApiError(false, "Unauthorized", null));
+        }
+        String email = auth.getName();
+        var resp = registrationService.approveRegistration(id, email, req.getOrganizerNote());
+        return ResponseEntity.ok(new ApiSuccess(true, resp, "Registration approved"));
     }
 
-    // Manager approves a registration
-    @PatchMapping("/api/registrations/{registrationId}/approve")
-    @PreAuthorize("hasAuthority('ROLE_MANAGER') or hasAuthority('ROLE_ADMIN')")
-    public ResponseEntity<RegistrationDto> approve(@PathVariable Long registrationId) {
-        return ResponseEntity.ok(registrationService.approve(registrationId));
+    // Reject
+    @PutMapping("/{id}/reject")
+    public ResponseEntity<?> reject(@PathVariable Long id, @Valid @RequestBody ApproveRequest req, Authentication auth) {
+        if (auth == null || !auth.isAuthenticated()) {
+            return ResponseEntity.status(401).body(new ApiError(false, "Unauthorized", null));
+        }
+        String email = auth.getName();
+        var resp = registrationService.rejectRegistration(id, email, req.getOrganizerNote());
+        return ResponseEntity.ok(new ApiSuccess(true, resp, "Registration rejected"));
     }
 
-    @PatchMapping("/api/registrations/{registrationId}/cancel")
-    @PreAuthorize("hasAuthority('ROLE_MANAGER') or hasAuthority('ROLE_ADMIN')")
-    public ResponseEntity<RegistrationDto> cancel(@PathVariable Long registrationId) {
-        return ResponseEntity.ok(registrationService.cancel(registrationId));
-    }
-
-    @PatchMapping("/api/registrations/{registrationId}/complete")
-    @PreAuthorize("hasAuthority('ROLE_MANAGER') or hasAuthority('ROLE_ADMIN')")
-    public ResponseEntity<RegistrationDto> complete(@PathVariable Long registrationId) {
-        return ResponseEntity.ok(registrationService.complete(registrationId));
+    // Complete
+    @PutMapping("/{id}/complete")
+    public ResponseEntity<?> complete(@PathVariable Long id, @Valid @RequestBody CompleteRequest req, Authentication auth) {
+        if (auth == null || !auth.isAuthenticated()) {
+            return ResponseEntity.status(401).body(new ApiError(false, "Unauthorized", null));
+        }
+        String email = auth.getName();
+        var resp = registrationService.completeRegistration(id, email, req);
+        return ResponseEntity.ok(new ApiSuccess(true, resp, "Registration completed"));
     }
 }
