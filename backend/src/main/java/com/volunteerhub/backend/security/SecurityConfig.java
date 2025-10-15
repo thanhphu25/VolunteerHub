@@ -10,41 +10,50 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.web.filter.CorsFilter;
 
-/**
- * Simple security configuration:
- * - stateless (JWT)
- * - permit /api/v1/auth/** and static resources
- * - require authentication for other endpoints
- * - register JwtAuthenticationFilter (uses only JwtTokenProvider)
- *
- * Note: this class uses the JwtAuthenticationFilter constructor that accepts
- * a single JwtTokenProvider instance (matching the filter in the repo).
- */
+import java.util.List;
+
 @Configuration
 public class SecurityConfig {
 
     private final JwtTokenProvider jwtTokenProvider;
-    // If you have a UserDetailsServiceImpl used elsewhere you can inject it,
-    // but we do not pass it into the filter here.
+
     public SecurityConfig(JwtTokenProvider jwtTokenProvider) {
         this.jwtTokenProvider = jwtTokenProvider;
     }
 
-    // ✅ Bean dùng để mã hóa mật khẩu (được inject vào AuthController)
+    // ✅ Bean dùng để mã hóa mật khẩu
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
+    // ✅ Cấu hình CORS filter cho React frontend
+    @Bean
+    public CorsFilter corsFilter() {
+        CorsConfiguration config = new CorsConfiguration();
+        config.setAllowedOrigins(List.of("http://localhost:5173")); // địa chỉ frontend React
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        config.setAllowedHeaders(List.of("*"));
+        config.setAllowCredentials(true);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", config);
+
+        return new CorsFilter(source);
+    }
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        // create filter with single-arg constructor
         JwtAuthenticationFilter jwtFilter = new JwtAuthenticationFilter(jwtTokenProvider);
 
         http
                 .csrf(csrf -> csrf.disable())
-                .exceptionHandling(ex -> {})
+                .cors(cors -> {
+                }) // ✅ bật CORS support
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/v1/auth/**", "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
@@ -53,13 +62,10 @@ public class SecurityConfig {
                         .anyRequest().authenticated()
                 );
 
-        // Add the JWT filter before UsernamePasswordAuthenticationFilter
         http.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
-
         return http.build();
     }
 
-    // expose AuthenticationManager if controllers/services need it
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
         return authenticationConfiguration.getAuthenticationManager();
