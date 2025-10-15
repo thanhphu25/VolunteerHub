@@ -1,7 +1,10 @@
-package com.volunteerhub.backend.model;
+package com.volunteerhub.backend.entity;
 
+import com.volunteerhub.backend.entity.UserEntity;
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
 
@@ -9,24 +12,19 @@ import java.time.LocalDateTime;
 @Table(name = "events")
 @Getter
 @Setter
-@Builder
-@NoArgsConstructor // JPA needs a no-arg constructor
-@AllArgsConstructor
-@EqualsAndHashCode(onlyExplicitlyIncluded = true)
-@ToString(onlyExplicitlyIncluded = true)
-public class Event {
+@NoArgsConstructor
+public class EventEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @EqualsAndHashCode.Include
-    @ToString.Include
     private Long id;
 
-    @Column(name = "organizer_id", nullable = false)
-    private Long organizerId;
+    // organizer_id
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "organizer_id", nullable = false)
+    private UserEntity organizer;
 
     @Column(name = "name", nullable = false, length = 255)
-    @ToString.Include
     private String name;
 
     @Column(name = "slug", length = 255)
@@ -58,7 +56,7 @@ public class Event {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)
-    private Status status = Status.pending;
+    private EventStatus status = EventStatus.pending;
 
     @Column(name = "image_url", length = 500)
     private String imageUrl;
@@ -91,19 +89,21 @@ public class Event {
     @Column(name = "approved_at")
     private LocalDateTime approvedAt;
 
-    @Column(name = "approved_by")
-    private Long approvedBy;
-
-    public enum Status { pending, approved, rejected, cancelled, completed }
+    // approved_by -> reference to users.id
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "approved_by")
+    private UserEntity approvedBy;
 
     @PrePersist
     public void prePersist() {
-        createdAt = LocalDateTime.now();
-        updatedAt = createdAt;
+        LocalDateTime now = LocalDateTime.now();
+        this.createdAt = now;
+        this.updatedAt = now;
+        if (this.currentVolunteers == null) this.currentVolunteers = 0;
     }
 
     @PreUpdate
     public void preUpdate() {
-        updatedAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
     }
 }

@@ -1,19 +1,11 @@
 package com.volunteerhub.backend.repository;
 
-import com.volunteerhub.backend.model.Event;
-import org.springframework.data.jpa.repository.*;
-import org.springframework.data.repository.query.Param;
+import com.volunteerhub.backend.entity.EventEntity;
+import com.volunteerhub.backend.entity.EventStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
 
-import jakarta.persistence.LockModeType;
-import jakarta.transaction.Transactional;
-import java.util.List;
-import java.util.Optional;
-
-public interface EventRepository extends JpaRepository<Event, Long>, JpaSpecificationExecutor<Event> {
-
-    List<Event> findByOrganizerId(Long organizerId);
-
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("select e from Event e where e.id = :id")
-    Optional<Event> findByIdForUpdate(@Param("id") Long id);
+public interface EventRepository extends JpaRepository<EventEntity, Long> {
+    Page<EventEntity> findByStatus(EventStatus status, Pageable pageable);
 }
