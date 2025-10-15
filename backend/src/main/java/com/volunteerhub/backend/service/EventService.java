@@ -2,135 +2,52 @@ package com.volunteerhub.backend.service;
 
 import com.volunteerhub.backend.dto.EventCreateRequest;
 import com.volunteerhub.backend.dto.EventResponse;
-import com.volunteerhub.backend.dto.EventUpdateRequest;
-import com.volunteerhub.backend.exception.ForbiddenException;
-import com.volunteerhub.backend.exception.NotFoundException;
-import com.volunteerhub.backend.model.Event;
-import com.volunteerhub.backend.model.User;
+import com.volunteerhub.backend.entity.EventEntity;
+import com.volunteerhub.backend.entity.EventStatus;
 import com.volunteerhub.backend.repository.EventRepository;
-import com.volunteerhub.backend.repository.EventSpecifications;
+import com.volunteerhub.backend.entity.UserEntity;
 import com.volunteerhub.backend.repository.UserRepository;
-import org.springframework.data.domain.*;
+import com.volunteerhub.backend.security.CustomUserDetails;
+import jakarta.transaction.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
+import java.text.Normalizer;
 import java.time.LocalDateTime;
-import java.util.stream.Collectors;
+import java.util.Locale;
+import java.util.Optional;
+import java.util.regex.Pattern;
 
 @Service
 public class EventService {
 
-    private final EventRepository eventRepository;
+    private final EventRepository repo;
     private final UserRepository userRepository;
 
-    public EventService(EventRepository eventRepository, UserRepository userRepository) {
-        this.eventRepository = eventRepository;
+    public EventService(EventRepository repo, UserRepository userRepository) {
+        this.repo = repo;
         this.userRepository = userRepository;
     }
 
-    public Page<EventResponse> listEvents(int page, int limit, String category, String status, String search,
-                                          LocalDateTime startDateFrom, LocalDateTime startDateTo, Sort sort) {
-        Pageable pageable = PageRequest.of(Math.max(0, page - 1), limit, sort);
-        var spec = EventSpecifications.filters(category, status, search, startDateFrom, startDateTo);
-        Page<Event> p = eventRepository.findAll(spec, pageable);
-        return p.map(this::toResponse);
+    private String toSlug(String input) {
+        if (!StringUtils.hasText(input)) return null;
+        String nowhitespace = Pattern.compile("\\s").matcher(input).replaceAll("-");
+        String normalized = Normalizer.normalize(nowhitespace, Normalizer.Form.NFD);
+        String slug = Pattern.compile("[^\\w\\-]").matcher(normalized).replaceAll("");
+        return slug.toLowerCase(Locale.ENGLISH);
     }
 
-    public EventResponse getEvent(Long id) {
-        Event e = eventRepository.findById(id).orElseThrow(() -> new NotFoundException("Event not found"));
-        if (Boolean.TRUE.equals(e.getIsDeleted())) throw new NotFoundException("Event not found");
-        return toResponse(e);
-    }
-
-    @Transactional
-    public EventResponse createEvent(EventCreateRequest req, String creatorEmail) {
-        User creator = userRepository.findByEmail(creatorEmail).orElseThrow(() -> new NotFoundException("Creator not found"));
-
-        // optional: only organizer/admin allowed — enforce here if desired
-        if (creator.getRole() == null || creator.getRole().name().equalsIgnoreCase("volunteer")) {
-            throw new ForbiddenException("Only organizers or admins can create events");
-        }
-
-        Event e = new Event();
-        e.setOrganizerId(creator.getId());
-        e.setName(req.getName());
-        e.setSlug(req.getSlug());
-        e.setDescription(req.getDescription());
-        e.setCategory(req.getCategory());
-        e.setLocation(req.getLocation());
-        e.setAddress(req.getAddress());
-        e.setStartDate(req.getStartDate());
-        e.setEndDate(req.getEndDate());
-        e.setMaxVolunteers(req.getMaxVolunteers());
-        e.setCurrentVolunteers(0);
-        e.setStatus(Event.Status.pending);
-        e.setImageUrl(req.getImageUrl());
-        e.setRequirements(req.getRequirements());
-        e.setBenefits(req.getBenefits());
-        e.setContactInfo(req.getContactInfo());
-
-        if (!e.getStartDate().isBefore(e.getEndDate())) {
-            throw new IllegalArgumentException("startDate must be before endDate");
-        }
-
-        Event saved = eventRepository.save(e);
-        return toResponse(saved);
-    }
-
-    @Transactional
-    public EventResponse updateEvent(Long id, EventUpdateRequest req, String currentUserEmail) {
-        Event existing = eventRepository.findById(id).orElseThrow(() -> new NotFoundException("Event not found"));
-        if (Boolean.TRUE.equals(existing.getIsDeleted())) throw new NotFoundException("Event not found");
-
-        User current = userRepository.findByEmail(currentUserEmail).orElseThrow(() -> new NotFoundException("User not found"));
-        // only owner or admin
-        boolean isAdmin = current.getRole() != null && current.getRole().name().equalsIgnoreCase("admin");
-        if (!(isAdmin || current.getId().equals(existing.getOrganizerId()))) {
-            throw new ForbiddenException("You are not allowed to update this event");
-        }
-
-        existing.setName(req.getName());
-        existing.setSlug(req.getSlug());
-        existing.setDescription(req.getDescription());
-        existing.setCategory(req.getCategory());
-        existing.setLocation(req.getLocation());
-        existing.setAddress(req.getAddress());
-        existing.setStartDate(req.getStartDate());
-        existing.setEndDate(req.getEndDate());
-        existing.setMaxVolunteers(req.getMaxVolunteers());
-        existing.setImageUrl(req.getImageUrl());
-        existing.setRequirements(req.getRequirements());
-        existing.setBenefits(req.getBenefits());
-        existing.setContactInfo(req.getContactInfo());
-
-        if (!existing.getStartDate().isBefore(existing.getEndDate())) {
-            throw new IllegalArgumentException("startDate must be before endDate");
-        }
-
-        Event saved = eventRepository.save(existing);
-        return toResponse(saved);
-    }
-
-    @Transactional
-    public void deleteEvent(Long id, String currentUserEmail) {
-        Event existing = eventRepository.findById(id).orElseThrow(() -> new NotFoundException("Event not found"));
-        if (Boolean.TRUE.equals(existing.getIsDeleted())) throw new NotFoundException("Event not found");
-
-        User current = userRepository.findByEmail(currentUserEmail).orElseThrow(() -> new NotFoundException("User not found"));
-        boolean isAdmin = current.getRole() != null && current.getRole().name().equalsIgnoreCase("admin");
-        if (!(isAdmin || current.getId().equals(existing.getOrganizerId()))) {
-            throw new ForbiddenException("You are not allowed to delete this event");
-        }
-
-        existing.setIsDeleted(true);
-        existing.setDeletedAt(LocalDateTime.now());
-        eventRepository.save(existing);
-    }
-
-    private EventResponse toResponse(Event e) {
+    public EventResponse toResponse(EventEntity e) {
+        Long organizerId = e.getOrganizer() != null ? e.getOrganizer().getId() : null;
+        String organizerName = e.getOrganizer() != null ? e.getOrganizer().getFullName() : null;
+        Long approvedBy = e.getApprovedBy() != null ? e.getApprovedBy().getId() : null;
         return new EventResponse(
                 e.getId(),
-                e.getOrganizerId(),
+                organizerId,
+                organizerName,
                 e.getName(),
                 e.getSlug(),
                 e.getDescription(),
@@ -141,7 +58,7 @@ public class EventService {
                 e.getEndDate(),
                 e.getMaxVolunteers(),
                 e.getCurrentVolunteers(),
-                e.getStatus() == null ? null : e.getStatus().name(),
+                e.getStatus() != null ? e.getStatus().name() : null,
                 e.getImageUrl(),
                 e.getRequirements(),
                 e.getBenefits(),
@@ -149,7 +66,109 @@ public class EventService {
                 e.getCreatedAt(),
                 e.getUpdatedAt(),
                 e.getApprovedAt(),
-                e.getApprovedBy()
+                approvedBy
         );
+    }
+
+    @Transactional
+    public EventResponse createEvent(EventCreateRequest req, Authentication auth) {
+        // validate dates
+        if (req.getStartDate() != null && req.getEndDate() != null && !req.getStartDate().isBefore(req.getEndDate())) {
+            throw new IllegalArgumentException("startDate must be before endDate");
+        }
+
+        UserEntity organizer = currentUserEntity(auth);
+
+        EventEntity e = new EventEntity();
+        e.setOrganizer(organizer);
+        e.setName(req.getName());
+        e.setSlug(toSlug(req.getName()));
+        e.setDescription(req.getDescription());
+        e.setCategory(req.getCategory());
+        e.setLocation(req.getLocation());
+        e.setAddress(req.getAddress());
+        e.setStartDate(req.getStartDate());
+        e.setEndDate(req.getEndDate());
+        e.setMaxVolunteers(req.getMaxVolunteers());
+        e.setImageUrl(req.getImageUrl());
+        e.setRequirements(req.getRequirements());
+        e.setBenefits(req.getBenefits());
+        e.setContactInfo(req.getContactInfo());
+        e.setStatus(EventStatus.pending);
+
+        EventEntity saved = repo.save(e);
+        return toResponse(saved);
+    }
+
+    public Page<EventResponse> listEvents(Optional<String> statusOpt, Pageable pageable) {
+        if (statusOpt.isPresent()) {
+            EventStatus st;
+            try {
+                st = EventStatus.valueOf(statusOpt.get());
+            } catch (Exception ex) {
+                throw new IllegalArgumentException("Invalid status");
+            }
+            return repo.findByStatus(st, pageable).map(this::toResponse);
+        }
+        return repo.findAll(pageable).map(this::toResponse);
+    }
+
+    public EventResponse getEvent(Long id) {
+        var e = repo.findById(id).orElseThrow(() -> new IllegalArgumentException("Event not found"));
+        return toResponse(e);
+    }
+
+    @Transactional
+    public EventResponse updateEvent(Long id, EventCreateRequest req, Authentication auth) {
+        var e = repo.findById(id).orElseThrow(() -> new IllegalArgumentException("Event not found"));
+
+        // Only organizer owner or admin allowed (controller pre-authorize ensures auth; double-check)
+        UserEntity current = currentUserEntity(auth);
+        boolean isOwner = e.getOrganizer() != null && e.getOrganizer().getId().equals(current.getId());
+        boolean isAdmin = current.getRole() != null && "admin".equalsIgnoreCase(current.getRole().name());
+
+        if (!isOwner && !isAdmin) throw new SecurityException("Not allowed to update this event");
+
+        if (req.getStartDate() != null && req.getEndDate() != null && !req.getStartDate().isBefore(req.getEndDate())) {
+            throw new IllegalArgumentException("startDate must be before endDate");
+        }
+
+        e.setName(req.getName());
+        e.setSlug(toSlug(req.getName()));
+        e.setDescription(req.getDescription());
+        e.setCategory(req.getCategory());
+        e.setLocation(req.getLocation());
+        e.setAddress(req.getAddress());
+        e.setStartDate(req.getStartDate());
+        e.setEndDate(req.getEndDate());
+        e.setMaxVolunteers(req.getMaxVolunteers());
+        e.setImageUrl(req.getImageUrl());
+        e.setRequirements(req.getRequirements());
+        e.setBenefits(req.getBenefits());
+        e.setContactInfo(req.getContactInfo());
+
+        EventEntity saved = repo.save(e);
+        return toResponse(saved);
+    }
+
+    @Transactional
+    public EventResponse approveEvent(Long id, Authentication auth) {
+        var e = repo.findById(id).orElseThrow(() -> new IllegalArgumentException("Event not found"));
+        UserEntity admin = currentUserEntity(auth);
+        // Only admin should call (controller ensures role)
+        e.setStatus(EventStatus.approved);
+        e.setApprovedAt(LocalDateTime.now());
+        e.setApprovedBy(admin);
+        EventEntity saved = repo.save(e);
+        return toResponse(saved);
+    }
+
+    private UserEntity currentUserEntity(Authentication auth) {
+        if (auth == null || !(auth.getPrincipal() instanceof com.volunteerhub.backend.security.CustomUserDetails)) {
+            throw new IllegalArgumentException("Authentication required");
+        }
+        com.volunteerhub.backend.security.CustomUserDetails cud = (com.volunteerhub.backend.security.CustomUserDetails) auth.getPrincipal();
+        Long userId = cud.getUserEntity().getId();
+        return userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("User not found"));
     }
 }
