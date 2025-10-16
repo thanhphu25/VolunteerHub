@@ -1,90 +1,125 @@
 package com.volunteerhub.backend.controller;
 
-import com.volunteerhub.backend.dto.*;
-import com.volunteerhub.backend.service.RegistrationService;
+import com.volunteerhub.backend.dto.RegistrationCreateRequest;
+import com.volunteerhub.backend.dto.RegistrationResponse;
+import com.volunteerhub.backend.service.IRegistrationService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
-@RequestMapping("/api/v1/registrations")
+@RequestMapping("/api")
 public class RegistrationController {
 
-    private final RegistrationService registrationService;
+    private final IRegistrationService svc;
 
-    public RegistrationController(RegistrationService registrationService) {
-        this.registrationService = registrationService;
+    public RegistrationController(IRegistrationService svc) {
+        this.svc = svc;
     }
 
-    // POST /api/v1/registrations  (volunteer)
-    @PostMapping
-    public ResponseEntity<?> register(@Valid @RequestBody RegistrationRequest req, Authentication auth) {
-        if (auth == null || !auth.isAuthenticated()) {
-            return ResponseEntity.status(401).body(new ApiError(false, "Unauthorized", null));
+    // Volunteer registers for an event
+    @PreAuthorize("hasRole('VOLUNTEER')")
+    @PostMapping("/events/{eventId}/register")
+    public ResponseEntity<?> register(@PathVariable Long eventId, @Valid @RequestBody RegistrationCreateRequest req, Authentication auth) {
+        try {
+            RegistrationResponse resp = svc.register(eventId, req, auth);
+            return ResponseEntity.status(201).body(resp);
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest().body(java.util.Map.of("error", ex.getMessage()));
+        } catch (Exception ex) {
+            return ResponseEntity.status(500).body(java.util.Map.of("error", "Unable to register"));
         }
-        String email = auth.getName();
-        var resp = registrationService.registerForEvent(req, email);
-        return ResponseEntity.status(201).body(new ApiSuccess(true, resp, "Registered (pending)"));
     }
 
-    // DELETE /api/v1/registrations/:id  (volunteer cancel)
-    @DeleteMapping("/{id}")
-    public ResponseEntity<?> cancel(@PathVariable Long id, Authentication auth) {
-        if (auth == null || !auth.isAuthenticated()) {
-            return ResponseEntity.status(401).body(new ApiError(false, "Unauthorized", null));
+    // Volunteer cancels registration
+    @PreAuthorize("hasRole('VOLUNTEER')")
+    @PostMapping("/events/{eventId}/registrations/{registrationId}/cancel")
+    public ResponseEntity<?> cancel(@PathVariable Long eventId, @PathVariable Long registrationId, Authentication auth) {
+        try {
+            RegistrationResponse resp = svc.cancel(eventId, registrationId, auth);
+            return ResponseEntity.ok(resp);
+        } catch (SecurityException ex) {
+            return ResponseEntity.status(403).body(java.util.Map.of("error", ex.getMessage()));
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest().body(java.util.Map.of("error", ex.getMessage()));
+        } catch (Exception ex) {
+            return ResponseEntity.status(500).body(java.util.Map.of("error", "Unable to cancel"));
         }
-        String email = auth.getName();
-        registrationService.cancelRegistration(id, email);
-        return ResponseEntity.ok(new ApiSuccess(true, null, "Registration cancelled"));
     }
 
-    // GET /api/v1/registrations/my-registrations
-    @GetMapping("/my-registrations")
-    public ResponseEntity<?> myRegistrations(
-            Authentication auth,
-            @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "10") int limit,
-            @RequestParam(required = false) String status
-    ) {
-        if (auth == null || !auth.isAuthenticated()) {
-            return ResponseEntity.status(401).body(new ApiError(false, "Unauthorized", null));
+    // Organizer/Admin: list registrations for event
+    @PreAuthorize("hasAnyRole('ORGANIZER','ADMIN')")
+    @GetMapping("/events/{eventId}/registrations")
+    public ResponseEntity<?> listForEvent(@PathVariable Long eventId, Authentication auth) {
+        try {
+            List<RegistrationResponse> list = svc.listForEvent(eventId, auth);
+            return ResponseEntity.ok(list);
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.status(404).body(java.util.Map.of("error", ex.getMessage()));
+        } catch (Exception ex) {
+            return ResponseEntity.status(500).body(java.util.Map.of("error", "Unable to list registrations"));
         }
-        String email = auth.getName();
-        var resp = registrationService.myRegistrations(email, page, limit, status);
-        return ResponseEntity.ok(resp);
     }
 
-    // Approve registration (organizer)
-    @PutMapping("/{id}/approve")
-    public ResponseEntity<?> approve(@PathVariable Long id, @Valid @RequestBody ApproveRequest req, Authentication auth) {
-        if (auth == null || !auth.isAuthenticated()) {
-            return ResponseEntity.status(401).body(new ApiError(false, "Unauthorized", null));
+    // Volunteer: list own registrations
+    @PreAuthorize("hasRole('VOLUNTEER')")
+    @GetMapping("/me/registrations")
+    public ResponseEntity<?> listForVolunteer(Authentication auth) {
+        try {
+            List<RegistrationResponse> list = svc.listForVolunteer(auth);
+            return ResponseEntity.ok(list);
+        } catch (Exception ex) {
+            return ResponseEntity.status(500).body(java.util.Map.of("error", "Unable to list registrations"));
         }
-        String email = auth.getName();
-        var resp = registrationService.approveRegistration(id, email, req.getOrganizerNote());
-        return ResponseEntity.ok(new ApiSuccess(true, resp, "Registration approved"));
     }
 
-    // Reject
-    @PutMapping("/{id}/reject")
-    public ResponseEntity<?> reject(@PathVariable Long id, @Valid @RequestBody ApproveRequest req, Authentication auth) {
-        if (auth == null || !auth.isAuthenticated()) {
-            return ResponseEntity.status(401).body(new ApiError(false, "Unauthorized", null));
+    // Organizer/Admin: approve a registration
+    @PreAuthorize("hasAnyRole('ORGANIZER','ADMIN')")
+    @PostMapping("/events/{eventId}/registrations/{registrationId}/approve")
+    public ResponseEntity<?> approve(@PathVariable Long eventId, @PathVariable Long registrationId, Authentication auth) {
+        try {
+            RegistrationResponse resp = svc.approve(eventId, registrationId, auth);
+            return ResponseEntity.ok(resp);
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest().body(java.util.Map.of("error", ex.getMessage()));
+        } catch (Exception ex) {
+            return ResponseEntity.status(500).body(java.util.Map.of("error", "Unable to approve"));
         }
-        String email = auth.getName();
-        var resp = registrationService.rejectRegistration(id, email, req.getOrganizerNote());
-        return ResponseEntity.ok(new ApiSuccess(true, resp, "Registration rejected"));
     }
 
-    // Complete
-    @PutMapping("/{id}/complete")
-    public ResponseEntity<?> complete(@PathVariable Long id, @Valid @RequestBody CompleteRequest req, Authentication auth) {
-        if (auth == null || !auth.isAuthenticated()) {
-            return ResponseEntity.status(401).body(new ApiError(false, "Unauthorized", null));
+    // Organizer/Admin: reject
+    @PreAuthorize("hasAnyRole('ORGANIZER','ADMIN')")
+    @PostMapping("/events/{eventId}/registrations/{registrationId}/reject")
+    public ResponseEntity<?> reject(@PathVariable Long eventId, @PathVariable Long registrationId, Authentication auth) {
+        try {
+            RegistrationResponse resp = svc.reject(eventId, registrationId, auth);
+            return ResponseEntity.ok(resp);
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest().body(java.util.Map.of("error", ex.getMessage()));
+        } catch (Exception ex) {
+            return ResponseEntity.status(500).body(java.util.Map.of("error", "Unable to reject"));
         }
-        String email = auth.getName();
-        var resp = registrationService.completeRegistration(id, email, req);
-        return ResponseEntity.ok(new ApiSuccess(true, resp, "Registration completed"));
+    }
+
+    // Organizer/Admin: mark completed & attendance
+    @PreAuthorize("hasAnyRole('ORGANIZER','ADMIN')")
+    @PostMapping("/events/{eventId}/registrations/{registrationId}/complete")
+    public ResponseEntity<?> complete(@PathVariable Long eventId,
+                                      @PathVariable Long registrationId,
+                                      @RequestParam(defaultValue = "true") boolean present,
+                                      @RequestParam(required = false) String note,
+                                      Authentication auth) {
+        try {
+            RegistrationResponse resp = svc.markCompleted(eventId, registrationId, present, note, auth);
+            return ResponseEntity.ok(resp);
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest().body(java.util.Map.of("error", ex.getMessage()));
+        } catch (Exception ex) {
+            return ResponseEntity.status(500).body(java.util.Map.of("error", "Unable to complete registration"));
+        }
     }
 }

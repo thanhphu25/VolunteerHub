@@ -1,121 +1,94 @@
 package com.volunteerhub.backend.controller;
 
-import com.volunteerhub.backend.dto.JwtResponse;
+import com.volunteerhub.backend.service.IAuthService;
+import com.volunteerhub.backend.dto.AuthResponse;
 import com.volunteerhub.backend.dto.LoginRequest;
 import com.volunteerhub.backend.dto.RegisterRequest;
-import com.volunteerhub.backend.dto.UserResponse;
-import com.volunteerhub.backend.model.User;
-import com.volunteerhub.backend.repository.UserRepository;
-import com.volunteerhub.backend.security.JwtTokenProvider;
+import com.volunteerhub.backend.dto.RefreshRequest;
+import com.volunteerhub.backend.dto.LogoutRequest;
+import com.volunteerhub.backend.entity.UserEntity;
+import com.volunteerhub.backend.security.CustomUserDetails;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.*;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
-import java.net.URI;
-import java.util.Optional;
-
 @RestController
-@RequestMapping("/api/v1/auth")
+@RequestMapping("/api/auth")
 public class AuthController {
 
-    private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
-    private final AuthenticationManager authenticationManager;
-    private final JwtTokenProvider jwtTokenProvider;
+    private final IAuthService authService;
 
-    public AuthController(UserRepository userRepository,
-                          PasswordEncoder passwordEncoder,
-                          AuthenticationManager authenticationManager,
-                          JwtTokenProvider jwtTokenProvider) {
-        this.userRepository = userRepository;
-        this.passwordEncoder = passwordEncoder;
-        this.authenticationManager = authenticationManager;
-        this.jwtTokenProvider = jwtTokenProvider;
+    public AuthController(IAuthService svc) {
+        this.authService = svc;
     }
 
-    // Register (unchanged)
     @PostMapping("/register")
-    @CrossOrigin(origins = {"http://localhost:5174"})
     public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest req) {
-        if (userRepository.existsByEmail(req.getEmail())) {
-            return ResponseEntity.status(409).body(new ApiError(false, "Email already exists", null));
+        try {
+            UserEntity created = authService.register(req);
+            return ResponseEntity.status(HttpStatus.CREATED).body(
+                    java.util.Map.of(
+                            "id", created.getId(),
+                            "email", created.getEmail(),
+                            "fullName", created.getFullName()
+                    )
+            );
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(java.util.Map.of("error", ex.getMessage()));
+        } catch (Exception ex) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(java.util.Map.of("error", "Unable to register user"));
         }
-
-        User.Role role = User.Role.volunteer;
-        if ("organizer".equalsIgnoreCase(req.getRole())) role = User.Role.organizer;
-        if ("admin".equalsIgnoreCase(req.getRole())) role = User.Role.admin;
-
-        User u = User.builder()
-                .email(req.getEmail())
-                .passwordHash(passwordEncoder.encode(req.getPassword()))
-                .fullName(req.getFullName())
-                .phone(req.getPhone())
-                .role(role)
-                .status(User.Status.active)
-                .build();
-
-        User saved = userRepository.save(u);
-
-        UserResponse resp = new UserResponse(
-                saved.getId(),
-                saved.getEmail(),
-                saved.getFullName(),
-                saved.getPhone(),
-                saved.getRole().name(),
-                saved.getStatus().name(),
-                saved.getAvatarUrl(),
-                saved.getBio()
-        );
-
-        return ResponseEntity.created(URI.create("/api/v1/users/" + saved.getId()))
-                .body(new ApiSuccess(true, resp, "User created"));
     }
 
-    // Login -> returns JWT
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequest req) {
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(req.getEmail(), req.getPassword())
-        );
-
-        // principal is Spring Security UserDetails
-        UserDetails ud = (UserDetails) authentication.getPrincipal();
-        Optional<User> ou = userRepository.findByEmail(ud.getUsername());
-        if (ou.isEmpty()) {
-            return ResponseEntity.status(500).body(new ApiError(false, "User record not found after authentication", null));
+        try {
+            AuthResponse resp = authService.login(req);
+            return ResponseEntity.ok(resp);
+        } catch (Exception ex) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(java.util.Map.of("error", "Invalid credentials"));
         }
-        User user = ou.get();
-
-        String token = jwtTokenProvider.generateToken(user.getEmail(), user.getRole().name(), user.getId());
-        JwtResponse resp = new JwtResponse(token, "Bearer", user.getId(), user.getEmail(), user.getFullName(), user.getRole().name());
-        return ResponseEntity.ok(new ApiSuccess(true, resp, "Login successful"));
     }
 
-    // Protected: get current user
+    @PostMapping("/refresh")
+    public ResponseEntity<?> refresh(@Valid @RequestBody RefreshRequest req) {
+        try {
+            AuthResponse resp = authService.refresh(req.getRefreshToken());
+            return ResponseEntity.ok(resp);
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(java.util.Map.of("error", ex.getMessage()));
+        } catch (Exception ex) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(java.util.Map.of("error", "Unable to refresh token"));
+        }
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout(@Valid @RequestBody LogoutRequest req) {
+        try {
+            authService.logout(req.getRefreshToken());
+            return ResponseEntity.ok(java.util.Map.of("message", "Logged out"));
+        } catch (Exception ex) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(java.util.Map.of("error", "Unable to logout"));
+        }
+    }
+
     @GetMapping("/me")
-    public ResponseEntity<?> me(org.springframework.security.core.Authentication auth) {
-        if (auth == null || !auth.isAuthenticated()) {
-            return ResponseEntity.status(401).body(new ApiError(false, "Unauthorized", null));
+    public ResponseEntity<?> me(Authentication authentication) {
+        if (authentication == null || !(authentication.getPrincipal() instanceof CustomUserDetails)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(java.util.Map.of("error", "Not authenticated"));
         }
-        String email = auth.getName();
-        User user = userRepository.findByEmail(email).orElse(null);
-        if (user == null) {
-            return ResponseEntity.status(404).body(new ApiError(false, "User not found", null));
-        }
-        UserResponse resp = new UserResponse(
-                user.getId(),
-                user.getEmail(),
-                user.getFullName(),
-                user.getPhone(),
-                user.getRole().name(),
-                user.getStatus().name(),
-                user.getAvatarUrl(),
-                user.getBio()
-        );
-        return ResponseEntity.ok(new ApiSuccess(true, resp, null));
+        CustomUserDetails cud = (CustomUserDetails) authentication.getPrincipal();
+        var u = cud.getUserEntity();
+        return ResponseEntity.ok(java.util.Map.of(
+                "id", u.getId(),
+                "email", u.getEmail(),
+                "fullName", u.getFullName(),
+                "role", u.getRole().name()
+        ));
     }
 }
