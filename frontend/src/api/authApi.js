@@ -1,6 +1,6 @@
 import axiosClient from './axiosClient'
 
 export default {
-  login: (payload) => axiosClient.post('/v1/auth/login', payload),
-  register: (payload) => axiosClient.post('/v1/auth/register', payload)
+  login: (payload) => axiosClient.post('/auth/login', payload),
+  register: (payload) => axiosClient.post('/auth/register', payload)
 }
