@@ -14,31 +14,60 @@ import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import {useNavigate} from "react-router-dom";
 import {useAuth} from "../context/AuthContext";
 import authApi from "../api/authApi";
+import axiosClient from "../api/axiosClient"; // top of file if not already imported
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const nav = useNavigate();
-  const login = useAuth();
+  const {login} = useAuth();
 
   const submit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    try {
-      const res = await authApi.login({email, password});
-      const token = res.data.accessToken || res.data.token || res.data;
-      if (!token) {
-        throw new Error("No token returned");
-      }
-      login(token);
-      nav("/dashboard");
-    } catch (err) {
-      alert(err.response?.data || err.message || "Login failed");
-    } finally {
-      setLoading(false);
-    }
-  };
+        e.preventDefault();
+        setLoading(true);
+        try {
+            console.log("payload:", { email, password });
+
+            const res = await authApi.login({ email, password });
+
+            // token may be in many shapes — be defensive
+            const data = res?.data ?? res;
+            const accessToken = data?.accessToken || data?.token || data?.access_token || null;
+            const refreshToken = data?.refreshToken || data?.refresh_token || null;
+
+            if (!accessToken) {
+                throw new Error("Login succeeded but no access token returned");
+            }
+
+            // if your useAuth.login expects a token string:
+            await login(accessToken);
+
+            // optionally store refresh token (see security note below)
+            if (refreshToken) {
+                // If you must store client-side (not recommended for refresh token):
+                localStorage.setItem("refreshToken", refreshToken);
+            }
+
+            // set default Authorization header for axiosClient (so subsequent calls include token)
+            // adjust if your axios client exposes a way to set default headers
+
+            axiosClient.defaults.headers.common["Authorization"] = `Bearer ${accessToken}`;
+
+            nav("/");
+        } catch (err) {
+            console.error("Login error full:", err);
+            if (err.response) {
+                console.error("status:", err.response.status);
+                console.error("response data:", err.response.data);
+                alert(err.response.data?.error || err.response.data?.message || JSON.stringify(err.response.data));
+            } else {
+                alert(err.message || "Login failed");
+            }
+        } finally {
+            setLoading(false);
+        }
+    };
 
   return (
       <Container component="main" maxWidth="xs">
