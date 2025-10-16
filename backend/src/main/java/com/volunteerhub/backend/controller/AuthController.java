@@ -1,5 +1,6 @@
 package com.volunteerhub.backend.controller;
 
+import com.volunteerhub.backend.service.IAuthService;
 import com.volunteerhub.backend.dto.AuthResponse;
 import com.volunteerhub.backend.dto.LoginRequest;
 import com.volunteerhub.backend.dto.RegisterRequest;
@@ -7,7 +8,6 @@ import com.volunteerhub.backend.dto.RefreshRequest;
 import com.volunteerhub.backend.dto.LogoutRequest;
 import com.volunteerhub.backend.entity.UserEntity;
 import com.volunteerhub.backend.security.CustomUserDetails;
-import com.volunteerhub.backend.service.AuthService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,9 +18,9 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/auth")
 public class AuthController {
 
-    private final AuthService authService;
+    private final IAuthService authService;
 
-    public AuthController(AuthService svc) {
+    public AuthController(IAuthService svc) {
         this.authService = svc;
     }
 

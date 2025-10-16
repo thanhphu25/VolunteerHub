@@ -1,5 +1,6 @@
-package com.volunteerhub.backend.service;
+package com.volunteerhub.backend.service.impl;
 
+import com.volunteerhub.backend.service.IRefreshTokenService;
 import com.volunteerhub.backend.entity.RefreshTokenEntity;
 import com.volunteerhub.backend.entity.UserEntity;
 import com.volunteerhub.backend.repository.RefreshTokenRepository;
@@ -7,17 +8,17 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.Optional;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.nio.charset.StandardCharsets;
+import java.util.Optional;
 
 @Service
-public class RefreshTokenService {
+public class RefreshTokenServiceImpl implements IRefreshTokenService {
 
     private final RefreshTokenRepository repo;
 
-    public RefreshTokenService(RefreshTokenRepository repo) {
+    public RefreshTokenServiceImpl(RefreshTokenRepository repo) {
         this.repo = repo;
     }
 
@@ -35,6 +36,7 @@ public class RefreshTokenService {
         }
     }
 
+    @Override
     @Transactional
     public RefreshTokenEntity createRefreshToken(UserEntity user, String token, LocalDateTime expiresAt) {
         RefreshTokenEntity e = new RefreshTokenEntity();
@@ -46,20 +48,20 @@ public class RefreshTokenService {
         return repo.save(e);
     }
 
-    /**
-     * Find by token string: compute hash and query DB.
-     */
+    @Override
     public Optional<RefreshTokenEntity> findByToken(String token) {
         String hash = sha256Hex(token);
         return repo.findByTokenHash(hash);
     }
 
+    @Override
     @Transactional
     public void revokeToken(RefreshTokenEntity tokenEntity) {
         tokenEntity.setRevoked(true);
         repo.save(tokenEntity);
     }
 
+    @Override
     @Transactional
     public void revokeAllForUser(UserEntity user) {
         var tokens = repo.findByUser(user);
@@ -67,6 +69,7 @@ public class RefreshTokenService {
         repo.saveAll(tokens);
     }
 
+    @Override
     @Transactional
     public void deleteAllForUser(UserEntity user) {
         repo.deleteAllByUser(user);

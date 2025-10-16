@@ -2,7 +2,7 @@ package com.volunteerhub.backend.controller;
 
 import com.volunteerhub.backend.dto.EventCreateRequest;
 import com.volunteerhub.backend.dto.EventResponse;
-import com.volunteerhub.backend.service.EventService;
+import com.volunteerhub.backend.service.IEventService;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -17,9 +17,9 @@ import java.util.Optional;
 @RequestMapping("/api/events")
 public class EventController {
 
-    private final EventService svc;
+    private final IEventService svc;
 
-    public EventController(EventService svc) {
+    public EventController(IEventService svc) {
         this.svc = svc;
     }
 
