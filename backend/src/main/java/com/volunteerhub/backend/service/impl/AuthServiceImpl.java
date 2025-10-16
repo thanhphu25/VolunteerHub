@@ -1,9 +1,10 @@
-package com.volunteerhub.backend.service;
+package com.volunteerhub.backend.service.impl;
 
+import com.volunteerhub.backend.service.IAuthService;
+import com.volunteerhub.backend.service.IRefreshTokenService;
 import com.volunteerhub.backend.dto.AuthResponse;
 import com.volunteerhub.backend.dto.LoginRequest;
 import com.volunteerhub.backend.dto.RegisterRequest;
-import com.volunteerhub.backend.entity.RefreshTokenEntity;
 import com.volunteerhub.backend.entity.UserEntity;
 import com.volunteerhub.backend.entity.Role;
 import com.volunteerhub.backend.repository.UserRepository;
@@ -14,24 +15,24 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.ZoneId;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Date;
 
 @Service
-public class AuthService {
+public class AuthServiceImpl implements IAuthService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtProvider jwtProvider;
     private final AuthenticationManager authenticationManager;
-    private final RefreshTokenService refreshTokenService;
+    private final IRefreshTokenService refreshTokenService;
 
-    public AuthService(UserRepository userRepository,
-                       PasswordEncoder passwordEncoder,
-                       JwtProvider jwtProvider,
-                       AuthenticationManager authenticationManager,
-                       RefreshTokenService refreshTokenService) {
+    public AuthServiceImpl(UserRepository userRepository,
+                           PasswordEncoder passwordEncoder,
+                           JwtProvider jwtProvider,
+                           AuthenticationManager authenticationManager,
+                           IRefreshTokenService refreshTokenService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtProvider = jwtProvider;
@@ -39,6 +40,7 @@ public class AuthService {
         this.refreshTokenService = refreshTokenService;
     }
 
+    @Override
     @Transactional
     public UserEntity register(RegisterRequest req) {
         if (userRepository.existsByEmail(req.getEmail())) {
@@ -53,37 +55,32 @@ public class AuthService {
         return userRepository.save(u);
     }
 
+    @Override
     @Transactional
     public AuthResponse login(LoginRequest req) {
-        // authenticate
         var token = new UsernamePasswordAuthenticationToken(req.getEmail(), req.getPassword());
-        authenticationManager.authenticate(token); // will throw if invalid
+        authenticationManager.authenticate(token);
 
-        // load user to build JWT
         var user = userRepository.findByEmail(req.getEmail())
                 .orElseThrow(() -> new IllegalArgumentException("User not found after auth"));
 
         String access = jwtProvider.generateAccessToken(user.getId(), user.getEmail(), user.getRole().name());
         String refresh = jwtProvider.generateRefreshToken(user.getId(), user.getEmail(), user.getRole().name());
 
-        // parse expiry from token claims
         Date expDate = jwtProvider.getClaims(refresh).getExpiration();
         LocalDateTime expiresAt = LocalDateTime.ofInstant(expDate.toInstant(), ZoneId.systemDefault());
-
-        // store refresh token in DB
         refreshTokenService.createRefreshToken(user, refresh, expiresAt);
 
         return new AuthResponse(access, refresh, user.getId(), user.getEmail(), user.getFullName(), user.getRole().name());
     }
 
+    @Override
     @Transactional
     public AuthResponse refresh(String refreshToken) {
-        // check signature & typ
         if (!jwtProvider.validateToken(refreshToken) || !jwtProvider.isRefreshToken(refreshToken)) {
             throw new IllegalArgumentException("Invalid refresh token");
         }
 
-        // check DB existence and not revoked and not expired
         var tokenEntityOpt = refreshTokenService.findByToken(refreshToken);
         if (tokenEntityOpt.isEmpty()) throw new IllegalArgumentException("Refresh token not found");
         var tokenEntity = tokenEntityOpt.get();
@@ -97,10 +94,8 @@ public class AuthService {
         Long userId = Long.valueOf(claims.getSubject());
         var user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("User not found"));
 
-        // revoke old token
         refreshTokenService.revokeToken(tokenEntity);
 
-        // generate new tokens and store new refresh
         String newAccess = jwtProvider.generateAccessToken(user.getId(), user.getEmail(), user.getRole().name());
         String newRefresh = jwtProvider.generateRefreshToken(user.getId(), user.getEmail(), user.getRole().name());
         Date newExpDate = jwtProvider.getClaims(newRefresh).getExpiration();
@@ -110,6 +105,7 @@ public class AuthService {
         return new AuthResponse(newAccess, newRefresh, user.getId(), user.getEmail(), user.getFullName(), user.getRole().name());
     }
 
+    @Override
     @Transactional
     public void logout(String refreshToken) {
         var tokenEntityOpt = refreshTokenService.findByToken(refreshToken);
