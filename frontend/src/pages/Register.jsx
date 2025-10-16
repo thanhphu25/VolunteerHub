@@ -1,155 +1,178 @@
-import React, { useState } from "react";
-import { useForm } from "react-hook-form";
-import { yupResolver } from "@hookform/resolvers/yup";
+import React, {useState} from "react";
+import {
+  Avatar,
+  Box,
+  Button,
+  CircularProgress,
+  Container,
+  MenuItem,
+  Paper,
+  TextField,
+  Typography,
+} from "@mui/material";
+import PersonAddAltIcon from "@mui/icons-material/PersonAddAlt";
+import {useForm} from "react-hook-form";
+import {yupResolver} from "@hookform/resolvers/yup";
 import * as yup from "yup";
+import {toast} from "react-toastify";
 import authApi from "../api/authApi";
 
-// Schema yup (giữ nguyên)
+// ✅ Schema validation
 const schema = yup.object({
-    fullName: yup.string().required("Vui lòng nhập tên của bạn"),
-    email: yup.string().email("Email không hợp lệ").required("Email là bắt buộc"),
-    phone: yup.string().matches(/^[0-9]{9,11}$/, "Số điện thoại không hợp lệ").required("Vui lòng nhập số điện thoại"),
-    password: yup.string().min(6, "Mật khẩu tối thiểu 6 ký tự").required("Mật khẩu là bắt buộc"),
-    confirmPassword: yup.string().oneOf([yup.ref("password")], "Mật khẩu xác nhận không khớp").required("Vui lòng nhập lại mật khẩu"),
-    role: yup.string().oneOf(["volunteer", "organizer", "admin"]),
+  fullName: yup.string().required("Vui lòng nhập tên của bạn"),
+  email: yup
+  .string()
+  .email("Email không hợp lệ")
+  .required("Email là bắt buộc"),
+  phone: yup
+  .string()
+  .matches(/^[0-9]{9,11}$/, "Số điện thoại không hợp lệ")
+  .required("Vui lòng nhập số điện thoại"),
+  password: yup
+  .string()
+  .min(8, "Mật khẩu tối thiểu 8 ký tự")
+  .required("Vui lòng nhập mật khẩu"),
+  confirmPassword: yup
+  .string()
+  .oneOf([yup.ref("password")], "Mật khẩu xác nhận không khớp")
+  .required("Vui lòng nhập lại mật khẩu"),
+  role: yup.string().oneOf(["volunteer", "organizer", "admin"]),
 });
 
-function Register() {
-    const { register, handleSubmit, formState: { errors } } = useForm({
-        resolver: yupResolver(schema),
-    });
+export default function Register() {
+  const {
+    register,
+    handleSubmit,
+    formState: {errors},
+  } = useForm({resolver: yupResolver(schema)});
 
-    const [loading, setLoading] = useState(false);
-    const [message, setMessage] = useState("");
-    const [fieldErrors, setFieldErrors] = useState({}); // validation errors from backend
+  const [loading, setLoading] = useState(false);
 
-    const onSubmit = async (data) => {
-        setFieldErrors({});
-        setMessage("");
-        setLoading(true);
+  const onSubmit = async (data) => {
+    setLoading(true);
+    try {
+      const res = await authApi.register({
+        fullName: data.fullName,
+        email: data.email,
+        phone: data.phone,
+        password: data.password,
+        role: data.role || "volunteer",
+      });
 
-        try {
-            // Chuẩn bị payload theo field backend mong đợi
-            const payload = {
-                fullName: data.fullName,
-                email: data.email,
-                phone: data.phone,
-                password: data.password,
-                role: data.role || "volunteer",
-            };
-
-            console.log("➡️ Sending payload:", payload);
-
-            // Gọi API qua authApi (axiosClient đã cấu hình baseURL)
-            const res = await authApi.register(payload);
-
-            // Nếu thành công: res.data có thể chứa thông tin user / message
-            console.log("✅ Server response:", res.data);
-            setMessage(res.data?.message || "🎉 Đăng ký thành công!");
-        } catch (err) {
-            console.error("❌ Lỗi đăng ký:", err);
-
-            // Nếu backend trả response (validation, duplicate email, ...)
-            if (err.response) {
-                console.error("Status:", err.response.status);
-                console.error("Response data:", err.response.data);
-
-                const data = err.response.data;
-
-                // Nếu backend trả object errors theo rule { errors: { email: [...], password: [...] } }
-                if (data?.errors && typeof data.errors === "object") {
-                    setFieldErrors(data.errors);
-                    // Build user-friendly message
-                    const firstErrField = Object.keys(data.errors)[0];
-                    const firstErrMsg = Array.isArray(data.errors[firstErrField])
-                        ? data.errors[firstErrField][0]
-                        : data.errors[firstErrField];
-                    setMessage(firstErrMsg || "Đăng ký thất bại do lỗi dữ liệu");
-                } else if (data?.message) {
-                    setMessage(data.message);
-                } else {
-                    setMessage("Đăng ký thất bại. Vui lòng thử lại!");
-                }
-            } else {
-                // Không có response: network / CORS
-                console.error("No response from server. Possible network/CORS issue.");
-                setMessage("Không kết nối được tới server. Kiểm tra server/CORS.");
-            }
-        } finally {
-            setLoading(false);
+      toast.success("🎉 Đăng ký thành công! Hãy đăng nhập để tiếp tục.");
+    } catch (err) {
+      // Xử lý lỗi rõ ràng 💡
+      if (err.response) {
+        const {status, data} = err.response;
+        if (status === 409) {
+          // Xử lý lỗi trùng thông tin đăng ký
+          if (data?.message?.includes("email")) {
+            toast.warning("⚠️ Email đã được sử dụng!");
+          } else if (data?.message?.includes("phone")) {
+            toast.warning("⚠️ Số điện thoại đã được sử dụng!");
+          } else {
+            toast.warning(data.message || "⚠️ Tài khoản đã tồn tại!");
+          }
+        } else {
+          toast.error(data.message || "Đăng ký thất bại. Vui lòng thử lại!");
         }
-    };
+      } else {
+        toast.error("Không thể kết nối đến máy chủ. Kiểm tra mạng hoặc CORS!");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-100">
-            <div className="bg-white shadow-md rounded-lg p-8 w-full max-w-md">
-                <h2 className="text-2xl font-bold text-center mb-6 text-indigo-600">
-                    VolunteerHub - Đăng ký
-                </h2>
+  return (
+      <Container component="main" maxWidth="sm">
+        <Paper elevation={6} sx={{mt: 8, p: 4, borderRadius: 3}}>
+          <Box display="flex" flexDirection="column" alignItems="center">
+            <Avatar sx={{m: 1, bgcolor: "primary.main"}}>
+              <PersonAddAltIcon/>
+            </Avatar>
+            <Typography component="h1" variant="h5">
+              Đăng ký tài khoản
+            </Typography>
 
-                <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-                    <div>
-                        <label className="block font-medium mb-1">Họ và tên</label>
-                        <input {...register("fullName")} type="text"
-                               className="w-full border border-gray-300 p-2 rounded focus:ring focus:ring-indigo-200"
-                               placeholder="Nhập họ tên của bạn"/>
-                        <p className="text-red-500 text-sm">{errors.fullName?.message || fieldErrors.fullName?.join?.(", ") || fieldErrors.name?.join?.(", ")}</p>
-                    </div>
+            <Box
+                component="form"
+                onSubmit={handleSubmit(onSubmit)}
+                sx={{mt: 2, width: "100%"}}
+            >
+              <TextField
+                  fullWidth
+                  label="Họ và tên"
+                  {...register("fullName")}
+                  error={!!errors.fullName}
+                  helperText={errors.fullName?.message}
+                  margin="normal"
+              />
 
-                    <div>
-                        <label className="block font-medium mb-1">Email</label>
-                        <input {...register("email")} type="email"
-                               className="w-full border border-gray-300 p-2 rounded focus:ring focus:ring-indigo-200"
-                               placeholder="Nhập email"/>
-                        <p className="text-red-500 text-sm">{errors.email?.message || fieldErrors.email?.join?.(", ")}</p>
-                    </div>
+              <TextField
+                  fullWidth
+                  label="Email"
+                  {...register("email")}
+                  error={!!errors.email}
+                  helperText={errors.email?.message}
+                  margin="normal"
+              />
 
-                    <div>
-                        <label className="block font-medium mb-1">Số điện thoại</label>
-                        <input {...register("phone")} type="text"
-                               className="w-full border border-gray-300 p-2 rounded focus:ring focus:ring-indigo-200"
-                               placeholder="Nhập số điện thoại"/>
-                        <p className="text-red-500 text-sm">{errors.phone?.message || fieldErrors.phone?.join?.(", ")}</p>
-                    </div>
+              <TextField
+                  fullWidth
+                  label="Số điện thoại"
+                  {...register("phone")}
+                  error={!!errors.phone}
+                  helperText={errors.phone?.message}
+                  margin="normal"
+              />
 
-                    <div>
-                        <label className="block font-medium mb-1">Mật khẩu</label>
-                        <input {...register("password")} type="password"
-                               className="w-full border border-gray-300 p-2 rounded focus:ring focus:ring-indigo-200"
-                               placeholder="Nhập mật khẩu"/>
-                        <p className="text-red-500 text-sm">{errors.password?.message || fieldErrors.password?.join?.(", ")}</p>
-                    </div>
+              <TextField
+                  fullWidth
+                  type="password"
+                  label="Mật khẩu"
+                  {...register("password")}
+                  error={!!errors.password}
+                  helperText={errors.password?.message}
+                  margin="normal"
+              />
 
-                    <div>
-                        <label className="block font-medium mb-1">Xác nhận mật khẩu</label>
-                        <input {...register("confirmPassword")} type="password"
-                               className="w-full border border-gray-300 p-2 rounded focus:ring focus:ring-indigo-200"
-                               placeholder="Nhập lại mật khẩu"/>
-                        <p className="text-red-500 text-sm">{errors.confirmPassword?.message}</p>
-                    </div>
+              <TextField
+                  fullWidth
+                  type="password"
+                  label="Xác nhận mật khẩu"
+                  {...register("confirmPassword")}
+                  error={!!errors.confirmPassword}
+                  helperText={errors.confirmPassword?.message}
+                  margin="normal"
+              />
 
-                    <div>
-                        <label className="block font-medium mb-1">Vai trò</label>
-                        <select {...register("role")} className="w-full border border-gray-300 p-2 rounded focus:ring focus:ring-indigo-200" defaultValue="volunteer">
-                            <option value="volunteer">Tình nguyện viên</option>
-                            <option value="organizer">Người tổ chức</option>
-                            <option value="admin">Quản trị viên</option>
-                        </select>
-                    </div>
+              <TextField
+                  select
+                  fullWidth
+                  label="Vai trò"
+                  defaultValue="volunteer"
+                  {...register("role")}
+                  margin="normal"
+              >
+                <MenuItem value="volunteer">Tình nguyện viên</MenuItem>
+                <MenuItem value="organizer">Người tổ chức</MenuItem>
+                <MenuItem value="admin">Quản trị viên</MenuItem>
+              </TextField>
 
-                    <button type="submit" disabled={loading} className="w-full bg-indigo-600 text-white py-2 rounded hover:bg-indigo-700 transition">
-                        {loading ? "Đang xử lý..." : "Đăng ký"}
-                    </button>
-                </form>
-
-                {message && (
-                    <p className={`mt-4 text-center font-semibold ${message.includes("thành công") ? "text-green-600" : "text-red-500"}`}>
-                        {message}
-                    </p>
-                )}
-            </div>
-        </div>
-    );
+              <Button
+                  type="submit"
+                  fullWidth
+                  variant="contained"
+                  sx={{mt: 3, mb: 2}}
+                  disabled={loading}
+              >
+                {loading ? <CircularProgress size={24} color="inherit"/>
+                    : "Đăng ký"}
+              </Button>
+            </Box>
+          </Box>
+        </Paper>
+      </Container>
+  );
 }
-
-export default Register;
