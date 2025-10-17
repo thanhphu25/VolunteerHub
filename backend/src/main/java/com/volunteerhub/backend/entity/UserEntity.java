@@ -34,8 +34,9 @@ public class UserEntity {
     @Column(nullable = false, length = 20)
     private Role role = Role.volunteer;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
-    private String status = "active";
+    private Status status = Status.active;
 
     @Column(name = "avatar_url", length = 500)
     private String avatarUrl;
