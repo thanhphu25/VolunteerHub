@@ -14,7 +14,7 @@ import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import {useNavigate} from "react-router-dom";
 import {useAuth} from "../context/AuthContext";
 import authApi from "../api/authApi";
-import axiosClient from "../api/axiosClient"; // top of file if not already imported
+import axiosClient from "../api/axiosClient";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -41,6 +41,7 @@ export default function Login() {
             }
 
             // if your useAuth.login expects a token string:
+            localStorage.setItem("accessToken", accessToken);
             await login(accessToken);
 
             // optionally store refresh token (see security note below)

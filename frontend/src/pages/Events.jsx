@@ -1,33 +1,62 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import EventCard from "../components/EventCard";
-import {Typography} from "@mui/material";
+import { Typography, Box, CircularProgress, Alert, Container } from "@mui/material";
+import eventApi from "../api/eventApi";
 
 export default function Events() {
-  const dummyEvents = [
-    {
-      id: 1,
-      title: "Dọn rác bãi biển Cần Giờ",
-      description: "Cùng nhau làm sạch môi trường biển và bảo vệ sinh thái 🌊",
-      date: "2025-11-10",
-      location: "Cần Giờ, TP. HCM"
-    },
-    {
-      id: 2,
-      title: "Hiến máu nhân đạo",
-      description: "Chương trình hiến máu tình nguyện nhằm cứu giúp người bệnh ❤️",
-      date: "2025-12-05",
-      location: "Bệnh viện Chợ Rẫy"
+  const [events, setEvents] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    fetchEvents();
+  }, []);
+
+  const fetchEvents = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await eventApi.getByStatus('approved');
+      setEvents(response.data.content || []);
+    } catch (err) {
+      console.error("Error fetching events:", err);
+      setError("Không thể tải danh sách sự kiện. Vui lòng thử lại sau.");
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
+
+  if (loading) {
+    return (
+      <Container>
+        <Box display="flex" justifyContent="center" alignItems="center" minHeight="50vh">
+          <CircularProgress />
+        </Box>
+      </Container>
+    );
+  }
 
   return (
-      <>
-        <Typography variant="h4" gutterBottom>
-          Danh sách sự kiện
-        </Typography>
-        {dummyEvents.map(event => (
-            <EventCard key={event.id} event={event}/>
-        ))}
-      </>
+    <Container maxWidth="lg" sx={{ py: 4 }}>
+      <Typography variant="h4" gutterBottom>
+        Danh sách sự kiện
+      </Typography>
+
+      {error && (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {error}
+        </Alert>
+      )}
+
+      {!loading && events.length === 0 && (
+        <Alert severity="info">
+          Hiện tại chưa có sự kiện nào được phê duyệt.
+        </Alert>
+      )}
+
+      {events.map(event => (
+        <EventCard key={event.id} event={event} />
+      ))}
+    </Container>
   );
 }

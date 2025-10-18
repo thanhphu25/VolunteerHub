@@ -71,14 +71,17 @@ public class EventServiceImpl implements IEventService {
             } catch (Exception ex) {
                 throw new IllegalArgumentException("Invalid status");
             }
-            return repo.findByStatus(st, pageable).map(mapper::toResponse);
+            return repo.findByStatusAndIsDeletedFalse(st, pageable).map(mapper::toResponse);
         }
-        return repo.findAll(pageable).map(mapper::toResponse);
+        return repo.findByIsDeletedFalse(pageable).map(mapper::toResponse);
     }
 
     @Override
     public EventResponse getEvent(Long id) {
         var e = repo.findById(id).orElseThrow(() -> new IllegalArgumentException("Event not found"));
+        if (e.getIsDeleted()) {
+            throw new IllegalArgumentException("Event not found");
+        }
         return mapper.toResponse(e);
     }
 
@@ -86,10 +89,16 @@ public class EventServiceImpl implements IEventService {
     @Transactional
     public EventResponse updateEvent(Long id, EventCreateRequest req, Authentication auth) {
         var e = repo.findById(id).orElseThrow(() -> new IllegalArgumentException("Event not found"));
+        if (e.getIsDeleted()) {
+            throw new IllegalArgumentException("Event not found");
+        }
         UserEntity current = currentUserEntity(auth);
         boolean isOwner = e.getOrganizer() != null && e.getOrganizer().getId().equals(current.getId());
         boolean isAdmin = current.getRole() != null && "admin".equalsIgnoreCase(current.getRole().name());
         if (!isOwner && !isAdmin) throw new SecurityException("Not allowed to update this event");
+        if (e.getStatus() == EventStatus.completed) {
+            throw new IllegalArgumentException("Cannot update completed events");
+        }
         if (req.getStartDate() != null && req.getEndDate() != null && !req.getStartDate().isBefore(req.getEndDate())) {
             throw new IllegalArgumentException("startDate must be before endDate");
         }
@@ -105,12 +114,80 @@ public class EventServiceImpl implements IEventService {
     @Transactional
     public EventResponse approveEvent(Long id, Authentication auth) {
         var e = repo.findById(id).orElseThrow(() -> new IllegalArgumentException("Event not found"));
+        if (e.getIsDeleted()) {
+            throw new IllegalArgumentException("Event not found");
+        }
+        if (e.getStatus() == EventStatus.approved) {
+            throw new IllegalArgumentException("Event is already approved");
+        }
         UserEntity admin = currentUserEntity(auth);
         e.setStatus(EventStatus.approved);
         e.setApprovedAt(LocalDateTime.now());
         e.setApprovedBy(admin);
         EventEntity saved = repo.save(e);
         return mapper.toResponse(saved);
+    }
+
+    @Override
+    @Transactional
+    public EventResponse rejectEvent(Long id, Authentication auth) {
+        var e = repo.findById(id).orElseThrow(() -> new IllegalArgumentException("Event not found"));
+        if (e.getIsDeleted()) {
+            throw new IllegalArgumentException("Event not found");
+        }
+        if (e.getStatus() != EventStatus.pending) {
+            throw new IllegalArgumentException("Only pending events can be rejected");
+        }
+        e.setStatus(EventStatus.rejected);
+        EventEntity saved = repo.save(e);
+        return mapper.toResponse(saved);
+    }
+
+    @Override
+    @Transactional
+    public EventResponse cancelEvent(Long id, Authentication auth) {
+        var e = repo.findById(id).orElseThrow(() -> new IllegalArgumentException("Event not found"));
+        if (e.getIsDeleted()) {
+            throw new IllegalArgumentException("Event not found");
+        }
+        UserEntity current = currentUserEntity(auth);
+        boolean isOwner = e.getOrganizer() != null && e.getOrganizer().getId().equals(current.getId());
+        boolean isAdmin = current.getRole() != null && "admin".equalsIgnoreCase(current.getRole().name());
+        if (!isOwner && !isAdmin) {
+            throw new SecurityException("Not allowed to cancel this event");
+        }
+        if (e.getStatus() == EventStatus.completed) {
+            throw new IllegalArgumentException("Cannot cancel completed events");
+        }
+        e.setStatus(EventStatus.cancelled);
+        EventEntity saved = repo.save(e);
+        return mapper.toResponse(saved);
+    }
+
+    @Override
+    @Transactional
+    public void deleteEvent(Long id, Authentication auth) {
+        var e = repo.findById(id).orElseThrow(() -> new IllegalArgumentException("Event not found"));
+        if (e.getIsDeleted()) {
+            throw new IllegalArgumentException("Event not found");
+        }
+        UserEntity current = currentUserEntity(auth);
+        boolean isOwner = e.getOrganizer() != null && e.getOrganizer().getId().equals(current.getId());
+        boolean isAdmin = current.getRole() != null && "admin".equalsIgnoreCase(current.getRole().name());
+        if (!isOwner && !isAdmin) {
+            throw new SecurityException("Not allowed to delete this event");
+        }
+        if (e.getStatus() == EventStatus.completed) {
+            throw new IllegalArgumentException("Cannot delete completed events");
+        }
+        e.setIsDeleted(true);
+        e.setDeletedAt(LocalDateTime.now());
+        repo.save(e);
+    }
+
+    @Override
+    public Page<EventResponse> listOrganizerEvents(Long organizerId, Pageable pageable) {
+        return repo.findByOrganizerIdAndIsDeletedFalse(organizerId, pageable).map(mapper::toResponse);
     }
 
     private UserEntity currentUserEntity(Authentication auth) {

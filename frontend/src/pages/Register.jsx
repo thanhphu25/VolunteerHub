@@ -16,6 +16,7 @@ import {yupResolver} from "@hookform/resolvers/yup";
 import * as yup from "yup";
 import {toast} from "react-toastify";
 import authApi from "../api/authApi";
+import {useNavigate} from "react-router-dom";
 
 // ✅ Schema validation
 const schema = yup.object({
@@ -40,6 +41,7 @@ const schema = yup.object({
 });
 
 export default function Register() {
+  const nav = useNavigate();
   const {
     register,
     handleSubmit,
@@ -60,11 +62,15 @@ export default function Register() {
       });
 
       toast.success("🎉 Đăng ký thành công! Hãy đăng nhập để tiếp tục.");
+
+      nav("/login")
     } catch (err) {
       // Xử lý lỗi rõ ràng 💡
       if (err.response) {
         const {status, data} = err.response;
-        if (status === 409) {
+        if (status === 400) {
+            toast.warning(data.error || data.message || "Du lieu khong hop le!")
+        } else if (status === 409) {
           // Xử lý lỗi trùng thông tin đăng ký
           if (data?.message?.includes("email")) {
             toast.warning("⚠️ Email đã được sử dụng!");
