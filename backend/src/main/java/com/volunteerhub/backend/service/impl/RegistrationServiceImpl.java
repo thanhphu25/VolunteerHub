@@ -11,6 +11,7 @@ import com.volunteerhub.backend.service.IRegistrationService;
 import com.volunteerhub.backend.entity.UserEntity;
 import com.volunteerhub.backend.repository.UserRepository;
 import com.volunteerhub.backend.security.CustomUserDetails;
+import com.volunteerhub.backend.service.INotificationService;
 import jakarta.transaction.Transactional;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
@@ -26,15 +27,18 @@ public class RegistrationServiceImpl implements IRegistrationService {
     private final EventRepository eventRepo;
     private final UserRepository userRepo;
     private final RegistrationMapper mapper;
+    private final INotificationService notificationService;
 
     public RegistrationServiceImpl(RegistrationRepository regRepo,
                                    EventRepository eventRepo,
                                    UserRepository userRepo,
-                                   RegistrationMapper mapper) {
+                                   RegistrationMapper mapper,
+                                   INotificationService notificationService) {
         this.regRepo = regRepo;
         this.eventRepo = eventRepo;
         this.userRepo = userRepo;
         this.mapper = mapper;
+        this.notificationService = notificationService;
     }
 
     private UserEntity currentUser(Authentication auth) {
@@ -138,6 +142,17 @@ public class RegistrationServiceImpl implements IRegistrationService {
         // update event current volunteers
         event.setCurrentVolunteers(current + 1);
         eventRepo.save(event);
+
+        // create in-app notification for volunteer
+        try {
+            String title = "Đăng ký được duyệt";
+            String message = "Đăng ký của bạn cho sự kiện \"" + event.getName() + "\" đã được duyệt.";
+            String payload = null; // you can include JSON payload if needed (e.g. eventId)
+            String link = "/events/" + event.getId();
+            notificationService.createNotification(reg.getVolunteer().getId(), "registration_approved", title, message, payload, link);
+        } catch (Exception ex) {
+            // log and ignore
+        }
 
         return mapper.toResponse(saved);
     }
