@@ -80,7 +80,7 @@ export function AuthProvider({ children }) {
     // ✅ Helpers
     const isAdmin = () => user?.role === "admin";
     const isOrganizer = () =>
-        user?.role === "organizer" || user?.role === "admin";
+        user?.role === "organizer";
 
     // Optional: add token validity check logic here
     useEffect(() => {

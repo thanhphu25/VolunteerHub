@@ -9,7 +9,10 @@ import {
   Paper,
   TextField,
   Typography,
+  IconButton,
+  InputAdornment
 } from "@mui/material";
+import { Visibility, VisibilityOff } from "@mui/icons-material";
 import PersonAddAltIcon from "@mui/icons-material/PersonAddAlt";
 import {useForm} from "react-hook-form";
 import {yupResolver} from "@hookform/resolvers/yup";
@@ -37,7 +40,7 @@ const schema = yup.object({
   .string()
   .oneOf([yup.ref("password")], "Mật khẩu xác nhận không khớp")
   .required("Vui lòng nhập lại mật khẩu"),
-  role: yup.string().oneOf(["volunteer", "organizer", "admin"]),
+  role: yup.string().oneOf(["volunteer", "organizer"]),
 });
 
 export default function Register() {
@@ -47,8 +50,12 @@ export default function Register() {
     handleSubmit,
     formState: {errors},
   } = useForm({resolver: yupResolver(schema)});
-
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  const toggleShowPassword = () => setShowPassword(s => !s);
+  const toggleShowConfirmPassword = () => setShowConfirmPassword(s => !s);
 
   const onSubmit = async (data) => {
     setLoading(true);
@@ -133,25 +140,55 @@ export default function Register() {
                   margin="normal"
               />
 
-              <TextField
-                  fullWidth
-                  type="password"
-                  label="Mật khẩu"
-                  {...register("password")}
-                  error={!!errors.password}
-                  helperText={errors.password?.message}
-                  margin="normal"
-              />
+                {/* Password */}
+                <TextField
+                    fullWidth
+                    type={showPassword ? "text" : "password"}
+                    label="Mật khẩu"
+                    {...register("password")}
+                    error={!!errors.password}
+                    helperText={errors.password?.message}
+                    margin="normal"
+                    InputProps={{
+                        endAdornment: (
+                            <InputAdornment position="end">
+                                <IconButton
+                                    onClick={toggleShowPassword}
+                                    edge="end"
+                                    aria-label={showPassword ? "Hide password" : "Show password"}
+                                    size="small"
+                                >
+                                    {showPassword ? <VisibilityOff /> : <Visibility />}
+                                </IconButton>
+                            </InputAdornment>
+                        ),
+                    }}
+                />
 
-              <TextField
-                  fullWidth
-                  type="password"
-                  label="Xác nhận mật khẩu"
-                  {...register("confirmPassword")}
-                  error={!!errors.confirmPassword}
-                  helperText={errors.confirmPassword?.message}
-                  margin="normal"
-              />
+                {/* Confirm Password */}
+                <TextField
+                    fullWidth
+                    type={showConfirmPassword ? "text" : "password"}
+                    label="Xác nhận mật khẩu"
+                    {...register("confirmPassword")}
+                    error={!!errors.confirmPassword}
+                    helperText={errors.confirmPassword?.message}
+                    margin="normal"
+                    InputProps={{
+                        endAdornment: (
+                            <InputAdornment position="end">
+                                <IconButton
+                                    onClick={toggleShowConfirmPassword}
+                                    edge="end"
+                                    aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                                    size="small"
+                                >
+                                    {showConfirmPassword ? <VisibilityOff /> : <Visibility />}
+                                </IconButton>
+                            </InputAdornment>
+                        ),
+                    }}
+                />
 
               <TextField
                   select
@@ -163,7 +200,6 @@ export default function Register() {
               >
                 <MenuItem value="volunteer">Tình nguyện viên</MenuItem>
                 <MenuItem value="organizer">Người tổ chức</MenuItem>
-                <MenuItem value="admin">Quản trị viên</MenuItem>
               </TextField>
 
               <Button

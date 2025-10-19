@@ -35,7 +35,7 @@ export default function App() {
           <Route
               path="/organizer/events"
               element={
-                <RoleBasedRoute allowedRoles={['organizer', 'admin']}>
+                <RoleBasedRoute allowedRoles={['organizer']}>
                   <OrganizerEvents/>
                 </RoleBasedRoute>
               }

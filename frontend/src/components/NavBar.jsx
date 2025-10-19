@@ -80,11 +80,11 @@ export default function NavBar() {
                   )}
                   
                   {/* Hiển thị link Quản lý Admin chỉ cho Admin */}
-                  {isAdmin() && (
-                    <Button color="inherit" component={Link} to="/admin/events">
-                      Quản lý Admin
-                    </Button>
-                  )}
+                  {/*{isAdmin() && (*/}
+                  {/*  <Button color="inherit" component={Link} to="/admin/events">*/}
+                  {/*    Quản lý Sự kiện*/}
+                  {/*  </Button>*/}
+                  {/*)}*/}
                   
                   <Button
                       color="inherit"
