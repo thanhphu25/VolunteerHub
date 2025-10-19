@@ -7,6 +7,7 @@ import com.volunteerhub.backend.entity.RegistrationEntity;
 import com.volunteerhub.backend.repository.RegistrationRepository;
 import com.volunteerhub.backend.repository.EventRepository;
 import com.volunteerhub.backend.mapper.RegistrationMapper;
+import com.volunteerhub.backend.service.IAuditService;
 import com.volunteerhub.backend.service.IRegistrationService;
 import com.volunteerhub.backend.entity.UserEntity;
 import com.volunteerhub.backend.repository.UserRepository;
@@ -28,17 +29,20 @@ public class RegistrationServiceImpl implements IRegistrationService {
     private final UserRepository userRepo;
     private final RegistrationMapper mapper;
     private final INotificationService notificationService;
+    private final IAuditService auditService;
 
     public RegistrationServiceImpl(RegistrationRepository regRepo,
                                    EventRepository eventRepo,
                                    UserRepository userRepo,
                                    RegistrationMapper mapper,
-                                   INotificationService notificationService) {
+                                   INotificationService notificationService,
+                                   IAuditService auditService) {
         this.regRepo = regRepo;
         this.eventRepo = eventRepo;
         this.userRepo = userRepo;
         this.mapper = mapper;
         this.notificationService = notificationService;
+        this.auditService = auditService;
     }
 
     private UserEntity currentUser(Authentication auth) {
@@ -150,6 +154,11 @@ public class RegistrationServiceImpl implements IRegistrationService {
             String payload = null; // you can include JSON payload if needed (e.g. eventId)
             String link = "/events/" + event.getId();
             notificationService.createNotification(reg.getVolunteer().getId(), "registration_approved", title, message, payload, link);
+            auditService.log(null, "registration:approve", java.util.Map.of(
+                    "eventId", event.getId(),
+                    "registrationId", reg.getId(),
+                    "volunteerId", reg.getVolunteer().getId()
+            ));
         } catch (Exception ex) {
             // log and ignore
         }
