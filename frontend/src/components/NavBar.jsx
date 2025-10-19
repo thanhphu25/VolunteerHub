@@ -50,15 +50,13 @@ export default function NavBar() {
               Sự kiện
             </Button>
 
-            {/* Nếu chưa login => hiện Login / Register */}
             {!token ? (
                 <>
                   <Button color="inherit" component={Link} to="/login">
                     Đăng nhập
                   </Button>
                   <Button
-                      color="secondary"
-                      variant="outlined"
+                      color="inherit"
                       component={Link}
                       to="/register"
                       sx={{ml: 1}}
@@ -96,7 +94,6 @@ export default function NavBar() {
                 </>
             )}
 
-            {/* Nút Dark / Light mode toggle 🌙 */}
             <IconButton
                 sx={{ml: 2}}
                 color="inherit"
