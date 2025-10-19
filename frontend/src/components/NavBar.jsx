@@ -16,7 +16,7 @@ import {useAuth} from "../context/AuthContext";
 export default function NavBar() {
   const theme = useTheme();
   const {toggleColorMode} = useThemeMode();
-  const {token, logout} = useAuth(); // 👈 token từ context xác định login chưa
+  const {token, user, logout, isAdmin, isOrganizer} = useAuth(); // 👈 token từ context xác định login chưa
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -71,6 +71,21 @@ export default function NavBar() {
                   <Button color="inherit" component={Link} to="/dashboard">
                     Bảng điều khiển
                   </Button>
+                  
+                  {/* Hiển thị link Quản lý sự kiện cho Organizer và Admin */}
+                  {isOrganizer() && (
+                    <Button color="inherit" component={Link} to="/organizer/events">
+                      Sự kiện của tôi
+                    </Button>
+                  )}
+                  
+                  {/* Hiển thị link Quản lý Admin chỉ cho Admin */}
+                  {/*{isAdmin() && (*/}
+                  {/*  <Button color="inherit" component={Link} to="/admin/events">*/}
+                  {/*    Quản lý Sự kiện*/}
+                  {/*  </Button>*/}
+                  {/*)}*/}
+                  
                   <Button
                       color="inherit"
                       onClick={handleLogout}

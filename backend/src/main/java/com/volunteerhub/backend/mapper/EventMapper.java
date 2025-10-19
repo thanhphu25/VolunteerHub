@@ -16,6 +16,7 @@ public interface EventMapper {
 
     @Mapping(target = "organizerId", expression = "java(entity.getOrganizer()!=null ? entity.getOrganizer().getId() : null)")
     @Mapping(target = "organizerName", expression = "java(entity.getOrganizer()!=null ? entity.getOrganizer().getFullName() : null)")
+    @Mapping(target = "status", expression = "java(entity.getStatus()!=null ? entity.getStatus().name() : null)")
     @Mapping(target = "approvedBy", expression = "java(entity.getApprovedBy()!=null ? entity.getApprovedBy().getId() : null)")
     EventResponse toResponse(EventEntity entity);
 

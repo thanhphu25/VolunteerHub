@@ -22,6 +22,7 @@ public class DataInitializer implements ApplicationRunner {
     @Override
     public void run(ApplicationArguments args) throws Exception {
         createIfNotExists("admin@vh.test", "Admin User", "admin", "Admin123!");
+        createIfNotExists("chuduc@trinhai.com", "Chu Duc Trinh", "admin", "12345678");
         createIfNotExists("org1@vh.test", "Organizer One", "organizer", "Org123456!");
         createIfNotExists("vol1@vh.test", "Volunteer One", "volunteer", "Vol123456!");
     }

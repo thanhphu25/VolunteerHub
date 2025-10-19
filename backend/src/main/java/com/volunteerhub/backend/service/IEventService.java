@@ -14,4 +14,8 @@ public interface IEventService {
     EventResponse getEvent(Long id);
     EventResponse updateEvent(Long id, EventCreateRequest req, Authentication auth);
     EventResponse approveEvent(Long id, Authentication auth);
+    EventResponse rejectEvent(Long id, Authentication auth);
+    EventResponse cancelEvent(Long id, Authentication auth);
+    void deleteEvent(Long id, Authentication auth);
+    Page<EventResponse> listOrganizerEvents(Long organizerId, Pageable pageable);
 }
