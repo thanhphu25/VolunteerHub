@@ -15,6 +15,7 @@ public class RegistrationResponse {
     private String eventName;
     private Long volunteerId;
     private String volunteerName;
+    private String volunteerEmail;
     private String status;
     private String note;
     private String organizerNote;
