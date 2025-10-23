@@ -12,6 +12,7 @@ import com.volunteerhub.backend.entity.UserEntity;
 import com.volunteerhub.backend.repository.UserRepository;
 import com.volunteerhub.backend.security.CustomUserDetails;
 import com.volunteerhub.backend.mapper.NotificationMapper;
+import com.volunteerhub.backend.service.impl.WebPushService;
 import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,17 +31,20 @@ public class NotificationServiceImpl implements INotificationService {
     private final ObjectMapper objectMapper;
     private final Logger logger = LoggerFactory.getLogger(NotificationServiceImpl.class);
     private final NotificationMapper notificationMapper;
+    private final WebPushService webPushService;
 
     public NotificationServiceImpl(NotificationRepository notificationRepo,
                                    PushSubscriptionRepository pushRepo,
                                    UserRepository userRepo,
                                    ObjectMapper objectMapper,
-                                   NotificationMapper notificationMapper) {
+                                   NotificationMapper notificationMapper,
+                                   WebPushService webPushService) {
         this.notificationRepo = notificationRepo;
         this.pushRepo = pushRepo;
         this.userRepo = userRepo;
         this.objectMapper = objectMapper;
         this.notificationMapper = notificationMapper;
+        this.webPushService = webPushService;
     }
 
     private UserEntity currentUser(Authentication auth) {
@@ -135,9 +139,12 @@ public class NotificationServiceImpl implements INotificationService {
      * Return true if send attempted successfully, false otherwise.
      */
     private boolean sendWebPushIfPossible(PushSubscriptionEntity sub, String title, String message, String payload, String link) {
-        // Placeholder — implement with a Web Push library / VAPID config.
-        logger.info("Would send web-push to endpoint={} with title='{}' message='{}'", sub.getEndpoint(), title, message);
-        // Example: build payload JSON {title, message, link, payload} and call WebPush.send(...)
-        return false;
+        try {
+            boolean ok = webPushService.sendPush(sub, title, message, payload, link);
+            return ok;
+        } catch (Exception ex) {
+            logger.warn("sendWebPushIfPossible failed", ex);
+            return false;
+        }
     }
 }
