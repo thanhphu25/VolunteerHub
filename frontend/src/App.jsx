@@ -1,5 +1,6 @@
+// App.jsx
 import React from "react";
-import {BrowserRouter as Router, Route, Routes} from "react-router-dom";
+import {Route, Routes} from "react-router-dom";
 import NavBar from "./components/NavBar";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
@@ -16,7 +17,8 @@ import EventRegistrations from "./pages/admin/EventRegistrations.jsx";
 
 export default function App() {
   return (
-      <Router>
+      // 2. Xóa thẻ <Router> bao ngoài, dùng Fragment <>...</> nếu cần
+      <>
         <NavBar/>
         <Routes>
           <Route path="/" element={<Home/>}/>
@@ -43,7 +45,15 @@ export default function App() {
                 </RoleBasedRoute>
               }
           />
-
+          {/* Thêm route cho MyRegistrations, chỉ cho volunteer */}
+          <Route
+              path="/my-registrations"
+              element={
+                <RoleBasedRoute allowedRoles={["volunteer"]}>
+                  <MyRegistrations/>
+                </RoleBasedRoute>
+              }
+          />
           {/* 👇 Routes cho Organizer */}
           <Route
               path="/organizer/events"
@@ -53,11 +63,10 @@ export default function App() {
                 </RoleBasedRoute>
               }
           />
-          {/* 2. Thêm route mới cho trang quản lý đăng ký */}
           <Route
               path="/organizer/events/:eventId/registrations"
               element={
-                <RoleBasedRoute allowedRoles={["organizer"]}> {/* Cho phép cả admin */}
+                <RoleBasedRoute allowedRoles={["organizer"]}>
                   <EventRegistrations/>
                 </RoleBasedRoute>
               }
@@ -74,6 +83,6 @@ export default function App() {
 
           <Route path="*" element={<h2>404 - Không tìm thấy trang</h2>}/>
         </Routes>
-      </Router>
+      </>
   );
 }

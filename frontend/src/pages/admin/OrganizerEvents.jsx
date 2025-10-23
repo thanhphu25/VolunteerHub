@@ -15,14 +15,17 @@ import EventCard from "../../components/EventCard";
 import EventForm from "../../components/EventForm";
 import eventApi from "../../api/eventApi";
 import {toast} from "react-toastify";
+// Import useNavigate nếu bạn cần dùng
+// import { useNavigate } from "react-router-dom";
 
 export default function OrganizerEvents() {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [formOpen, setFormOpen] = useState(false);
-  const [currentEvent, setCurrentEvent] = useState(null); // State lưu event đang sửa (Keep this one)
+  const [currentEvent, setCurrentEvent] = useState(null);
   const [statusFilter, setStatusFilter] = useState("all");
+  // const navigate = useNavigate(); // Bỏ comment nếu cần dùng
 
   useEffect(() => {
     fetchMyEvents();
@@ -32,10 +35,7 @@ export default function OrganizerEvents() {
     try {
       setLoading(true);
       setError(null);
-      // Assuming eventApi.getMyEvents returns paginated data like { content: [...] }
-      // Lấy hết sự kiện hoặc có phân trang phù hợp
       const response = await eventApi.getMyEvents({page: 0, size: 100});
-      // Xử lý cả response có content (phân trang) và không có (trả về mảng trực tiếp)
       setEvents(response.data.content || response.data || []);
     } catch (err) {
       console.error("Error fetching events:", err);
@@ -46,24 +46,22 @@ export default function OrganizerEvents() {
   };
 
   const handleCreateEvent = () => {
-    setCurrentEvent(null); // Reset current event for creation
+    setCurrentEvent(null);
     setFormOpen(true);
   };
 
-  // Keep handleOpenEditModal, remove handleEditEvent
   const handleOpenEditModal = (eventToEdit) => {
-    setCurrentEvent(eventToEdit); // Use the correct state setter
+    setCurrentEvent(eventToEdit);
     setFormOpen(true);
   };
 
   const handleCloseModal = () => {
     setFormOpen(false);
-    setCurrentEvent(null); // Reset event đang sửa khi đóng modal
+    setCurrentEvent(null);
   }
 
   const handleFormSubmit = async (formData) => {
     try {
-      // Use currentEvent to check if editing
       if (currentEvent) {
         await eventApi.update(currentEvent.id, formData);
         toast.success("Cập nhật sự kiện thành công!");
@@ -71,8 +69,8 @@ export default function OrganizerEvents() {
         await eventApi.create(formData);
         toast.success("Tạo sự kiện thành công! Đang chờ duyệt.");
       }
-      handleCloseModal(); // Close modal and reset state
-      await fetchMyEvents(); // Fetch updated list
+      handleCloseModal();
+      await fetchMyEvents();
     } catch (err) {
       console.error("Error submitting form:", err);
       toast.error(
@@ -82,7 +80,6 @@ export default function OrganizerEvents() {
   };
 
   const handleCancelEvent = async (eventId) => {
-    // Kiểm tra xem eventApi có hàm cancel không, nếu chưa thì cần thêm ở eventApi.js
     if (!eventApi.cancel) {
       toast.error("Chức năng hủy sự kiện chưa được định nghĩa trong API.");
       return;
@@ -92,9 +89,9 @@ export default function OrganizerEvents() {
       return;
     }
     try {
-      await eventApi.cancel(eventId); // Gọi API hủy
+      await eventApi.cancel(eventId);
       toast.success("Hủy sự kiện thành công!");
-      await fetchMyEvents(); // Tải lại danh sách
+      await fetchMyEvents();
     } catch (err) {
       console.error("Error cancelling event:", err);
       toast.error(err.response?.data?.message || err.response?.data?.error
@@ -103,7 +100,6 @@ export default function OrganizerEvents() {
   };
 
   const handleDeleteEvent = async (eventId) => {
-    // Kiểm tra xem eventApi có hàm delete không
     if (!eventApi.delete) {
       toast.error("Chức năng xóa sự kiện chưa được định nghĩa trong API.");
       return;
@@ -113,9 +109,8 @@ export default function OrganizerEvents() {
       return;
     }
     try {
-      await eventApi.delete(eventId); // Gọi API xóa
+      await eventApi.delete(eventId);
       toast.success("Xóa sự kiện thành công!");
-      // Tải lại danh sách sự kiện sau khi xóa thành công
       await fetchMyEvents();
     } catch (err) {
       console.error("Error deleting event:", err);
@@ -128,7 +123,6 @@ export default function OrganizerEvents() {
     setStatusFilter(newValue);
   };
 
-  // Filter events based on the selected tab
   const filteredEvents = statusFilter === "all"
       ? events
       : events.filter(e => e.status === statusFilter);
@@ -189,21 +183,18 @@ export default function OrganizerEvents() {
               }
             </Alert>
         ) : (
+            // Đảm bảo Grid bao ngoài có prop 'container'
             <Grid container spacing={3}>
-              {/* Use filteredEvents for mapping */}
               {filteredEvents.map((event) => (
-                  <Grid item xs={12} sm={6} md={4} key={event.id}>
+                  <Grid /* item */ xs={12} sm={6} md={4} key={event.id}>
                     <EventCard
                         event={event}
                         showStatus={true}
-                        showViewRegistrationsButton={true} // Show button to view registrations
-                        // Only allow editing if pending or approved
+                        showViewRegistrationsButton={true}
                         onEdit={(event.status === 'pending' || event.status
                             === 'approved') ? handleOpenEditModal : undefined}
-                        // Only allow cancelling if approved
                         onCancel={event.status === 'approved'
                             ? handleCancelEvent : undefined}
-                        // Allow deleting unless completed (adjust as needed)
                         onDelete={event.status !== 'completed'
                             ? handleDeleteEvent : undefined}
                     />
@@ -217,8 +208,8 @@ export default function OrganizerEvents() {
             open={formOpen}
             onClose={handleCloseModal}
             onSubmit={handleFormSubmit}
-            initialData={currentEvent} // Use currentEvent for initial data
-            isEdit={!!currentEvent} // Determine edit mode based on currentEvent
+            initialData={currentEvent}
+            isEdit={!!currentEvent}
         />
       </Container>
   );

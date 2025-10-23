@@ -27,6 +27,7 @@ import {
 } from "@mui/icons-material";
 import eventApi from "../api/eventApi";
 import registrationApi from "../api/registrationApi"; // 1. Import registrationApi
+import EventDiscussion from '../components/EventDiscussion'; // Import component
 import {useAuth} from "../context/AuthContext";
 import {toast} from "react-toastify";
 
@@ -64,7 +65,9 @@ export default function EventDetail() {
       const response = await registrationApi.getMyRegistrationForEvent(eventId);
       if (response.data.status === "cancelled") {
         setRegistration(null)
-      } else setRegistration(response.data); // Lưu toàn bộ thông tin đăng ký
+      } else {
+        setRegistration(response.data);
+      } // Lưu toàn bộ thông tin đăng ký
     } catch (err) {
       console.log("Su kien chua duoc dang ky dau babe")
       if (err.response?.status === 404) {
@@ -125,10 +128,15 @@ export default function EventDetail() {
 
   // Hàm xử lý hủy đăng ký
   const handleCancelRegistration = async () => {
-    if (!registration) return;
-    
-    const confirmed = window.confirm('Bạn có chắc chắn muốn hủy đăng ký tham gia sự kiện này?');
-    if (!confirmed) return;
+    if (!registration) {
+      return;
+    }
+
+    const confirmed = window.confirm(
+        'Bạn có chắc chắn muốn hủy đăng ký tham gia sự kiện này?');
+    if (!confirmed) {
+      return;
+    }
 
     setIsCancelling(true);
     try {
@@ -304,11 +312,19 @@ export default function EventDetail() {
               </>
           )}
 
+          {event.status === 'approved' && user && ( // Chỉ hiển thị khi sự kiện đã duyệt và user đã đăng nhập
+              <>
+                <Divider sx={{my: 3}}/>
+                <EventDiscussion eventId={event.id}/> {/* Truyền eventId vào */}
+              </>
+          )}
+
           {/* 3. Cập nhật logic hiển thị nút đăng ký */}
           {isVolunteer && !eventEnded && ( // Chỉ hiển thị nếu là volunteer và sự kiện chưa kết thúc
               <Box sx={{mt: 4, textAlign: 'center'}}>
                 {registration ? ( // Nếu đã đăng ký (pending hoặc approved)
-                    <Box display="flex" flexDirection="column" gap={2} alignItems="center">
+                    <Box display="flex" flexDirection="column" gap={2}
+                         alignItems="center">
                       <Button
                           variant="contained"
                           color={registration.status === 'approved' ? 'success'
@@ -320,18 +336,19 @@ export default function EventDetail() {
                         {registration.status === 'approved' ? 'Đã được duyệt'
                             : 'Đang chờ duyệt'}
                       </Button>
-                      
+
                       {/* Nút hủy đăng ký - chỉ hiển thị nếu chưa được duyệt hoặc đã được duyệt */}
-                      {(registration.status === 'pending' || registration.status === 'approved') && (
-                        <Button
-                            variant="outlined"
-                            color="error"
-                            size="medium"
-                            onClick={handleCancelRegistration}
-                            disabled={isCancelling}
-                        >
-                          {isCancelling ? 'Đang hủy...' : 'Hủy đăng ký'}
-                        </Button>
+                      {(registration.status === 'pending' || registration.status
+                          === 'approved') && (
+                          <Button
+                              variant="outlined"
+                              color="error"
+                              size="medium"
+                              onClick={handleCancelRegistration}
+                              disabled={isCancelling}
+                          >
+                            {isCancelling ? 'Đang hủy...' : 'Hủy đăng ký'}
+                          </Button>
                       )}
                     </Box>
                 ) : ( // Nếu chưa đăng ký
