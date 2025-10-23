@@ -25,4 +25,5 @@ public interface RegistrationRepository extends JpaRepository<RegistrationEntity
     @Query("SELECT r FROM RegistrationEntity r " +
            "WHERE r.event.id = :eventId AND r.volunteer.id = :volunteerId")
     Optional<RegistrationEntity> findByEventIdAndVolunteerIdSimple(@Param("eventId") Long eventId, @Param("volunteerId") Long volunteerId);
+    
 }

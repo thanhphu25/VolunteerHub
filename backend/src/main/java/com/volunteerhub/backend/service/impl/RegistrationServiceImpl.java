@@ -69,12 +69,36 @@ public class RegistrationServiceImpl implements IRegistrationService {
             }
         }
 
-        // prevent duplicate
-        var existing = regRepo.findByEventAndVolunteer(event, volunteer);
-        if (existing.isPresent()) {
-            throw new IllegalArgumentException("Already registered for this event");
+        // Check for existing registration
+        var existingRegistration = regRepo.findByEventAndVolunteer(event, volunteer);
+        
+        if (existingRegistration.isPresent()) {
+            RegistrationEntity existing = existingRegistration.get();
+            
+            // If there's an active registration, prevent duplicate
+            if (existing.getStatus() == RegistrationEntity.RegistrationStatus.pending ||
+                existing.getStatus() == RegistrationEntity.RegistrationStatus.approved ||
+                existing.getStatus() == RegistrationEntity.RegistrationStatus.completed) {
+                throw new IllegalArgumentException("Already registered for this event");
+            }
+            
+            // If there's a cancelled or rejected registration, reactivate it
+            if (existing.getStatus() == RegistrationEntity.RegistrationStatus.cancelled ||
+                existing.getStatus() == RegistrationEntity.RegistrationStatus.rejected) {
+                
+                // Update the existing registration
+                existing.setStatus(RegistrationEntity.RegistrationStatus.pending);
+                existing.setRegisteredAt(LocalDateTime.now());
+                existing.setCancelledAt(null); // Clear cancellation timestamp
+                existing.setApprovedAt(null); // Clear approval timestamp
+                existing.setNote(req.getNote()); // Update with new note
+                
+                RegistrationEntity saved = regRepo.save(existing);
+                return mapper.toResponse(saved);
+            }
         }
 
+        // No existing registration, create new one
         RegistrationEntity r = mapper.toEntity(req);
         r.setEvent(event);
         r.setVolunteer(volunteer);
@@ -97,9 +121,9 @@ public class RegistrationServiceImpl implements IRegistrationService {
 
         EventEntity event = reg.getEvent();
         // only before event start
-        if (event.getStartDate() != null && LocalDateTime.now().isAfter(event.getStartDate())) {
-            throw new IllegalArgumentException("Cannot cancel after event start");
-        }
+//        if (event.getStartDate() != null && LocalDateTime.now().isAfter(event.getStartDate())) {
+//            throw new IllegalArgumentException("Cannot cancel after event start");
+//        }
 
         // if previously approved, decrement currentVolunteers
         if (reg.getStatus() == RegistrationEntity.RegistrationStatus.approved) {
