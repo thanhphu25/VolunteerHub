@@ -7,6 +7,7 @@ import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import Events from "./pages/Events";
 import EventDetail from "./pages/EventDetail.jsx";
+import MyRegistrations from "./pages/MyRegistrations.jsx";
 import PrivateRoute from "./components/PrivateRoute";
 import RoleBasedRoute from "./components/RoleBasedRoute";
 import OrganizerEvents from "./pages/admin/OrganizerEvents";
@@ -30,6 +31,16 @@ export default function App() {
                 <PrivateRoute>
                   <Dashboard/>
                 </PrivateRoute>
+              }
+          />
+
+          {/* 👇 Route cho My Registrations - chỉ dành cho volunteers */}
+          <Route
+              path="/my-registrations"
+              element={
+                <RoleBasedRoute allowedRoles={['volunteer']}>
+                  <MyRegistrations/>
+                </RoleBasedRoute>
               }
           />
 

@@ -119,7 +119,12 @@ axiosClient.interceptors.response.use(
       if (status >= 500) {
         toast.error("Lỗi hệ thống. Vui lòng thử lại sau!");
       } else if (status === 404) {
-        toast.warning("API không tồn tại hoặc đường dẫn sai!");
+          if (
+              !error.config?.url?.includes('/my-registration') &&
+              !error.config?.url?.includes('/me/registrations')
+          ) {
+              toast.warn('API không tồn tại hoặc đường dẫn sai!');
+          }
       } else if (status === 403) {
         toast.warning("Bạn không có quyền truy cập!");
       }

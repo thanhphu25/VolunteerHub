@@ -39,10 +39,44 @@ public class EventController {
     @GetMapping
     public ResponseEntity<?> listEvents(
             @RequestParam Optional<String> status,
+            @RequestParam Optional<String> category,
+            @RequestParam Optional<String> location,
+            @RequestParam Optional<String> search,
+            @RequestParam Optional<String> startDate,
+            @RequestParam Optional<String> endDate,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        Page<EventResponse> p = svc.listEvents(status, PageRequest.of(page, size));
-        return ResponseEntity.ok(p);
+        try {
+            // Check if any advanced filters are provided
+            boolean hasAdvancedFilters = category.isPresent() || location.isPresent() || 
+                                       search.isPresent() || startDate.isPresent() || endDate.isPresent();
+            
+            if (hasAdvancedFilters) {
+                // Use advanced filtering
+                java.time.LocalDateTime startDateTime = null;
+                java.time.LocalDateTime endDateTime = null;
+                
+                if (startDate.isPresent()) {
+                    startDateTime = java.time.LocalDateTime.parse(startDate.get());
+                }
+                if (endDate.isPresent()) {
+                    endDateTime = java.time.LocalDateTime.parse(endDate.get());
+                }
+                
+                Page<EventResponse> p = svc.listEventsWithFilters(
+                    status, category, location, search, 
+                    Optional.ofNullable(startDateTime), Optional.ofNullable(endDateTime), 
+                    PageRequest.of(page, size)
+                );
+                return ResponseEntity.ok(p);
+            } else {
+                // Use simple filtering (backward compatibility)
+                Page<EventResponse> p = svc.listEvents(status, PageRequest.of(page, size));
+                return ResponseEntity.ok(p);
+            }
+        } catch (Exception ex) {
+            return ResponseEntity.badRequest().body(java.util.Map.of("error", "Invalid filter parameters: " + ex.getMessage()));
+        }
     }
 
     @GetMapping("/{id}")

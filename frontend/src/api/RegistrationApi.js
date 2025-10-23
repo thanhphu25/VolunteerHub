@@ -33,6 +33,15 @@ const registrationApi = {
   },
 
   /**
+   * Get volunteer's registration for a specific event.
+   * @param {number|string} eventId - The ID of the event.
+   * @returns Promise<AxiosResponse<any>>
+   */
+  getMyRegistrationForEvent: (eventId) => {
+    return axiosClient.get(`/events/${eventId}/my-registration`);
+  },
+
+  /**
    * Organizer/Admin gets registrations for a specific event.
    * @param {number|string} eventId - The ID of the event.
    * @returns Promise<AxiosResponse<any>>

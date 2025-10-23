@@ -70,6 +70,13 @@ export default function NavBar() {
                     Bảng điều khiển
                   </Button>
                   
+                  {/* Hiển thị link Đăng ký của tôi cho Volunteers */}
+                  {user?.role === 'volunteer' && (
+                    <Button color="inherit" component={Link} to="/my-registrations">
+                      Đăng ký của tôi
+                    </Button>
+                  )}
+                  
                   {/* Hiển thị link Quản lý sự kiện cho Organizer và Admin */}
                   {isOrganizer() && (
                     <Button color="inherit" component={Link} to="/organizer/events">
