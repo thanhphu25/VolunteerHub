@@ -77,6 +77,31 @@ public class EventServiceImpl implements IEventService {
     }
 
     @Override
+    public Page<EventResponse> listEventsWithFilters(Optional<String> statusOpt, Optional<String> category, 
+                                                    Optional<String> location, Optional<String> search,
+                                                    Optional<LocalDateTime> startDate, Optional<LocalDateTime> endDate, 
+                                                    Pageable pageable) {
+        EventStatus status = null;
+        if (statusOpt.isPresent()) {
+            try {
+                status = EventStatus.valueOf(statusOpt.get());
+            } catch (Exception ex) {
+                throw new IllegalArgumentException("Invalid status");
+            }
+        }
+        
+        return repo.findEventsWithFilters(
+            status,
+            category.orElse(null),
+            location.orElse(null),
+            search.orElse(null),
+            startDate.orElse(null),
+            endDate.orElse(null),
+            pageable
+        ).map(mapper::toResponse);
+    }
+
+    @Override
     public EventResponse getEvent(Long id) {
         var e = repo.findById(id).orElseThrow(() -> new IllegalArgumentException("Event not found"));
         if (e.getIsDeleted()) {

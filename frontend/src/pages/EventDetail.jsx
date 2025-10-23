@@ -36,7 +36,8 @@ export default function EventDetail() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isRegistering, setIsRegistering] = useState(false); // Trạng thái đang đăng ký
-  const [registrationStatus, setRegistrationStatus] = useState(null); // Lưu trạng thái đăng ký của user hiện tại
+  const [isCancelling, setIsCancelling] = useState(false); // Trạng thái đang hủy đăng ký
+  const [registration, setRegistration] = useState(null); // Lưu toàn bộ thông tin đăng ký
   const {user} = useAuth();
 
   const formatDate = (dateString) => {
@@ -60,21 +61,17 @@ export default function EventDetail() {
       return;
     } // Chỉ kiểm tra cho volunteer
     try {
-      const response = await registrationApi.getMyRegistrations();
-      const myRegistrations = response.data || [];
-      const currentRegistration = myRegistrations.find(reg =>
-          reg.eventId?.toString() === eventId && // So sánh eventId
-          reg.volunteerId?.toString() === user.userId?.toString() && // So sánh userId
-          reg.status !== 'cancelled' // Bỏ qua nếu đã hủy
-      );
-      if (currentRegistration) {
-        setRegistrationStatus(currentRegistration.status); // Lưu trạng thái (pending, approved, ...)
-      } else {
-        setRegistrationStatus(null); // Chưa đăng ký hoặc đã hủy
-      }
+      const response = await registrationApi.getMyRegistrationForEvent(eventId);
+      setRegistration(response.data); // Lưu toàn bộ thông tin đăng ký
     } catch (err) {
-      console.error("Lỗi khi kiểm tra đăng ký:", err);
-      // Không cần báo lỗi ở đây, có thể user chưa đăng nhập hoặc API lỗi nhẹ
+      console.log("Su kien chua duoc dang ky dau babe")
+      if (err.response?.status === 404) {
+        // Không có đăng ký cho sự kiện này
+        setRegistration(null);
+      } else {
+        console.error("Lỗi khi kiểm tra đăng ký:", err);
+        setRegistration(null);
+      }
     }
   };
 
@@ -83,7 +80,7 @@ export default function EventDetail() {
       try {
         setLoading(true);
         setError(null);
-        setRegistrationStatus(null); // Reset trạng thái đăng ký khi tải lại
+        setRegistration(null); // Reset trạng thái đăng ký khi tải lại
         const response = await eventApi.getById(eventId);
         setEvent(response.data);
         // Sau khi có event, kiểm tra trạng thái đăng ký của user
@@ -111,11 +108,9 @@ export default function EventDetail() {
       // Có thể thêm Dialog để nhập ghi chú (note) ở đây
       const payload = {note: ''}; // Gửi note rỗng nếu không có Dialog
 
-      await registrationApi.register(eventId, payload);
-
+      const response = await registrationApi.register(eventId, payload);
+      setRegistration(response.data); // Lưu thông tin đăng ký mới
       toast.success('Đăng ký tham gia sự kiện thành công! Vui lòng chờ duyệt.');
-      // Cập nhật trạng thái nút -> báo đã đăng ký (pending)
-      setRegistrationStatus('pending');
     } catch (err) {
       console.error("Error registering for event:", err);
       // Hiển thị lỗi cụ thể từ backend nếu có
@@ -123,6 +118,27 @@ export default function EventDetail() {
           || 'Đăng ký thất bại. Bạn có thể đã đăng ký sự kiện này rồi.');
     } finally {
       setIsRegistering(false);
+    }
+  };
+
+  // Hàm xử lý hủy đăng ký
+  const handleCancelRegistration = async () => {
+    if (!registration) return;
+    
+    const confirmed = window.confirm('Bạn có chắc chắn muốn hủy đăng ký tham gia sự kiện này?');
+    if (!confirmed) return;
+
+    setIsCancelling(true);
+    try {
+      await registrationApi.cancel(eventId, registration.id);
+      setRegistration(null); // Xóa thông tin đăng ký
+      toast.success('Hủy đăng ký thành công!');
+    } catch (err) {
+      console.error("Error cancelling registration:", err);
+      toast.error(err.response?.data?.error || err.response?.data?.message
+          || 'Hủy đăng ký thất bại. Vui lòng thử lại sau.');
+    } finally {
+      setIsCancelling(false);
     }
   };
 
@@ -187,32 +203,32 @@ export default function EventDetail() {
 
           {/* Thông tin cơ bản (Ngày, Địa điểm, Danh mục) */}
           <Grid container spacing={2} sx={{mb: 3, color: 'text.secondary'}}>
-            <Grid item xs={12} md={4}
+            <Grid size={{xs: 12, md: 4}}
                   sx={{display: 'flex', alignItems: 'center'}}>
               <EventIcon sx={{mr: 1}}/>
               <Typography variant="body1">
                 {formatDate(event.startDate)} - {formatDate(event.endDate)}
               </Typography>
             </Grid>
-            <Grid item xs={12} md={4}
+            <Grid size={{xs: 12, md: 4}}
                   sx={{display: 'flex', alignItems: 'center'}}>
               <LocationOnIcon sx={{mr: 1}}/>
               <Typography variant="body1">{event.location} {event.address
                   ? `- ${event.address}` : ''}</Typography>
             </Grid>
-            <Grid item xs={12} md={4}
+            <Grid size={{xs: 12, md: 4}}
                   sx={{display: 'flex', alignItems: 'center'}}>
               <CategoryIcon sx={{mr: 1}}/>
               <Chip label={event.category} size="small"/>
             </Grid>
-            <Grid item xs={12} md={4}
+            <Grid size={{xs: 12, md: 4}}
                   sx={{display: 'flex', alignItems: 'center'}}>
               <PersonIcon sx={{mr: 1}}/>
               <Typography variant="body1">Tổ chức bởi: {event.organizerName
                   || 'N/A'}</Typography>
             </Grid>
             {event.maxVolunteers != null && ( // Check cả null/undefined
-                <Grid item xs={12} md={4}
+                <Grid size={{xs: 12, md: 4}}
                       sx={{display: 'flex', alignItems: 'center'}}>
                   <PeopleIcon sx={{mr: 1}}/>
                   <Typography variant="body1"
@@ -227,7 +243,7 @@ export default function EventDetail() {
                 </Grid>
             )}
             {/* Hiển thị trạng thái sự kiện */}
-            <Grid item xs={12} md={4}
+            <Grid size={{xs: 12, md: 4}}
                   sx={{display: 'flex', alignItems: 'center'}}>
               <Chip
                   label={statusLabels[event.status] || event.status}
@@ -289,18 +305,33 @@ export default function EventDetail() {
           {/* 3. Cập nhật logic hiển thị nút đăng ký */}
           {isVolunteer && !eventEnded && ( // Chỉ hiển thị nếu là volunteer và sự kiện chưa kết thúc
               <Box sx={{mt: 4, textAlign: 'center'}}>
-                {registrationStatus ? ( // Nếu đã đăng ký (pending hoặc approved)
-                    <Button
-                        variant="contained"
-                        color={registrationStatus === 'approved' ? 'success'
-                            : 'warning'} // Màu xanh nếu approved, vàng nếu pending
-                        size="large"
-                        disabled // Không cho nhấn lại
-                        startIcon={<CheckCircleIcon/>}
-                    >
-                      {registrationStatus === 'approved' ? 'Đã được duyệt'
-                          : 'Đang chờ duyệt'}
-                    </Button>
+                {registration ? ( // Nếu đã đăng ký (pending hoặc approved)
+                    <Box display="flex" flexDirection="column" gap={2} alignItems="center">
+                      <Button
+                          variant="contained"
+                          color={registration.status === 'approved' ? 'success'
+                              : 'warning'} // Màu xanh nếu approved, vàng nếu pending
+                          size="large"
+                          disabled // Không cho nhấn lại
+                          startIcon={<CheckCircleIcon/>}
+                      >
+                        {registration.status === 'approved' ? 'Đã được duyệt'
+                            : 'Đang chờ duyệt'}
+                      </Button>
+                      
+                      {/* Nút hủy đăng ký - chỉ hiển thị nếu chưa được duyệt hoặc đã được duyệt */}
+                      {(registration.status === 'pending' || registration.status === 'approved') && (
+                        <Button
+                            variant="outlined"
+                            color="error"
+                            size="medium"
+                            onClick={handleCancelRegistration}
+                            disabled={isCancelling}
+                        >
+                          {isCancelling ? 'Đang hủy...' : 'Hủy đăng ký'}
+                        </Button>
+                      )}
+                    </Box>
                 ) : ( // Nếu chưa đăng ký
                     canRegister ? ( // Và sự kiện còn chỗ, đã duyệt
                         <Button

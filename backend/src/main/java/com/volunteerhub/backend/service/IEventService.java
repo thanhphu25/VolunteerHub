@@ -6,11 +6,16 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 public interface IEventService {
     EventResponse createEvent(EventCreateRequest req, Authentication auth);
     Page<EventResponse> listEvents(Optional<String> statusOpt, Pageable pageable);
+    Page<EventResponse> listEventsWithFilters(Optional<String> statusOpt, Optional<String> category, 
+                                            Optional<String> location, Optional<String> search,
+                                            Optional<LocalDateTime> startDate, Optional<LocalDateTime> endDate, 
+                                            Pageable pageable);
     EventResponse getEvent(Long id);
     EventResponse updateEvent(Long id, EventCreateRequest req, Authentication auth);
     EventResponse approveEvent(Long id, Authentication auth);

@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -124,6 +125,41 @@ public class RegistrationServiceImpl implements IRegistrationService {
     public List<RegistrationResponse> listForVolunteer(Authentication auth) {
         UserEntity user = currentUser(auth);
         return regRepo.findByVolunteer(user).stream().map(mapper::toResponse).collect(Collectors.toList());
+    }
+
+    @Override
+    public RegistrationResponse getRegistrationByEventAndVolunteer(Long eventId, Authentication auth) {
+        try {
+            UserEntity user = currentUser(auth);
+            
+            // First check if event exists and is not deleted
+            EventEntity event = eventRepo.findById(eventId)
+                .orElseThrow(() -> new IllegalArgumentException("Event not found"));
+            
+            if (event.getIsDeleted()) {
+                throw new IllegalArgumentException("Event not found");
+            }
+            
+            // Try the simple query first
+            Optional<RegistrationEntity> registrationOpt = regRepo.findByEventIdAndVolunteerIdSimple(eventId, user.getId());
+            
+            if (registrationOpt.isPresent()) {
+                RegistrationEntity registration = registrationOpt.get();
+                // Manually fetch the related entities to avoid lazy loading issues
+                registration.getEvent().getName(); // Trigger lazy loading
+                registration.getVolunteer().getFullName(); // Trigger lazy loading
+                registration.getVolunteer().getEmail(); // Trigger lazy loading
+                
+                return mapper.toResponse(registration);
+            }
+            
+            return null;
+        } catch (Exception e) {
+            // Log the error for debugging
+            System.err.println("Error in getRegistrationByEventAndVolunteer: " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("Unable to get registration: " + e.getMessage(), e);
+        }
     }
 
     @Override

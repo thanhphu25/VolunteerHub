@@ -77,6 +77,23 @@ public class RegistrationController {
         }
     }
 
+    // Volunteer: get own registration for specific event
+    @PreAuthorize("hasRole('VOLUNTEER')")
+    @GetMapping("/events/{eventId}/my-registration")
+    public ResponseEntity<?> getMyRegistration(@PathVariable Long eventId, Authentication auth) {
+        try {
+            RegistrationResponse registration = svc.getRegistrationByEventAndVolunteer(eventId, auth);
+            if (registration == null) {
+                return ResponseEntity.status(404).body(java.util.Map.of("error", "No registration found for this event"));
+            }
+            return ResponseEntity.ok(registration);
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.status(404).body(java.util.Map.of("error", ex.getMessage()));
+        } catch (Exception ex) {
+            return ResponseEntity.status(500).body(java.util.Map.of("error", "Unable to get registration"));
+        }
+    }
+
     // Organizer/Admin: approve a registration
     @PreAuthorize("hasAnyRole('ORGANIZER','ADMIN')")
     @PostMapping("/events/{eventId}/registrations/{registrationId}/approve")
