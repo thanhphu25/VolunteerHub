@@ -14,6 +14,7 @@ import RoleBasedRoute from "./components/RoleBasedRoute";
 import OrganizerEvents from "./pages/admin/OrganizerEvents";
 import AdminEventManagement from "./pages/admin/AdminEventManagement";
 import EventRegistrations from "./pages/admin/EventRegistrations.jsx";
+import AdminUserManagement from "./pages/admin/AdminUserManagement.jsx";
 
 export default function App() {
   return (
@@ -77,6 +78,16 @@ export default function App() {
               element={
                 <RoleBasedRoute allowedRoles={['admin']}>
                   <AdminEventManagement/>
+                </RoleBasedRoute>
+              }
+          />
+
+          <Route
+              path="/admin/users"
+              element={
+                <RoleBasedRoute
+                    allowedRoles={['admin']}> {/* Chỉ cho phép Admin */}
+                  <AdminUserManagement/>
                 </RoleBasedRoute>
               }
           />

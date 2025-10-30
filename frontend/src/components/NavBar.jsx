@@ -37,6 +37,7 @@ const organizerPages = [
 ];
 const adminPages = [
   {name: 'Duyệt sự kiện', path: '/admin/events'},
+  {name: 'Quản lý User', path: '/admin/users'}
 ];
 
 function NavBar() {
@@ -176,7 +177,6 @@ function NavBar() {
                 </IconButton>
               </Tooltip>
 
-              {/* 4. Sửa lại logic hiển thị nút Đăng nhập/Đăng ký và User Menu */}
               {loading ? (
                   <CircularProgress size={24} color="inherit" sx={{ml: 1}}/>
               ) : user ? ( // Nếu đã đăng nhập (có user)
@@ -220,7 +220,6 @@ function NavBar() {
                     </Button>
                   </>
               )}
-              {/* 5. Đóng thẻ Box còn thiếu */}
             </Box>
           </Toolbar>
         </Container>

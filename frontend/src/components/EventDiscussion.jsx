@@ -151,7 +151,7 @@ function PostItem({post, onCommentSubmit}) {
             </Box>
         )}
 
-        {/* === DÒNG HIỂN THỊ SỐ LIKE/COMMENT (CHỈ MỘT DÒNG) === */}
+        {/* DÒNG HIỂN THỊ SỐ LIKE/COMMENT */}
         <Box display="flex" justifyContent="space-between" alignItems="center"
              mt={1} pt={1} borderTop="1px solid #eee">
           <Typography variant="body2" color="text.secondary">{currentLikes} lượt
@@ -166,7 +166,7 @@ function PostItem({post, onCommentSubmit}) {
 
         <Divider sx={{my: 1}}/>
 
-        {/* === KHU VỰC NÚT BẤM (CHỈ CÓ NÚT LIKE) === */}
+        {/* === KHU VỰC NÚT BẤM */}
         <Box display="flex" justifyContent="flex-start"> {/* Căn lề trái */}
           <Button
               startIcon={isLiked ? <ThumbUpIcon/> :
@@ -187,7 +187,7 @@ function PostItem({post, onCommentSubmit}) {
         {/* =========================================== */}
 
 
-        {/* Phần bình luận (giữ nguyên logic hiển thị) */}
+        {/* Phần bình luận */}
         {showComments && (
             <Box mt={2} pl={1} borderLeft="3px solid #eee">
               {/* Form thêm bình luận */}
@@ -244,7 +244,6 @@ function PostItem({post, onCommentSubmit}) {
                             }}>{comment.userName?.[0]}</Avatar>
                           </ListItemAvatar>
 
-                          {/* === THAY THẾ HOẶC DÁN CODE NÀY VÀO ĐÂY === */}
                           <ListItemText
                               primary={
                                 // Hiển thị tên người bình luận (in đậm)
@@ -298,7 +297,6 @@ export default function EventDiscussion({eventId}) {
   // --- Hàm fetch posts ---
   const fetchPosts = useCallback(async () => {
     try {
-      // Không cần setLoadingPosts(true) ở đây vì có thể gọi lại sau khi like/comment
       const response = await postApi.listPosts(eventId,
           {sort: 'createdAt,desc'}); // Sắp xếp mới nhất lên đầu
       setPosts(response.data.content || []);
