@@ -15,9 +15,6 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Implementation that builds a dynamic query via Criteria API to support filters.
- */
 @Service
 public class AuditQueryServiceImpl implements IAuditQueryService {
 
@@ -34,9 +31,53 @@ public class AuditQueryServiceImpl implements IAuditQueryService {
         CriteriaBuilder cb = em.getCriteriaBuilder();
         CriteriaQuery<AuditLogEntity> cq = cb.createQuery(AuditLogEntity.class);
         Root<AuditLogEntity> root = cq.from(AuditLogEntity.class);
-        // join user (optional)
         Join<AuditLogEntity, UserEntity> userJoin = root.join("user", JoinType.LEFT);
 
+        List<Predicate> predicates = buildPredicates(cb, root, userJoin, action, userId, from, to);
+        cq.where(predicates.toArray(new Predicate[0]));
+        cq.orderBy(cb.desc(root.get("createdAt")));
+
+        TypedQuery<AuditLogEntity> query = em.createQuery(cq);
+
+        // count
+        CriteriaQuery<Long> countCq = cb.createQuery(Long.class);
+        Root<AuditLogEntity> countRoot = countCq.from(AuditLogEntity.class);
+        Join<AuditLogEntity, UserEntity> countUserJoin = countRoot.join("user", JoinType.LEFT);
+        List<Predicate> countPreds = buildPredicates(cb, countRoot, countUserJoin, action, userId, from, to);
+        countCq.select(cb.count(countRoot)).where(countPreds.toArray(new Predicate[0]));
+        Long total = em.createQuery(countCq).getSingleResult();
+
+        int pageNumber = pageable.getPageNumber();
+        int pageSize = pageable.getPageSize();
+        query.setFirstResult(pageNumber * pageSize);
+        query.setMaxResults(pageSize);
+
+        List<AuditLogEntity> results = query.getResultList();
+
+        List<AuditResponse> content = mapToDto(results);
+
+        Pageable pg = PageRequest.of(pageNumber, pageSize, pageable.getSort().isSorted() ? pageable.getSort() : Sort.by(Sort.Direction.DESC, "createdAt"));
+        return new PageImpl<>(content, pg, total);
+    }
+
+    @Override
+    public List<AuditResponse> exportList(String action, Long userId, LocalDateTime from, LocalDateTime to) {
+        CriteriaBuilder cb = em.getCriteriaBuilder();
+        CriteriaQuery<AuditLogEntity> cq = cb.createQuery(AuditLogEntity.class);
+        Root<AuditLogEntity> root = cq.from(AuditLogEntity.class);
+        Join<AuditLogEntity, UserEntity> userJoin = root.join("user", JoinType.LEFT);
+
+        List<Predicate> predicates = buildPredicates(cb, root, userJoin, action, userId, from, to);
+        cq.where(predicates.toArray(new Predicate[0]));
+        cq.orderBy(cb.desc(root.get("createdAt")));
+
+        TypedQuery<AuditLogEntity> query = em.createQuery(cq);
+        List<AuditLogEntity> results = query.getResultList();
+        return mapToDto(results);
+    }
+
+    private List<Predicate> buildPredicates(CriteriaBuilder cb, Root<AuditLogEntity> root, Join<AuditLogEntity, UserEntity> userJoin,
+                                            String action, Long userId, LocalDateTime from, LocalDateTime to) {
         List<Predicate> predicates = new ArrayList<>();
         if (action != null && !action.isBlank()) {
             predicates.add(cb.like(cb.lower(root.get("action")), "%" + action.toLowerCase() + "%"));
@@ -50,43 +91,12 @@ public class AuditQueryServiceImpl implements IAuditQueryService {
         if (to != null) {
             predicates.add(cb.lessThanOrEqualTo(root.get("createdAt"), to));
         }
+        return predicates;
+    }
 
-        cq.where(predicates.toArray(new Predicate[0]));
-        // default order: createdAt desc
-        cq.orderBy(cb.desc(root.get("createdAt")));
-
-        TypedQuery<AuditLogEntity> query = em.createQuery(cq);
-        // count total
-        CriteriaQuery<Long> countCq = cb.createQuery(Long.class);
-        Root<AuditLogEntity> countRoot = countCq.from(AuditLogEntity.class);
-        Join<AuditLogEntity, UserEntity> countUserJoin = countRoot.join("user", JoinType.LEFT);
-        List<Predicate> countPreds = new ArrayList<>();
-        if (action != null && !action.isBlank()) {
-            countPreds.add(cb.like(cb.lower(countRoot.get("action")), "%" + action.toLowerCase() + "%"));
-        }
-        if (userId != null) {
-            countPreds.add(cb.equal(countUserJoin.get("id"), userId));
-        }
-        if (from != null) {
-            countPreds.add(cb.greaterThanOrEqualTo(countRoot.get("createdAt"), from));
-        }
-        if (to != null) {
-            countPreds.add(cb.lessThanOrEqualTo(countRoot.get("createdAt"), to));
-        }
-        countCq.select(cb.count(countRoot)).where(countPreds.toArray(new Predicate[0]));
-        Long total = em.createQuery(countCq).getSingleResult();
-
-        // apply paging
-        int pageNumber = pageable.getPageNumber();
-        int pageSize = pageable.getPageSize();
-        query.setFirstResult(pageNumber * pageSize);
-        query.setMaxResults(pageSize);
-
-        List<AuditLogEntity> results = query.getResultList();
-
-        // map to DTOs
-        List<AuditResponse> content = new ArrayList<>();
-        for (AuditLogEntity a : results) {
+    private List<AuditResponse> mapToDto(List<AuditLogEntity> list) {
+        List<AuditResponse> out = new ArrayList<>();
+        for (AuditLogEntity a : list) {
             Long actorId = null;
             String actorEmail = null;
             UserEntity u = a.getUser();
@@ -94,10 +104,8 @@ public class AuditQueryServiceImpl implements IAuditQueryService {
                 actorId = u.getId();
                 actorEmail = u.getEmail();
             }
-            content.add(new AuditResponse(a.getId(), actorId, actorEmail, a.getAction(), a.getDetails(), a.getCreatedAt()));
+            out.add(new AuditResponse(a.getId(), actorId, actorEmail, a.getAction(), a.getDetails(), a.getCreatedAt()));
         }
-
-        Pageable pg = PageRequest.of(pageNumber, pageSize, pageable.getSort().isSorted() ? pageable.getSort() : Sort.by(Sort.Direction.DESC, "createdAt"));
-        return new PageImpl<>(content, pg, total);
+        return out;
     }
 }
