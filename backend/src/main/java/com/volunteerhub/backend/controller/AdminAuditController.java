@@ -18,9 +18,6 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 
-/**
- * Admin controller to view and export audit logs.
- */
 @RestController
 @RequestMapping("/api/admin")
 public class AdminAuditController {
@@ -60,10 +57,6 @@ public class AdminAuditController {
         return auditQueryService.search(action, userId, fromDt, toDt, pageReq);
     }
 
-    /**
-     * Export audits as CSV or JSON.
-     * Example: GET /api/admin/audits/export?format=csv&action=admin:lock_user
-     */
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/audits/export")
     public ResponseEntity<?> exportAudits(
@@ -80,7 +73,6 @@ public class AdminAuditController {
         if (to != null) toDt = to.atTime(LocalTime.MAX);
 
         try {
-            // log admin export action
             auditService.log(auth, "admin:export_audits", java.util.Map.of("format", format, "action", action, "userId", userId));
         } catch (Exception ignore) {}
 

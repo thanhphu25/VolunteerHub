@@ -39,7 +39,7 @@ public class AuditQueryServiceImpl implements IAuditQueryService {
 
         TypedQuery<AuditLogEntity> query = em.createQuery(cq);
 
-        // count
+        // count total
         CriteriaQuery<Long> countCq = cb.createQuery(Long.class);
         Root<AuditLogEntity> countRoot = countCq.from(AuditLogEntity.class);
         Join<AuditLogEntity, UserEntity> countUserJoin = countRoot.join("user", JoinType.LEFT);
