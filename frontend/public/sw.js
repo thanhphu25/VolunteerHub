@@ -1,69 +1,46 @@
 // public/sw.js
 
-// Lắng nghe sự kiện 'push' — khi server gửi push, SW sẽ nhận và hiển thị notification.
-self.addEventListener('push', function (event) {
-    let data = {};
-    try {
-        data = event.data ? event.data.json() : {};
-    } catch (err) {
-        // nếu payload không phải JSON, lấy text
-        try { data = { title: 'Thông báo', message: event.data.text() }; } catch(e) { data = { title: 'Thông báo', message: '' }; }
-    }
-
-    const title = data.title || 'VolunteerHub';
-    const message = data.message || '';
-    const url = data.url || '/';
-    const payload = data.payload || null;
-
-    const options = {
-        body: message,
-        data: {
-            url,
-            payload
-        },
-        // icon: '/icons/icon-192.png', // nếu bạn có icon trong public
-        badge: '/favicon.ico', // optional
-        tag: data.tag || undefined, // group notifications nếu muốn
-        renotify: data.renotify || false
+// Lắng nghe sự kiện 'push' (khi nhận được tin nhắn từ server)
+self.addEventListener('push', event => {
+  let data;
+  try {
+    // Backend của bạn gửi payload dạng JSON (Map<String, Object>)
+    // nên chúng ta cần parse nó
+    data = event.data.json();
+  } catch (e) {
+    console.error('Push event data error:', e);
+    data = {
+      title: 'Thông báo mới',
+      message: event.data.text() // Hiển thị text thô nếu không phải JSON
     };
+  }
 
-    event.waitUntil(
-        self.registration.showNotification(title, options)
-    );
+  console.log('Push Received:', data);
+
+  const title = data.title || 'Thông báo từ VolunteerHub';
+  const options = {
+    body: data.message || 'Bạn có thông báo mới.',
+    icon: '/vite.svg', // Bạn có thể thay bằng logo của mình (ví dụ: /logo.png)
+    badge: '/vite.svg', // Icon nhỏ trên thanh thông báo (Android)
+    data: {
+      // Gắn link mà backend gửi kèm (nếu có) để xử lý khi click
+      url: data.url || '/'
+    }
+  };
+
+  // Yêu cầu trình duyệt hiển thị thông báo
+  event.waitUntil(self.registration.showNotification(title, options));
 });
 
-// Khi user click notification -> mở tab/redirect
-self.addEventListener('notificationclick', function (event) {
-    event.notification.close();
-    const url = event.notification.data && event.notification.data.url ? event.notification.data.url : '/';
-    event.waitUntil(
-        clients.matchAll({ type: 'window', includeUncontrolled: true }).then(windowClients => {
-            // Nếu đã có tab với url, focus
-            for (let i = 0; i < windowClients.length; i++) {
-                const client = windowClients[i];
-                if (client.url === url && 'focus' in client) {
-                    return client.focus();
-                }
-            }
-            // nếu không, mở tab mới
-            if (clients.openWindow) {
-                return clients.openWindow(url);
-            }
-        })
-    );
-});
+// Lắng nghe sự kiện 'notificationclick' (khi người dùng bấm vào thông báo)
+self.addEventListener('notificationclick', event => {
+  console.log('Notification click Received.', event.notification.data);
 
-// (Optional) handle notificationclose
-self.addEventListener('notificationclose', function (event) {
-    // bạn có thể gửi analytics / log về server nếu muốn
-});
+  // Đóng thông báo lại
+  event.notification.close();
 
-// (Optional) lifecycle: install/activate — thêm cache nếu cần (static assets caching)
-self.addEventListener('install', function (event) {
-    // skipWaiting() nếu muốn activate ngay (cẩn thận khi có caching)
-    // self.skipWaiting();
-});
-
-self.addEventListener('activate', function (event) {
-    // clients.claim();
+  // Mở đường link (URL) đã được đính kèm trong data
+  event.waitUntil(
+      clients.openWindow(event.notification.data.url || '/')
+  );
 });

@@ -17,12 +17,11 @@ spring:
     enabled: true
     locations: classpath:db/migration
 
-  webpush:
-    vapid:
-      public-key: ${VAPID_PUBLIC_KEY:YOUR_PUBLIC_KEY}
-      private-key: ${VAPID_PRIVATE_KEY:YOUR_PRIVATE_KEY}
-      subject: ${VAPID_SUBJECT:mailto:admin@volunteerhub.test}
-
+webpush:
+  vapid:
+    public-key: BG0M7NIgM1tXh8m6iEbr6pYdYLlGsrMUYcGp2HwB8GpRq0RjZpxum1nzsPFQOIOMbUFsVE-wkW1bBc78U_9lh8M
+    private-key: tZv0VqD-lwzXk2nMKw_9x8J_AFwx8cteZC2PHb6xS4Y
+    subject: mailto:admin@volunteerhub.test
 
 jwt:
   secret: ${JWT_SECRET:change_this_to_a_very_long_random_secret_key_for_dev_only}
