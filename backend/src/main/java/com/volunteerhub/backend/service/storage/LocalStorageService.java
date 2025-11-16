@@ -1,5 +1,6 @@
 package com.volunteerhub.backend.service.storage;
 
+import com.volunteerhub.backend.exception.FileValidationException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -19,6 +20,12 @@ public class LocalStorageService implements StorageService {
 
     private Path root;
 
+    private final FileValidationService fileValidationService; // may be injected
+
+    public LocalStorageService(FileValidationService fileValidationService) {
+        this.fileValidationService = fileValidationService;
+    }
+
     @PostConstruct
     public void init() throws IOException {
         this.root = Paths.get(uploadDir).toAbsolutePath().normalize();
@@ -32,6 +39,17 @@ public class LocalStorageService implements StorageService {
         if (file == null || file.isEmpty()) {
             throw new IOException("Empty file");
         }
+
+        // optional validation
+        try {
+            if (fileValidationService != null) {
+                fileValidationService.validateImage(file);
+            }
+        } catch (FileValidationException fve) {
+            // wrap to IOException so callers get consistent exception type, or rethrow as-is
+            throw new IOException("File validation failed: " + fve.getMessage(), fve);
+        }
+
         String original = StringUtils.cleanPath(file.getOriginalFilename());
         String ext = "";
         int idx = original.lastIndexOf('.');

@@ -17,6 +17,11 @@ spring:
     enabled: true
     locations: classpath:db/migration
 
+  file:
+    upload-dir: uploads
+    max-size-bytes: 5242880      # 5 MB
+    allowed-types: image/png,image/jpeg,image/webp,image/gif
+
 webpush:
   vapid:
     public-key: BG0M7NIgM1tXh8m6iEbr6pYdYLlGsrMUYcGp2HwB8GpRq0RjZpxum1nzsPFQOIOMbUFsVE-wkW1bBc78U_9lh8M

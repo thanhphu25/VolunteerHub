@@ -5,17 +5,22 @@ import com.volunteerhub.backend.dto.PostResponse;
 import com.volunteerhub.backend.entity.EventEntity;
 import com.volunteerhub.backend.entity.PostEntity;
 import com.volunteerhub.backend.entity.UserEntity;
+import com.volunteerhub.backend.exception.FileValidationException;
 import com.volunteerhub.backend.mapper.PostMapper;
 import com.volunteerhub.backend.repository.EventRepository;
 import com.volunteerhub.backend.repository.PostRepository;
 import com.volunteerhub.backend.repository.UserRepository;
+import com.volunteerhub.backend.service.storage.FileValidationService;
 import com.volunteerhub.backend.service.storage.StorageService;
 import jakarta.validation.constraints.NotBlank;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.lang.reflect.Method;
 import java.time.LocalDateTime;
 import java.util.Map;
@@ -25,21 +30,23 @@ import java.util.Optional;
 @RequestMapping("/api")
 public class PostUploadController {
 
+    private final Logger logger = LoggerFactory.getLogger(PostUploadController.class);
+
     private final StorageService storageService;
+    private final FileValidationService fileValidationService;
     private final EventRepository eventRepository;
     private final UserRepository userRepository;
     private final PostRepository postRepository;
     private final PostMapper postMapper;
 
-    // max file size (bytes) — adjust as needed
-    private static final long MAX_FILE_SIZE = 5L * 1024 * 1024; // 5MB
-
     public PostUploadController(StorageService storageService,
+                                FileValidationService fileValidationService,
                                 EventRepository eventRepository,
                                 UserRepository userRepository,
                                 PostRepository postRepository,
                                 PostMapper postMapper) {
         this.storageService = storageService;
+        this.fileValidationService = fileValidationService;
         this.eventRepository = eventRepository;
         this.userRepository = userRepository;
         this.postRepository = postRepository;
@@ -63,25 +70,21 @@ public class PostUploadController {
             return ResponseEntity.status(404).body(Map.of("error", "User not found"));
         }
 
-        // basic validation
-        if (file == null || file.isEmpty()) {
-            return ResponseEntity.badRequest().body(Map.of("error", "No file uploaded"));
-        }
-        if (file.getSize() > MAX_FILE_SIZE) {
-            return ResponseEntity.status(400).body(Map.of("error", "File too large (max 5MB)"));
-        }
-        String ct = file.getContentType();
-        if (ct == null || !ct.startsWith("image/")) {
-            return ResponseEntity.status(400).body(Map.of("error", "Only image files allowed"));
-        }
-
+        // validate + save
         try {
+            fileValidationService.validateImage(file);
             String url = storageService.store(file);
             UserEntity user = userOpt.get();
             user.setAvatarUrl(url);
             userRepository.save(user);
             return ResponseEntity.ok(Map.of("avatarUrl", url));
+        } catch (FileValidationException fve) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Invalid file", "details", fve.getMessage()));
+        } catch (IOException ioe) {
+            logger.error("Avatar upload IO error", ioe);
+            return ResponseEntity.status(500).body(Map.of("error", "Upload failed", "details", ioe.getMessage()));
         } catch (Exception ex) {
+            logger.error("Avatar upload unexpected error", ex);
             return ResponseEntity.status(500).body(Map.of("error", "Upload failed", "details", ex.getMessage()));
         }
     }
@@ -113,17 +116,17 @@ public class PostUploadController {
         String imageUrl = null;
         try {
             if (file != null && !file.isEmpty()) {
-                if (file.getSize() > MAX_FILE_SIZE) {
-                    return ResponseEntity.status(400).body(Map.of("error", "File too large (max 5MB)"));
-                }
-                String ct = file.getContentType();
-                if (ct == null || !ct.startsWith("image/")) {
-                    return ResponseEntity.status(400).body(Map.of("error", "Only image files allowed"));
-                }
+                fileValidationService.validateImage(file);
                 imageUrl = storageService.store(file);
             }
+        } catch (FileValidationException fve) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Invalid file", "details", fve.getMessage()));
+        } catch (IOException ioe) {
+            logger.error("Post image store IO error", ioe);
+            return ResponseEntity.status(500).body(Map.of("error", "File upload failed", "details", ioe.getMessage()));
         } catch (Exception ex) {
-            return ResponseEntity.status(500).body(Map.of("error", "File upload failed", "details", ex.getMessage()));
+            logger.error("Post image unexpected error", ex);
+            return ResponseEntity.status(500).body(Map.of("error", "Upload failed", "details", ex.getMessage()));
         }
 
         // build DTO
