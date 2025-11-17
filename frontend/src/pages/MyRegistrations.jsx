@@ -1,322 +1,289 @@
-import React, { useEffect, useState } from "react";
+// src/pages/MyRegistrations.jsx
+import React, {useCallback, useEffect, useState} from "react";
+import {Link as RouterLink} from "react-router-dom";
 import {
-  Typography,
-  Box,
-  CircularProgress,
   Alert,
-  Container,
-  Card,
-  CardContent,
-  CardActions,
-  Button,
+  Box,
   Chip,
-  Grid,
-  Tabs,
-  Tab,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  DialogContentText
+  CircularProgress,
+  Container,
+  Divider,
+  IconButton,
+  List,
+  ListItem,
+  ListItemText,
+  Paper,
+  Tooltip,
+  Typography,
 } from "@mui/material";
-import {
-  Event as EventIcon,
-  LocationOn as LocationOnIcon,
-  CalendarToday as CalendarIcon,
-  Cancel as CancelIcon,
-  Visibility as ViewIcon,
-  CheckCircle as CheckCircleIcon,
-  Schedule as ScheduleIcon,
-  Block as BlockIcon
-} from "@mui/icons-material";
-import { Link as RouterLink } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
-import registrationApi from "../api/registrationApi";
-import { toast } from "react-toastify";
+import {Cancel as CancelIcon} from "@mui/icons-material";
+import registrationApi from "../api/registrationApi"; // Đảm bảo đã tạo file này
+import {toast} from "react-toastify";
+import {useAuth} from "../context/AuthContext"; // Cần để lấy userId
 
-const statusColors = {
-  pending: "warning",
-  approved: "success",
-  rejected: "error",
-  cancelled: "default",
-  completed: "info"
-};
-
+// Nhãn và màu cho trạng thái đăng ký (có thể đưa ra file constants dùng chung)
 const statusLabels = {
   pending: "Chờ duyệt",
   approved: "Đã duyệt",
   rejected: "Đã từ chối",
   cancelled: "Đã hủy",
-  completed: "Hoàn thành"
+  completed: "Hoàn thành",
+};
+const statusColors = {
+  pending: "warning",
+  approved: "success",
+  rejected: "error",
+  cancelled: "default",
+  completed: "info",
 };
 
-const statusIcons = {
-  pending: <ScheduleIcon />,
-  approved: <CheckCircleIcon />,
-  rejected: <BlockIcon />,
-  cancelled: <CancelIcon />,
-  completed: <CheckCircleIcon />
+// Định dạng ngày tháng
+const formatDate = (dateString) => {
+  if (!dateString) {
+    return "N/A";
+  }
+  const date = new Date(dateString);
+  return date.toLocaleString("vi-VN", {
+    year: "numeric", month: "2-digit", day: "2-digit",
+    hour: "2-digit", minute: "2-digit",
+  });
 };
 
 export default function MyRegistrations() {
   const [registrations, setRegistrations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [filteredRegistrations, setFilteredRegistrations] = useState([]);
-  const [selectedTab, setSelectedTab] = useState(0);
-  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
-  const [registrationToCancel, setRegistrationToCancel] = useState(null);
-  const [isCancelling, setIsCancelling] = useState(false);
-  const { user } = useAuth();
+  const [cancellingId, setCancellingId] = useState(null); // ID đăng ký đang hủy
+  const {user} = useAuth(); // Lấy thông tin user
 
-  const tabLabels = ['Tất cả', 'Chờ duyệt', 'Đã duyệt', 'Đã từ chối', 'Đã hủy', 'Hoàn thành'];
-  const tabValues = ['all', 'pending', 'approved', 'rejected', 'cancelled', 'completed'];
-
-  useEffect(() => {
-    fetchRegistrations();
-  }, []);
-
-  useEffect(() => {
-    filterRegistrations();
-  }, [registrations, selectedTab]);
-
-  const fetchRegistrations = async () => {
+  // Hàm fetch danh sách đăng ký
+  const fetchMyRegistrations = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
       const response = await registrationApi.getMyRegistrations();
-      setRegistrations(response.data || []);
+      // Sắp xếp: pending/approved lên đầu, theo ngày đăng ký mới nhất
+      const sortedData = (response.data || []).sort((a, b) => {
+        const statusOrder = {
+          pending: 1,
+          approved: 2,
+          completed: 3,
+          rejected: 4,
+          cancelled: 5
+        };
+        const orderA = statusOrder[a.status] || 99;
+        const orderB = statusOrder[b.status] || 99;
+        if (orderA !== orderB) {
+          return orderA - orderB;
+        }
+        // Nếu cùng status, sắp theo ngày đăng ký mới nhất
+        return new Date(b.registeredAt) - new Date(a.registeredAt);
+      });
+      setRegistrations(sortedData);
     } catch (err) {
-      console.error("Error fetching registrations:", err);
-      setError("Không thể tải danh sách đăng ký. Vui lòng thử lại sau.");
+      console.error("Lỗi khi tải đăng ký:", err);
+      setError("Không thể tải danh sách đăng ký của bạn. Vui lòng thử lại.");
+      toast.error("Không thể tải danh sách đăng ký.");
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const filterRegistrations = () => {
-    if (selectedTab === 0) {
-      // Show all registrations
-      setFilteredRegistrations(registrations);
+  useEffect(() => {
+    if (user) { // Chỉ fetch khi đã có thông tin user
+      fetchMyRegistrations();
     } else {
-      const status = tabValues[selectedTab];
-      setFilteredRegistrations(registrations.filter(reg => reg.status === status));
+      setLoading(false); // Nếu không có user, không cần loading
+      setError("Vui lòng đăng nhập để xem danh sách đăng ký.");
     }
-  };
+  }, [fetchMyRegistrations, user]);
 
-  const handleTabChange = (event, newValue) => {
-    setSelectedTab(newValue);
-  };
-
-  const handleCancelClick = (registration) => {
-    setRegistrationToCancel(registration);
-    setCancelDialogOpen(true);
-  };
-
-  const handleCancelConfirm = async () => {
-    if (!registrationToCancel) return;
-
-    setIsCancelling(true);
+  // Hàm xử lý hủy đăng ký
+  const handleCancelRegistration = async (eventId, registrationId) => {
+    if (cancellingId) {
+      return;
+    } // Ngăn click nhiều lần
+    if (!window.confirm(
+        "Bạn có chắc chắn muốn hủy đăng ký tham gia sự kiện này?")) {
+      return;
+    }
+    setCancellingId(registrationId);
     try {
-      await registrationApi.cancel(registrationToCancel.eventId, registrationToCancel.id);
-      toast.success('Hủy đăng ký thành công!');
-      
-      // Update the registration status locally
-      setRegistrations(prev => 
-        prev.map(reg => 
-          reg.id === registrationToCancel.id 
-            ? { ...reg, status: 'cancelled' }
-            : reg
-        )
+      // API yêu cầu cả eventId và registrationId
+      await registrationApi.cancel(eventId, registrationId);
+      toast.success("Hủy đăng ký thành công!");
+      // Cập nhật UI: thay đổi status thành 'cancelled' hoặc fetch lại
+      setRegistrations(prev =>
+          prev.map(
+              reg => reg.id === registrationId ? {...reg, status: 'cancelled'}
+                  : reg)
       );
-      
-      setCancelDialogOpen(false);
-      setRegistrationToCancel(null);
+      // Hoặc gọi lại fetchMyRegistrations(); nếu muốn lấy dữ liệu mới nhất từ server
     } catch (err) {
-      console.error("Error cancelling registration:", err);
-      toast.error(err.response?.data?.error || 'Hủy đăng ký thất bại. Vui lòng thử lại sau.');
+      console.error("Lỗi khi hủy đăng ký:", err);
+      toast.error(err.response?.data?.error || err.response?.data?.message
+          || "Hủy đăng ký thất bại.");
     } finally {
-      setIsCancelling(false);
+      setCancellingId(null);
     }
   };
 
-  const formatDate = (dateString) => {
-    if (!dateString) return "N/A";
-    const date = new Date(dateString);
-    return date.toLocaleString("vi-VN", {
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
-
-  const canCancel = (registration) => {
-    return registration.status === 'pending' || registration.status === 'approved';
-  };
+  // ----- Render UI -----
 
   if (loading) {
     return (
-      <Container>
-        <Box display="flex" justifyContent="center" alignItems="center" minHeight="50vh">
-          <CircularProgress />
-        </Box>
-      </Container>
+        <Container>
+          <Box display="flex" justifyContent="center" alignItems="center"
+               minHeight="50vh">
+            <CircularProgress/>
+          </Box>
+        </Container>
+    );
+  }
+
+  if (error) {
+    return (
+        <Container sx={{py: 4}}>
+          <Alert severity="error">{error}</Alert>
+        </Container>
     );
   }
 
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Typography variant="h4" fontWeight="bold" gutterBottom>
-        Đăng ký của tôi
-      </Typography>
+      <Container maxWidth="md" sx={{py: 4}}>
+        <Typography variant="h4" component="h1" gutterBottom>
+          Sự kiện đã đăng ký
+        </Typography>
 
-      {error && (
-        <Alert severity="error" sx={{ mb: 2 }}>
-          {error}
-        </Alert>
-      )}
-
-      {!loading && registrations.length === 0 && (
-        <Alert severity="info">
-          Bạn chưa đăng ký tham gia sự kiện nào.
-        </Alert>
-      )}
-
-      {registrations.length > 0 && (
-        <>
-          <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
-            <Tabs value={selectedTab} onChange={handleTabChange} variant="scrollable">
-              {tabLabels.map((label, index) => (
-                <Tab 
-                  key={label} 
-                  label={`${label} (${index === 0 ? registrations.length : registrations.filter(reg => reg.status === tabValues[index]).length})`}
-                />
-              ))}
-            </Tabs>
-          </Box>
-
-          {filteredRegistrations.length === 0 ? (
-            <Alert severity="info">
-              Không có đăng ký nào trong danh mục này.
+        {registrations.length === 0 ? (
+            <Alert severity="info">Bạn chưa đăng ký tham gia sự kiện nào.
+              <RouterLink to="/events">Xem danh sách sự kiện</RouterLink>
             </Alert>
-          ) : (
-            <Grid container spacing={2}>
-              {filteredRegistrations.map((registration) => (
-                <Grid size={{xs: 12, md: 6}} key={registration.id}>
-                  <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-                    <CardContent sx={{ flexGrow: 1 }}>
-                      <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={2}>
-                        <Typography variant="h6" component="div" sx={{ flex: 1 }}>
-                          {registration.eventName}
-                        </Typography>
-                        <Chip
-                          icon={statusIcons[registration.status]}
-                          label={statusLabels[registration.status]}
-                          color={statusColors[registration.status]}
-                          size="small"
-                        />
-                      </Box>
+        ) : (
+            <Paper elevation={2}>
+              <List disablePadding>
+                {registrations.map((reg, index) => {
+                  // Kiểm tra xem sự kiện đã bắt đầu chưa (Cần thêm eventStartDate vào RegistrationResponse backend)
+                  // const eventHasStarted = reg.eventStartDate ? new Date(reg.eventStartDate) < new Date() : false;
+                  const canCancel = (reg.status === 'pending' || reg.status
+                      === 'approved'); // && !eventHasStarted;
 
-                      <Box display="flex" alignItems="center" mb={1} color="text.secondary">
-                        <CalendarIcon sx={{ mr: 1, fontSize: 20 }} />
-                        <Typography variant="body2">
-                          Đăng ký: {formatDate(registration.registeredAt)}
-                        </Typography>
-                      </Box>
-
-                      {registration.approvedAt && (
-                        <Box display="flex" alignItems="center" mb={1} color="text.secondary">
-                          <CheckCircleIcon sx={{ mr: 1, fontSize: 20 }} />
-                          <Typography variant="body2">
-                            Duyệt: {formatDate(registration.approvedAt)}
-                          </Typography>
-                        </Box>
-                      )}
-
-                      {registration.note && (
-                        <Box mt={2}>
-                          <Typography variant="body2" color="text.secondary">
-                            <strong>Ghi chú:</strong> {registration.note}
-                          </Typography>
-                        </Box>
-                      )}
-
-                      {registration.organizerNote && (
-                        <Box mt={1}>
-                          <Typography variant="body2" color="text.secondary">
-                            <strong>Ghi chú từ tổ chức:</strong> {registration.organizerNote}
-                          </Typography>
-                        </Box>
-                      )}
-                    </CardContent>
-
-                    <CardActions>
-                      <Button
-                        size="small"
-                        variant="outlined"
-                        startIcon={<ViewIcon />}
-                        component={RouterLink}
-                        to={`/events/${registration.eventId}`}
-                      >
-                        Xem sự kiện
-                      </Button>
-
-                      {canCancel(registration) && (
-                        <Button
-                          size="small"
-                          variant="outlined"
-                          color="error"
-                          startIcon={<CancelIcon />}
-                          onClick={() => handleCancelClick(registration)}
-                        >
-                          Hủy đăng ký
-                        </Button>
-                      )}
-                    </CardActions>
-                  </Card>
-                </Grid>
-              ))}
-            </Grid>
-          )}
-        </>
-      )}
-
-      {/* Cancel Confirmation Dialog */}
-      <Dialog
-        open={cancelDialogOpen}
-        onClose={() => setCancelDialogOpen(false)}
-        aria-labelledby="cancel-dialog-title"
-        aria-describedby="cancel-dialog-description"
-      >
-        <DialogTitle id="cancel-dialog-title">
-          Xác nhận hủy đăng ký
-        </DialogTitle>
-        <DialogContent>
-          <DialogContentText id="cancel-dialog-description">
-            Bạn có chắc chắn muốn hủy đăng ký tham gia sự kiện "{registrationToCancel?.eventName}"?
-            Hành động này không thể hoàn tác.
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button 
-            onClick={() => setCancelDialogOpen(false)}
-            disabled={isCancelling}
-          >
-            Hủy
-          </Button>
-          <Button 
-            onClick={handleCancelConfirm}
-            color="error"
-            variant="contained"
-            disabled={isCancelling}
-            autoFocus
-          >
-            {isCancelling ? 'Đang hủy...' : 'Xác nhận hủy'}
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </Container>
+                  return (
+                      <React.Fragment key={reg.id}>
+                        <ListItem alignItems="flex-start">
+                          <ListItemText
+                              primary={
+                                <Typography component="span" variant="h6">
+                                  <RouterLink to={`/events/${reg.eventId}`}
+                                              style={{
+                                                textDecoration: 'none',
+                                                color: 'inherit'
+                                              }}>
+                                    {reg.eventName || `Sự kiện #${reg.eventId}`}
+                                  </RouterLink>
+                                </Typography>
+                              }
+                              secondary={
+                                <>
+                                  <Typography
+                                      sx={{display: 'block'}}
+                                      component="span"
+                                      variant="body2"
+                                      color="text.primary"
+                                  >
+                                    Ngày đăng ký: {formatDate(reg.registeredAt)}
+                                  </Typography>
+                                  {/* Hiển thị ngày duyệt nếu có */}
+                                  {reg.approvedAt && reg.status === 'approved'
+                                      && (
+                                          <Typography sx={{display: 'block'}}
+                                                      component="span"
+                                                      variant="caption"
+                                                      color="text.secondary">
+                                            Ngày duyệt: {formatDate(
+                                              reg.approvedAt)}
+                                          </Typography>
+                                      )}
+                                  {/* Hiển thị ngày hoàn thành nếu có */}
+                                  {reg.completedAt && reg.status === 'completed'
+                                      && (
+                                          <Typography sx={{display: 'block'}}
+                                                      component="span"
+                                                      variant="caption"
+                                                      color="text.secondary">
+                                            Ngày hoàn thành: {formatDate(
+                                              reg.completedAt)}
+                                          </Typography>
+                                      )}
+                                  {/* Hiển thị ngày hủy nếu có */}
+                                  {reg.cancelledAt && reg.status === 'cancelled'
+                                      && (
+                                          <Typography sx={{display: 'block'}}
+                                                      component="span"
+                                                      variant="caption"
+                                                      color="text.secondary">
+                                            Ngày hủy: {formatDate(
+                                              reg.cancelledAt)}
+                                          </Typography>
+                                      )}
+                                  {reg.note && (
+                                      <Typography sx={{
+                                        display: 'block',
+                                        fontStyle: 'italic',
+                                        mt: 0.5
+                                      }} component="span" variant="caption"
+                                                  color="text.secondary">
+                                        Ghi chú: "{reg.note}"
+                                      </Typography>
+                                  )}
+                                </>
+                              }
+                          />
+                          <Box sx={{textAlign: 'right', ml: 2}}>
+                            <Chip
+                                label={statusLabels[reg.status] || reg.status}
+                                color={statusColors[reg.status] || "default"}
+                                size="small"
+                                sx={{mb: 1}}
+                            />
+                            {canCancel && (
+                                <Tooltip title="Hủy đăng ký">
+                                <span> {/* Wrap IconButton for Tooltip when disabled */}
+                                  <IconButton
+                                      edge="end"
+                                      aria-label="hủy đăng ký"
+                                      onClick={() => handleCancelRegistration(
+                                          reg.eventId, reg.id)}
+                                      disabled={cancellingId === reg.id}
+                                      color="error"
+                                      size="small"
+                                  >
+                                    {cancellingId === reg.id ? <CircularProgress
+                                            size={20} color="inherit"/> :
+                                        <CancelIcon/>}
+                                    </IconButton>
+                                </span>
+                                </Tooltip>
+                            )}
+                            {!canCancel && reg.status !== 'cancelled'
+                                && reg.status !== 'rejected' && (
+                                    <Typography variant="caption"
+                                                color="text.secondary"
+                                                display="block">
+                                      {/* {eventHasStarted ? "Sự kiện đã bắt đầu" : ""} */}
+                                      {/* Thông báo nếu không thể hủy */}
+                                    </Typography>
+                                )}
+                          </Box>
+                        </ListItem>
+                        {index < registrations.length - 1 && <Divider
+                            component="li"/>}
+                      </React.Fragment>
+                  );
+                })}
+              </List>
+            </Paper>
+        )}
+      </Container>
   );
 }
