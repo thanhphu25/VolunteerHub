@@ -66,8 +66,12 @@ export default function NavBar() {
                 </>
             ) : (
                 <>
-                  <Button color="inherit" component={Link} to="/dashboard">
-                    Bảng điều khiển
+                  <Button color="inherit" component={Link} to="/profile">
+                    Trang cá nhân
+                  </Button>
+
+                  <Button color="inherit" component={Link} to="/notifications">
+                    Thông báo
                   </Button>
                   
                   {/* Hiển thị link Đăng ký của tôi cho Volunteers */}

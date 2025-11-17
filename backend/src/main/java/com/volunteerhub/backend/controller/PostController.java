@@ -1,6 +1,9 @@
 package com.volunteerhub.backend.controller;
 
 import com.volunteerhub.backend.dto.*;
+import com.volunteerhub.backend.entity.EventEntity;
+import com.volunteerhub.backend.entity.EventStatus;
+import com.volunteerhub.backend.repository.EventRepository;
 import com.volunteerhub.backend.service.IPostService;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.PageRequest;
@@ -16,9 +19,11 @@ import java.util.List;
 public class PostController {
 
     private final IPostService svc;
+    private final EventRepository eventRepo;
 
-    public PostController(IPostService svc) {
+    public PostController(IPostService svc, EventRepository eventRepo) {
         this.svc = svc;
+        this.eventRepo = eventRepo;
     }
 
     @PreAuthorize("hasAnyRole('VOLUNTEER','ORGANIZER','ADMIN')")
@@ -40,8 +45,24 @@ public class PostController {
     public ResponseEntity<?> listPosts(@PathVariable Long eventId,
                                        @RequestParam(defaultValue = "0") int page,
                                        @RequestParam(defaultValue = "10") int size) {
-        var p = svc.listPosts(eventId, PageRequest.of(page, size));
-        return ResponseEntity.ok(p);
+        try {
+            EventEntity event = eventRepo.findById(eventId)
+                    .orElseThrow(() -> new IllegalArgumentException("Event not found"));
+
+            if (event.getStatus() == null || !EventStatus.approved.equals(event.getStatus())) {
+                return ResponseEntity.status(403)
+                        .body(java.util.Map.of("error", "Discussion channel is only available for approved events"));
+            }
+
+            var posts = svc.listPosts(eventId, PageRequest.of(page, size));
+            return ResponseEntity.ok(posts);
+        } catch (SecurityException ex) {
+            return ResponseEntity.status(403).body(java.util.Map.of("error", ex.getMessage()));
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.status(404).body(java.util.Map.of("error", ex.getMessage()));
+        } catch (Exception ex) {
+            return ResponseEntity.status(500).body(java.util.Map.of("error", "Unable to list posts"));
+        }
     }
 
     @PreAuthorize("hasAnyRole('VOLUNTEER','ORGANIZER','ADMIN')")

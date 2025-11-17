@@ -4,7 +4,6 @@ import NavBar from "./components/NavBar";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
-import Dashboard from "./pages/Dashboard";
 import Events from "./pages/Events";
 import EventDetail from "./pages/EventDetail.jsx";
 import MyRegistrations from "./pages/MyRegistrations.jsx";
@@ -13,6 +12,8 @@ import RoleBasedRoute from "./components/RoleBasedRoute";
 import OrganizerEvents from "./pages/admin/OrganizerEvents";
 import AdminEventManagement from "./pages/admin/AdminEventManagement";
 import EventRegistrations from "./pages/admin/EventRegistrations.jsx";
+import Profile from "./pages/Profile.jsx";
+import Notifications from "./pages/Notifications.jsx";
 
 export default function App() {
   return (
@@ -26,10 +27,19 @@ export default function App() {
           <Route path="/events/:eventId" element={<EventDetail/>}/>
           {/* 👇 Chặn truy cập nếu chưa login */}
           <Route
-              path="/dashboard"
+              path="/profile"
               element={
                 <PrivateRoute>
-                  <Dashboard/>
+                  <Profile/>
+                </PrivateRoute>
+              }
+          />
+
+          <Route
+              path="/notifications"
+              element={
+                <PrivateRoute>
+                  <Notifications/>
                 </PrivateRoute>
               }
           />

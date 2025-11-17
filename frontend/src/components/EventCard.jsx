@@ -120,12 +120,12 @@ export default function EventCard({
             📅 {formatDate(event.startDate)} - {formatDate(event.endDate)}
           </Typography>
 
-          {event.maxVolunteers != null && ( // Kiểm tra cả null và undefined
-              <Typography variant="caption" display="block">
-                👥 {event.currentVolunteers ?? 0} / {event.maxVolunteers} tình
-                nguyện viên
-              </Typography>
-          )}
+          <Typography variant="caption" display="block">
+            👥 {event.currentVolunteers ?? 0}
+            {event.maxVolunteers != null
+                ? ` / ${event.maxVolunteers} tình nguyện viên`
+                : " tình nguyện viên đã đăng ký"}
+          </Typography>
         </CardContent>
 
         <CardActions>

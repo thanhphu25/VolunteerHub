@@ -10,6 +10,8 @@ public interface INotificationService {
     void subscribe(Authentication auth, PushSubscriptionRequest req);
     void unsubscribe(Authentication auth, PushSubscriptionRequest req);
     List<NotificationResponse> listNotifications(Authentication auth);
+    List<NotificationResponse> listFeed(Authentication auth);
     void markAsRead(Authentication auth, Long notificationId);
+    void markAllAsRead(Authentication auth);
     void createNotification(Long userId, String type, String title, String message, String payload, String link);
 }

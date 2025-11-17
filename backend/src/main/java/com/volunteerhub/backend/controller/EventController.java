@@ -1,6 +1,7 @@
 package com.volunteerhub.backend.controller;
 
 import com.volunteerhub.backend.dto.EventCreateRequest;
+import com.volunteerhub.backend.dto.EventRejectRequest;
 import com.volunteerhub.backend.dto.EventResponse;
 import com.volunteerhub.backend.service.IEventService;
 import jakarta.validation.Valid;
@@ -42,14 +43,17 @@ public class EventController {
             @RequestParam Optional<String> category,
             @RequestParam Optional<String> location,
             @RequestParam Optional<String> search,
+            @RequestParam Optional<String> organizerName,
             @RequestParam Optional<String> startDate,
             @RequestParam Optional<String> endDate,
+            @RequestParam Optional<String> timeStatus,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         try {
             // Check if any advanced filters are provided
             boolean hasAdvancedFilters = category.isPresent() || location.isPresent() || 
-                                       search.isPresent() || startDate.isPresent() || endDate.isPresent();
+                                       search.isPresent() || organizerName.isPresent() ||
+                                       startDate.isPresent() || endDate.isPresent();
             
             if (hasAdvancedFilters) {
                 // Use advanced filtering
@@ -66,12 +70,14 @@ public class EventController {
                 Page<EventResponse> p = svc.listEventsWithFilters(
                     status, category, location, search, 
                     Optional.ofNullable(startDateTime), Optional.ofNullable(endDateTime), 
+                    organizerName,
+                    timeStatus,
                     PageRequest.of(page, size)
                 );
                 return ResponseEntity.ok(p);
             } else {
                 // Use simple filtering (backward compatibility)
-                Page<EventResponse> p = svc.listEvents(status, PageRequest.of(page, size));
+                Page<EventResponse> p = svc.listEvents(status, timeStatus, PageRequest.of(page, size));
                 return ResponseEntity.ok(p);
             }
         } catch (Exception ex) {
@@ -119,9 +125,11 @@ public class EventController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/{id}/reject")
-    public ResponseEntity<?> rejectEvent(@PathVariable Long id, Authentication auth) {
+    public ResponseEntity<?> rejectEvent(@PathVariable Long id,
+                                         @Valid @RequestBody EventRejectRequest request,
+                                         Authentication auth) {
         try {
-            EventResponse resp = svc.rejectEvent(id, auth);
+            EventResponse resp = svc.rejectEvent(id, request.getReason(), auth);
             return ResponseEntity.ok(resp);
         } catch (IllegalArgumentException ex) {
             return ResponseEntity.status(404).body(java.util.Map.of("error", ex.getMessage()));

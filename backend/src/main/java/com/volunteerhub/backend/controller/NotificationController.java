@@ -48,12 +48,21 @@ public class NotificationController {
     // List current user's notifications (in-app)
     @PreAuthorize("isAuthenticated()")
     @GetMapping("/me/notifications")
-    public ResponseEntity<?> listNotifications(Authentication auth) {
+    public ResponseEntity<List<NotificationResponse>> listNotifications(Authentication auth) {
         try {
-            List<NotificationResponse> list = svc.listNotifications(auth);
-            return ResponseEntity.ok(list);
+            return ResponseEntity.ok(svc.listNotifications(auth));
         } catch (Exception ex) {
-            return ResponseEntity.status(500).body(java.util.Map.of("error", ex.getMessage()));
+            return ResponseEntity.status(500).build();
+        }
+    }
+
+    @PreAuthorize("isAuthenticated()")
+    @GetMapping("/me/notifications/feed")
+    public ResponseEntity<List<NotificationResponse>> feed(Authentication auth) {
+        try {
+            return ResponseEntity.ok(svc.listFeed(auth));
+        } catch (Exception ex) {
+            return ResponseEntity.status(500).build();
         }
     }
 
@@ -70,6 +79,17 @@ public class NotificationController {
             return ResponseEntity.status(404).body(java.util.Map.of("error", ie.getMessage()));
         } catch (Exception ex) {
             return ResponseEntity.status(500).body(java.util.Map.of("error", "Unable to mark read"));
+        }
+    }
+
+    @PreAuthorize("isAuthenticated()")
+    @PostMapping("/me/notifications/read-all")
+    public ResponseEntity<?> markAllRead(Authentication auth) {
+        try {
+            svc.markAllAsRead(auth);
+            return ResponseEntity.ok(java.util.Map.of("message", "all_marked"));
+        } catch (Exception ex) {
+            return ResponseEntity.status(500).body(java.util.Map.of("error", "Unable to mark all read"));
         }
     }
 }

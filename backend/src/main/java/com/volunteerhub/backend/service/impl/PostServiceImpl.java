@@ -13,6 +13,7 @@ import com.volunteerhub.backend.entity.RegistrationEntity;
 import com.volunteerhub.backend.repository.RegistrationRepository;
 import com.volunteerhub.backend.repository.UserRepository;
 import com.volunteerhub.backend.security.CustomUserDetails;
+import com.volunteerhub.backend.service.INotificationService;
 import jakarta.transaction.Transactional;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
@@ -20,7 +21,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
+import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -35,6 +39,7 @@ public class PostServiceImpl implements IPostService {
     private final UserRepository userRepo;
     private final RegistrationRepository registrationRepo;
     private final PostLikeMapper postLikeMapper;
+    private final INotificationService notificationService;
 
     public PostServiceImpl(PostRepository postRepo,
                            EventRepository eventRepo,
@@ -44,7 +49,8 @@ public class PostServiceImpl implements IPostService {
                            PostLikeRepository likeRepo,
                            UserRepository userRepo,
                            RegistrationRepository registrationRepo,
-                           PostLikeMapper postLikeMapper) {
+                           PostLikeMapper postLikeMapper,
+                           INotificationService notificationService) {
         this.postRepo = postRepo;
         this.eventRepo = eventRepo;
         this.postMapper = postMapper;
@@ -54,6 +60,7 @@ public class PostServiceImpl implements IPostService {
         this.userRepo = userRepo;
         this.registrationRepo = registrationRepo;
         this.postLikeMapper = postLikeMapper;
+        this.notificationService = notificationService;
     }
 
     private UserEntity currentUser(Authentication auth) {
@@ -96,12 +103,17 @@ public class PostServiceImpl implements IPostService {
         p.setLikesCount(0);
         p.setCommentsCount(0);
         PostEntity saved = postRepo.save(p);
+
+        notifyNewDiscussion(event, user, saved);
         return postMapper.toResponse(saved);
     }
 
     @Override
     public Page<PostResponse> listPosts(Long eventId, Pageable pageable) {
         EventEntity event = eventRepo.findById(eventId).orElseThrow(() -> new IllegalArgumentException("Event not found"));
+        if (event.getStatus() == null || event.getStatus() != EventStatus.approved) {
+            throw new SecurityException("Event must be approved to view discussion");
+        }
         return postRepo.findByEventAndIsDeletedFalseOrderByCreatedAtDesc(event, pageable).map(postMapper::toResponse);
     }
 
@@ -125,6 +137,7 @@ public class PostServiceImpl implements IPostService {
         post.setCommentsCount((post.getCommentsCount() == null ? 0 : post.getCommentsCount()) + 1);
         postRepo.save(post);
 
+        notifyPostAuthorOfComment(post, user, saved);
         return commentMapper.toResponse(saved);
     }
 
@@ -158,6 +171,7 @@ public class PostServiceImpl implements IPostService {
             likeRepo.save(like);
             post.setLikesCount((post.getLikesCount() == null ? 0 : post.getLikesCount()) + 1);
             postRepo.save(post);
+            notifyPostAuthorOfLike(post, user);
         } catch (DataIntegrityViolationException ex) {
             // unique constraint violation -> ignore
         }
@@ -191,4 +205,160 @@ public class PostServiceImpl implements IPostService {
                 .collect(java.util.stream.Collectors.toList());
     }
 
+    private void notifyNewDiscussion(EventEntity event, UserEntity author, PostEntity post) {
+        try {
+            Long eventId = event.getId();
+            if (eventId == null) {
+                return;
+            }
+
+            String authorName = author.getFullName() != null ? author.getFullName() : "Một thành viên";
+            String eventName = event.getName() != null ? event.getName() : "sự kiện";
+            String payload = String.format("{\"eventId\":%d,\"postId\":%d}", eventId, post.getId());
+            String link = "/events/" + eventId + "?tab=discussion&postId=" + post.getId();
+
+            // Notify organizer if different from author
+            if (event.getOrganizer() != null && event.getOrganizer().getId() != null && !event.getOrganizer().getId().equals(author.getId())) {
+                notificationService.createNotification(
+                        event.getOrganizer().getId(),
+                        "organizer:new_discussion",
+                        "Thảo luận mới trong sự kiện",
+                        authorName + " đã bắt đầu một thảo luận mới trong \"" + eventName + "\".",
+                        payload,
+                        link
+                );
+            }
+
+            // Notify approved/completed participants excluding author
+            Set<Long> recipientIds = new HashSet<>();
+            var statuses = EnumSet.of(RegistrationEntity.RegistrationStatus.approved, RegistrationEntity.RegistrationStatus.completed);
+            for (RegistrationEntity registration : registrationRepo.findByEventAndStatusIn(event, statuses)) {
+                UserEntity volunteer = registration.getVolunteer();
+                if (volunteer == null || volunteer.getId() == null) {
+                    continue;
+                }
+                if (volunteer.getId().equals(author.getId())) {
+                    continue;
+                }
+                recipientIds.add(volunteer.getId());
+            }
+
+            if (recipientIds.isEmpty()) {
+                return;
+            }
+
+            String participantMessage = authorName + " đã đăng một thảo luận mới trong \"" + eventName + "\".";
+            for (Long userId : recipientIds) {
+                notificationService.createNotification(
+                        userId,
+                        "volunteer:event_discussion",
+                        "Thảo luận mới trong sự kiện",
+                        participantMessage,
+                        payload,
+                        link
+                );
+            }
+        } catch (Exception ex) {
+            // Swallow notification errors to avoid blocking post creation
+        }
+    }
+
+    private void notifyPostAuthorOfLike(PostEntity post, UserEntity actor) {
+        try {
+            if (post == null || actor == null) {
+                return;
+            }
+
+            UserEntity author = post.getUser();
+            if (author == null || author.getId() == null) {
+                return;
+            }
+
+            if (author.getId().equals(actor.getId())) {
+                return;
+            }
+
+            EventEntity event = post.getEvent();
+            Long eventId = event != null ? event.getId() : null;
+            String actorName = actor.getFullName() != null ? actor.getFullName() : "Một thành viên";
+            String eventName = event != null && event.getName() != null ? event.getName() : "sự kiện";
+            String prefix = resolveNotificationPrefix(author);
+            String payload = eventId != null
+                    ? String.format("{\"eventId\":%d,\"postId\":%d}", eventId, post.getId())
+                    : String.format("{\"postId\":%d}", post.getId());
+            String link = eventId != null
+                    ? "/events/" + eventId + "?tab=discussion&postId=" + post.getId()
+                    : "/events";
+
+            notificationService.createNotification(
+                    author.getId(),
+                    prefix + ":discussion_like",
+                    "Bài thảo luận được thích",
+                    actorName + " đã thích bài thảo luận của bạn trong \"" + eventName + "\".",
+                    payload,
+                    link
+            );
+        } catch (Exception ex) {
+            // ignore notification failures
+        }
+    }
+
+    private void notifyPostAuthorOfComment(PostEntity post, UserEntity actor, PostCommentEntity comment) {
+        try {
+            if (post == null || actor == null || comment == null) {
+                return;
+            }
+
+            UserEntity author = post.getUser();
+            if (author == null || author.getId() == null) {
+                return;
+            }
+
+            if (author.getId().equals(actor.getId())) {
+                return;
+            }
+
+            EventEntity event = post.getEvent();
+            Long eventId = event != null ? event.getId() : null;
+            String actorName = actor.getFullName() != null ? actor.getFullName() : "Một thành viên";
+            String eventName = event != null && event.getName() != null ? event.getName() : "sự kiện";
+            String prefix = resolveNotificationPrefix(author);
+            String payload;
+            if (eventId != null) {
+                payload = String.format("{\"eventId\":%d,\"postId\":%d,\"commentId\":%d}", eventId, post.getId(), comment.getId());
+            } else {
+                payload = String.format("{\"postId\":%d,\"commentId\":%d}", post.getId(), comment.getId());
+            }
+            String link = eventId != null
+                    ? "/events/" + eventId + "?tab=discussion&postId=" + post.getId()
+                    : "/events";
+
+            notificationService.createNotification(
+                    author.getId(),
+                    prefix + ":discussion_comment",
+                    "Bài thảo luận có bình luận mới",
+                    actorName + " đã bình luận vào bài thảo luận của bạn trong \"" + eventName + "\".",
+                    payload,
+                    link
+            );
+        } catch (Exception ex) {
+            // ignore notification failures
+        }
+    }
+
+    private String resolveNotificationPrefix(UserEntity recipient) {
+        if (recipient == null || recipient.getRole() == null) {
+            return "volunteer";
+        }
+
+        switch (recipient.getRole()) {
+            case admin:
+                return "admin";
+            case organizer:
+                return "organizer";
+            case volunteer:
+            default:
+                return "volunteer";
+        }
+    }
 }

@@ -29,23 +29,27 @@ import eventApi from "../api/eventApi";
 import {Link} from "react-router-dom";
 import {useAuth} from "../context/AuthContext.jsx";
 
+const DEFAULT_FILTERS = {
+  search: '',
+  category: '',
+  location: '',
+  organizerName: '',
+  startDate: new Date(),
+  endDate: null,
+  timeStatus: ''
+};
+
 export default function Events() {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showFilters, setShowFilters] = useState(false);
-  const [filters, setFilters] = useState({
-    search: '',
-    category: '',
-    location: '',
-    startDate: null,
-    endDate: null
-  });
+  const [filters, setFilters] = useState(() => ({ ...DEFAULT_FILTERS }));
   const [categories, setCategories] = useState([]);
   const {token, user, logout, isAdmin, isOrganizer} = useAuth();
 
   useEffect(() => {
-    fetchEvents();
+    fetchEvents({ startDate: DEFAULT_FILTERS.startDate });
     fetchCategories();
   }, []);
 
@@ -54,20 +58,35 @@ export default function Events() {
       setLoading(true);
       setError(null);
 
-      // Build query parameters
+      const combinedFilters = { ...DEFAULT_FILTERS, ...filters, ...filterParams };
+
       const params = {
         status: 'approved',
         page: 0,
-        size: 50,
-        ...filterParams
+        size: 50
       };
 
-      // Convert dates to ISO string format
-      if (filterParams.startDate) {
-        params.startDate = filterParams.startDate.toISOString();
+      if (combinedFilters.search) {
+        params.search = combinedFilters.search;
       }
-      if (filterParams.endDate) {
-        params.endDate = filterParams.endDate.toISOString();
+      if (combinedFilters.category) {
+        params.category = combinedFilters.category;
+      }
+      if (combinedFilters.location) {
+        params.location = combinedFilters.location;
+      }
+      if (combinedFilters.organizerName) {
+        params.organizerName = combinedFilters.organizerName;
+      }
+      if (combinedFilters.timeStatus) {
+        params.timeStatus = combinedFilters.timeStatus;
+      }
+
+      if (combinedFilters.startDate) {
+        params.startDate = formatDateParam(combinedFilters.startDate);
+      }
+      if (combinedFilters.endDate) {
+        params.endDate = formatDateParam(combinedFilters.endDate);
       }
 
       const response = await eventApi.getAll(params);
@@ -78,6 +97,16 @@ export default function Events() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const formatDateParam = (value) => {
+    if (!value) return value;
+    if (value instanceof Date) {
+      const iso = value.toISOString();
+      return iso.slice(0, 19); // remove milliseconds and timezone Z
+    }
+    // assume string already in correct format
+    return value;
   };
 
   const fetchCategories = async () => {
@@ -110,17 +139,12 @@ export default function Events() {
   };
 
   const clearFilters = () => {
-    setFilters({
-      search: '',
-      category: '',
-      location: '',
-      startDate: null,
-      endDate: null
-    });
-    fetchEvents();
+    const reset = { ...DEFAULT_FILTERS };
+    setFilters(reset);
+    fetchEvents(reset);
   };
 
-  const hasActiveFilters = Object.values(filters).some(value => value && value !== '');
+  const hasActiveFilters = Object.entries(filters).some(([, value]) => value && value !== '');
 
   if (loading) {
     return (
@@ -210,6 +234,32 @@ export default function Events() {
                 />
               </Grid>
 
+              <Grid size={{xs: 12, md: 6}}>
+                <TextField
+                    fullWidth
+                    label="Tên người tổ chức"
+                    placeholder="Nhập tên tổ chức..."
+                    value={filters.organizerName}
+                    onChange={(e) => handleFilterChange('organizerName', e.target.value)}
+                />
+              </Grid>
+
+              <Grid size={{xs: 12, md: 6}}>
+                <FormControl fullWidth>
+                  <InputLabel id="time-status-label">Trạng thái thời gian</InputLabel>
+                  <Select
+                    labelId="time-status-label"
+                    label="Trạng thái thời gian"
+                    value={filters.timeStatus}
+                    onChange={(e) => handleFilterChange('timeStatus', e.target.value)}
+                  >
+                    <MenuItem value="ongoing">Đang diễn ra</MenuItem>
+                    <MenuItem value="upcoming">Chưa diễn ra</MenuItem>
+                    <MenuItem value="ended">Đã kết thúc</MenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
+
               <Grid size={{xs: 12, md: 3}}>
                 <DatePicker
                   label="Từ ngày"
@@ -266,6 +316,13 @@ export default function Events() {
                       size="small"
                     />
                   )}
+                  {filters.organizerName && (
+                    <Chip
+                        label={`Tổ chức: ${filters.organizerName}`}
+                        onDelete={() => handleFilterChange('organizerName', '')}
+                      size="small"
+                    />
+                  )}
                   {filters.startDate && (
                     <Chip
                       label={`Từ: ${filters.startDate.toLocaleDateString('vi-VN')}`}
@@ -277,6 +334,13 @@ export default function Events() {
                     <Chip
                       label={`Đến: ${filters.endDate.toLocaleDateString('vi-VN')}`}
                       onDelete={() => handleFilterChange('endDate', null)}
+                      size="small"
+                    />
+                  )}
+                  {filters.timeStatus && (
+                    <Chip
+                      label={`Trạng thái: ${filters.timeStatus === 'ended' ? 'Đã kết thúc' : filters.timeStatus === 'upcoming' ? 'Chưa diễn ra' : 'Đang diễn ra'}`}
+                      onDelete={() => handleFilterChange('timeStatus', '')}
                       size="small"
                     />
                   )}

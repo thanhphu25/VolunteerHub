@@ -1,6 +1,6 @@
 // src/pages/EventDetail.jsx
 import React, {useEffect, useState} from "react";
-import {Link as RouterLink, useParams} from "react-router-dom";
+import {Link as RouterLink, useNavigate, useParams} from "react-router-dom";
 import {
   Alert,
   Box,
@@ -9,9 +9,15 @@ import {
   Chip,
   CircularProgress,
   Container,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   Divider,
   Grid,
   Paper,
+  Stack,
+  TextField,
   Typography,
 } from "@mui/material";
 import {
@@ -29,15 +35,25 @@ import eventApi from "../api/eventApi";
 import registrationApi from "../api/registrationApi"; // 1. Import registrationApi
 import {useAuth} from "../context/AuthContext";
 import {toast} from "react-toastify";
+import EventDiscussion from "../components/EventDiscussion";
+import profileApi from "../api/profileApi";
 
 export default function EventDetail() {
   const {eventId} = useParams();
+  const navigate = useNavigate();
   const [event, setEvent] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isRegistering, setIsRegistering] = useState(false); // Trạng thái đang đăng ký
   const [isCancelling, setIsCancelling] = useState(false); // Trạng thái đang hủy đăng ký
   const [registration, setRegistration] = useState(null); // Lưu toàn bộ thông tin đăng ký
+  const [lastRegistrationStatus, setLastRegistrationStatus] = useState(null);
+  const [followingOrganizer, setFollowingOrganizer] = useState(false);
+  const [followLoading, setFollowLoading] = useState(false);
+  const [approving, setApproving] = useState(false);
+  const [rejecting, setRejecting] = useState(false);
+  const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
+  const [rejectReason, setRejectReason] = useState("");
   const {user} = useAuth();
 
   const formatDate = (dateString) => {
@@ -62,17 +78,29 @@ export default function EventDetail() {
     } // Chỉ kiểm tra cho volunteer
     try {
       const response = await registrationApi.getMyRegistrationForEvent(eventId);
-      if (response.data.status === "cancelled") {
-        setRegistration(null)
-      } else setRegistration(response.data); // Lưu toàn bộ thông tin đăng ký
+      const data = response.data;
+      const status = data?.status;
+
+      if (status === 'pending' || status === 'approved') {
+        setRegistration(data);
+        setLastRegistrationStatus(status);
+      } else if (status) {
+        setRegistration(null);
+        setLastRegistrationStatus(status);
+      } else {
+        setRegistration(null);
+        setLastRegistrationStatus(null);
+      }
     } catch (err) {
       console.log("Su kien chua duoc dang ky dau babe")
       if (err.response?.status === 404) {
         // Không có đăng ký cho sự kiện này
         setRegistration(null);
+        setLastRegistrationStatus(null);
       } else {
         console.error("Lỗi khi kiểm tra đăng ký:", err);
         setRegistration(null);
+        setLastRegistrationStatus(null);
       }
     }
   };
@@ -83,11 +111,15 @@ export default function EventDetail() {
         setLoading(true);
         setError(null);
         setRegistration(null); // Reset trạng thái đăng ký khi tải lại
+        setLastRegistrationStatus(null);
         const response = await eventApi.getById(eventId);
         setEvent(response.data);
         // Sau khi có event, kiểm tra trạng thái đăng ký của user
         if (user) {
           await checkRegistration();
+          if (user.role === 'volunteer' && response.data?.organizerId) {
+            await checkFollowStatus(response.data.organizerId);
+          }
         }
       } catch (err) {
         console.error("Error fetching event detail:", err);
@@ -112,6 +144,7 @@ export default function EventDetail() {
 
       const response = await registrationApi.register(eventId, payload);
       setRegistration(response.data); // Lưu thông tin đăng ký mới
+      setLastRegistrationStatus(response.data?.status || null);
       toast.success('Đăng ký tham gia sự kiện thành công! Vui lòng chờ duyệt.');
     } catch (err) {
       console.error("Error registering for event:", err);
@@ -134,6 +167,7 @@ export default function EventDetail() {
     try {
       await registrationApi.cancel(eventId, registration.id);
       setRegistration(null); // Xóa thông tin đăng ký
+      setLastRegistrationStatus('cancelled');
       toast.success('Hủy đăng ký thành công!');
     } catch (err) {
       console.error("Error cancelling registration:", err);
@@ -141,6 +175,40 @@ export default function EventDetail() {
           || 'Hủy đăng ký thất bại. Vui lòng thử lại sau.');
     } finally {
       setIsCancelling(false);
+    }
+  };
+
+  const checkFollowStatus = async (organizerId) => {
+    try {
+      setFollowLoading(true);
+      const res = await profileApi.getFollowedOrganizers();
+      const organizers = res.data ?? [];
+      setFollowingOrganizer(organizers.some(item => item.organizerId === organizerId));
+    } catch (err) {
+      console.error("Failed to load follow status", err);
+    } finally {
+      setFollowLoading(false);
+    }
+  };
+
+  const handleToggleFollow = async () => {
+    if (!event?.organizerId) return;
+    try {
+      setFollowLoading(true);
+      if (followingOrganizer) {
+        await profileApi.unfollowOrganizer(event.organizerId);
+        setFollowingOrganizer(false);
+        toast.success("Đã hủy theo dõi tổ chức này");
+      } else {
+        await profileApi.followOrganizer(event.organizerId);
+        setFollowingOrganizer(true);
+        toast.success("Đã theo dõi tổ chức này");
+      }
+    } catch (err) {
+      console.error("Failed to toggle follow", err);
+      toast.error(err.response?.data?.error || "Không thể cập nhật theo dõi");
+    } finally {
+      setFollowLoading(false);
     }
   };
 
@@ -181,6 +249,7 @@ export default function EventDetail() {
   const canRegister = event.status === 'approved' && (!event.maxVolunteers
       || (event.currentVolunteers || 0) < event.maxVolunteers);
   const eventEnded = event.endDate && new Date(event.endDate) < new Date();
+  const isAdmin = user?.role === 'admin';
 
   return (
       <Container maxWidth="lg" sx={{py: 4}}>
@@ -228,22 +297,36 @@ export default function EventDetail() {
               <PersonIcon sx={{mr: 1}}/>
               <Typography variant="body1">Tổ chức bởi: {event.organizerName
                   || 'N/A'}</Typography>
+              {isVolunteer && event.organizerId && (
+                  <Button
+                      variant={followingOrganizer ? "outlined" : "contained"}
+                      color={followingOrganizer ? "secondary" : "primary"}
+                      size="small"
+                      sx={{ml: 2}}
+                      onClick={handleToggleFollow}
+                      disabled={followLoading}
+                  >
+                    {followingOrganizer ? 'Hủy theo dõi' : 'Theo dõi tổ chức'}
+                  </Button>
+              )}
             </Grid>
-            {event.maxVolunteers != null && ( // Check cả null/undefined
-                <Grid size={{xs: 12, md: 4}}
-                      sx={{display: 'flex', alignItems: 'center'}}>
-                  <PeopleIcon sx={{mr: 1}}/>
-                  <Typography variant="body1"
-                              color={(event.currentVolunteers || 0)
-                              >= event.maxVolunteers ? 'error'
-                                  : 'text.secondary'}>
-                    Số lượng: {event.currentVolunteers
-                      || 0} / {event.maxVolunteers} tình nguyện viên
-                    {(event.currentVolunteers || 0) >= event.maxVolunteers
-                        && " (Đã đủ)"}
-                  </Typography>
-                </Grid>
-            )}
+            <Grid size={{xs: 12, md: 4}}
+                  sx={{display: 'flex', alignItems: 'center'}}>
+              <PeopleIcon sx={{mr: 1}}/>
+              <Typography variant="body1"
+                          color={event.maxVolunteers != null && (event.currentVolunteers || 0)
+                          >= event.maxVolunteers ? 'error'
+                              : 'text.secondary'}>
+                {event.maxVolunteers != null ? (
+                    <>
+                      Số lượng: {event.currentVolunteers || 0} / {event.maxVolunteers} tình nguyện viên
+                      {(event.currentVolunteers || 0) >= event.maxVolunteers && " (Đã đủ)"}
+                    </>
+                ) : (
+                    <>Đã có {event.currentVolunteers || 0} tình nguyện viên đăng ký</>
+                )}
+              </Typography>
+            </Grid>
             {/* Hiển thị trạng thái sự kiện */}
             <Grid size={{xs: 12, md: 4}}
                   sx={{display: 'flex', alignItems: 'center'}}>
@@ -336,6 +419,12 @@ export default function EventDetail() {
                     </Box>
                 ) : ( // Nếu chưa đăng ký
                     canRegister ? ( // Và sự kiện còn chỗ, đã duyệt
+                        <>
+                          {lastRegistrationStatus === 'rejected' && (
+                              <Alert severity="warning" sx={{mb: 2}}>
+                                Yêu cầu tham gia trước đó đã bị từ chối. Bạn có thể đăng ký lại cho sự kiện này.
+                              </Alert>
+                          )}
                         <Button
                             variant="contained"
                             color="primary"
@@ -345,6 +434,7 @@ export default function EventDetail() {
                         >
                           {isRegistering ? 'Đang xử lý...' : 'Đăng ký tham gia'}
                         </Button>
+                        </>
                     ) : ( // Nếu hết chỗ hoặc chưa duyệt
                         <Button variant="contained" color="inherit" size="large"
                                 disabled>
@@ -360,6 +450,52 @@ export default function EventDetail() {
                 thúc.</Alert>
           )}
 
+          {isAdmin && (
+              <Box sx={{mt: 4, display: 'flex', gap: 2, flexWrap: 'wrap'}}>
+                {event.status === 'pending' && (
+                    <>
+                      <Button
+                          variant="contained"
+                          color="success"
+                          onClick={async () => {
+                            setApproving(true);
+                            try {
+                              const res = await eventApi.approve(eventId);
+                              setEvent(res.data);
+                              toast.success('Đã duyệt sự kiện');
+                            } catch (err) {
+                              console.error('Approve event failed', err);
+                              toast.error(err.response?.data?.error || 'Không thể duyệt sự kiện');
+                            } finally {
+                              setApproving(false);
+                            }
+                          }}
+                          disabled={approving || rejecting}
+                      >
+                        {approving ? 'Đang duyệt...' : 'Duyệt'}
+                      </Button>
+
+                      <Button
+                          variant="outlined"
+                          color="error"
+                          onClick={() => {
+                            setRejectReason("");
+                            setRejectDialogOpen(true);
+                          }}
+                          disabled={approving || rejecting}
+                      >
+                        Từ chối
+                      </Button>
+                    </>
+                )}
+              </Box>
+          )}
+
+
+          {event.status === 'approved' && (
+              <EventDiscussion eventId={eventId} event={event} registration={registration}/>
+          )}
+
 
           {/* Nút quay lại */}
           <Box sx={{mt: 4}}>
@@ -368,6 +504,49 @@ export default function EventDetail() {
             </Button>
           </Box>
         </Paper>
+
+        <Dialog open={rejectDialogOpen} onClose={() => setRejectDialogOpen(false)} fullWidth maxWidth="sm">
+          <DialogTitle>Từ chối sự kiện</DialogTitle>
+          <DialogContent dividers>
+            <Stack spacing={2} sx={{mt: 1}}>
+              <Typography variant="body2" color="text.secondary">
+                Vui lòng nhập lý do từ chối để thông báo tới tổ chức.
+              </Typography>
+              <TextField
+                  label="Lý do từ chối"
+                  value={rejectReason}
+                  onChange={(e) => setRejectReason(e.target.value)}
+                  multiline
+                  minRows={3}
+                  fullWidth
+              />
+            </Stack>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setRejectDialogOpen(false)}>Hủy</Button>
+            <Button
+                variant="contained"
+                color="error"
+                disabled={!rejectReason.trim() || rejecting}
+                onClick={async () => {
+                  setRejecting(true);
+                  try {
+                    const res = await eventApi.reject(eventId, {reason: rejectReason.trim()});
+                    setEvent(res.data);
+                    toast.info('Đã từ chối sự kiện');
+                    setRejectDialogOpen(false);
+                  } catch (err) {
+                    console.error('Reject event failed', err);
+                    toast.error(err.response?.data?.error || 'Không thể từ chối sự kiện');
+                  } finally {
+                    setRejecting(false);
+                  }
+                }}
+            >
+              {rejecting ? 'Đang xử lý...' : 'Từ chối sự kiện'}
+            </Button>
+          </DialogActions>
+        </Dialog>
       </Container>
   );
 }

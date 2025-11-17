@@ -25,6 +25,11 @@ public class DataInitializer implements ApplicationRunner {
         createIfNotExists("chuduc@trinhai.com", "Chu Duc Trinh", "admin", "12345678");
         createIfNotExists("org1@vh.test", "Organizer One", "organizer", "Org123456!");
         createIfNotExists("vol1@vh.test", "Volunteer One", "volunteer", "Vol123456!");
+        createIfNotExists("admin@test.com", "Admin User", "admin", "12345678");
+        createIfNotExists("org1@test.com", "organizer 1", "organizer", "12346578");
+        createIfNotExists("org2@test.com", "organizer 2", "organizer", "12346578");
+        createIfNotExists("user1@test.com", "volunteer 1", "volunteer", "12346578");
+        createIfNotExists("user2@test.com", "volunteer 2", "volunteer", "12346578");
     }
 
     private void createIfNotExists(String email, String fullName, String roleName, String rawPassword) {

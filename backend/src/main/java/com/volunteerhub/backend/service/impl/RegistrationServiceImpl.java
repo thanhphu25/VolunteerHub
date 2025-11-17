@@ -94,6 +94,7 @@ public class RegistrationServiceImpl implements IRegistrationService {
                 existing.setNote(req.getNote()); // Update with new note
                 
                 RegistrationEntity saved = regRepo.save(existing);
+                notifyOrganizerOfNewRegistration(event, volunteer);
                 return mapper.toResponse(saved);
             }
         }
@@ -106,6 +107,7 @@ public class RegistrationServiceImpl implements IRegistrationService {
         r.setRegisteredAt(LocalDateTime.now());
 
         RegistrationEntity saved = regRepo.save(r);
+        notifyOrganizerOfNewRegistration(event, volunteer);
         return mapper.toResponse(saved);
     }
 
@@ -160,24 +162,28 @@ public class RegistrationServiceImpl implements IRegistrationService {
             EventEntity event = eventRepo.findById(eventId)
                 .orElseThrow(() -> new IllegalArgumentException("Event not found"));
             
-            if (event.getIsDeleted()) {
+            if (Boolean.TRUE.equals(event.getIsDeleted())) {
                 throw new IllegalArgumentException("Event not found");
             }
             
             // Try the simple query first
             Optional<RegistrationEntity> registrationOpt = regRepo.findByEventIdAndVolunteerIdSimple(eventId, user.getId());
             
-            if (registrationOpt.isPresent()) {
-                RegistrationEntity registration = registrationOpt.get();
-                // Manually fetch the related entities to avoid lazy loading issues
-                registration.getEvent().getName(); // Trigger lazy loading
-                registration.getVolunteer().getFullName(); // Trigger lazy loading
-                registration.getVolunteer().getEmail(); // Trigger lazy loading
-                
-                return mapper.toResponse(registration);
+            if (registrationOpt.isEmpty()) {
+                return null;
             }
             
-            return null;
+            RegistrationEntity registration = registrationOpt.get();
+            // Manually fetch the related entities to avoid lazy loading issues
+            registration.getEvent().getName(); // Trigger lazy loading
+            registration.getVolunteer().getFullName(); // Trigger lazy loading
+            registration.getVolunteer().getEmail(); // Trigger lazy loading
+            
+            return mapper.toResponse(registration);
+        } catch (IllegalArgumentException iae) {
+            throw iae;
+        } catch (SecurityException se) {
+            throw se;
         } catch (Exception e) {
             // Log the error for debugging
             System.err.println("Error in getRegistrationByEventAndVolunteer: " + e.getMessage());
@@ -233,6 +239,30 @@ public class RegistrationServiceImpl implements IRegistrationService {
         reg.setStatus(RegistrationEntity.RegistrationStatus.rejected);
         reg.setApprovedAt(LocalDateTime.now()); // set as processed
         RegistrationEntity saved = regRepo.save(reg);
+
+        try {
+            EventEntity event = reg.getEvent();
+            UserEntity volunteer = reg.getVolunteer();
+            if (event != null && volunteer != null && volunteer.getId() != null) {
+                String eventName = event.getName() != null ? event.getName() : "sự kiện";
+                String title = "Đăng ký bị từ chối";
+                String message = "Yêu cầu tham gia sự kiện \"" + eventName + "\" đã bị từ chối.";
+                String payload = event.getId() != null
+                        ? String.format("{\"eventId\":%d}", event.getId())
+                        : null;
+                String link = "/events/" + event.getId();
+                notificationService.createNotification(
+                        volunteer.getId(),
+                        "volunteer:registration_rejected",
+                        title,
+                        message,
+                        payload,
+                        link
+                );
+            }
+        } catch (Exception ex) {
+            // ignore notification failures to keep rejection flow working
+        }
         return mapper.toResponse(saved);
     }
 
@@ -246,5 +276,38 @@ public class RegistrationServiceImpl implements IRegistrationService {
         reg.setCompletionNote(completionNote);
         RegistrationEntity saved = regRepo.save(reg);
         return mapper.toResponse(saved);
+    }
+
+    private void notifyOrganizerOfNewRegistration(EventEntity event, UserEntity volunteer) {
+        try {
+            if (event.getOrganizer() == null || event.getOrganizer().getId() == null) {
+                return;
+            }
+
+            Long organizerId = event.getOrganizer().getId();
+            if (volunteer != null && organizerId.equals(volunteer.getId())) {
+                return;
+            }
+
+            String volunteerName = (volunteer != null && volunteer.getFullName() != null)
+                    ? volunteer.getFullName()
+                    : "Một tình nguyện viên";
+            String eventName = event.getName() != null ? event.getName() : "sự kiện";
+            String payload = event.getId() != null
+                    ? String.format("{\"eventId\":%d}", event.getId())
+                    : null;
+            String link = "/organizer/events/" + event.getId() + "/registrations";
+
+            notificationService.createNotification(
+                    organizerId,
+                    "organizer:new_registration",
+                    "Đăng ký mới cho sự kiện",
+                    volunteerName + " đã đăng ký tham gia \"" + eventName + "\".",
+                    payload,
+                    link
+            );
+        } catch (Exception ex) {
+            // ignore notification failure to keep registration flow working
+        }
     }
 }
