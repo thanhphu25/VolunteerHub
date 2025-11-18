@@ -79,7 +79,6 @@ function NavBar() {
   }
 
   return (
-<<<<<<< HEAD
       <AppBar position="static" color="primary">
         <Toolbar sx={{display: "flex", justifyContent: "space-between"}}>
           {/* Logo / Tên ứng dụng */}
@@ -165,25 +164,6 @@ function NavBar() {
                 color="inherit"
                 onClick={toggleColorMode}
                 title="Chuyển giao diện sáng / tối"
-=======
-      <AppBar position="static">
-        <Container maxWidth="xl">
-          <Toolbar disableGutters>
-            {/* Logo */}
-            <Typography
-                variant="h6"
-                noWrap
-                component={RouterLink} // Sử dụng RouterLink
-                to="/"
-                sx={{
-                  mr: 2,
-                  display: {xs: 'none', md: 'flex'},
-                  fontWeight: 700,
-                  letterSpacing: '.1rem',
-                  color: 'inherit',
-                  textDecoration: 'none',
-                }}
->>>>>>> 1286da8984a757a7f5cc2d2584c7260109721118
             >
               🌿 VolunteerHub
             </Typography>

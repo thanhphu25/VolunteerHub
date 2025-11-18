@@ -79,7 +79,6 @@ export default function EventDetail() {
     } // Chỉ kiểm tra cho volunteer
     try {
       const response = await registrationApi.getMyRegistrationForEvent(eventId);
-<<<<<<< HEAD
       const data = response.data;
       const status = data?.status;
 
@@ -93,13 +92,6 @@ export default function EventDetail() {
         setRegistration(null);
         setLastRegistrationStatus(null);
       }
-=======
-      if (response.data.status === "cancelled") {
-        setRegistration(null)
-      } else {
-        setRegistration(response.data);
-      } // Lưu toàn bộ thông tin đăng ký
->>>>>>> 1286da8984a757a7f5cc2d2584c7260109721118
     } catch (err) {
       console.log("Su kien chua duoc dang ky dau babe")
       if (err.response?.status === 404) {
