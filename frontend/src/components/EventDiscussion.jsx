@@ -61,7 +61,7 @@ export default function EventDiscussion({eventId, event, registration}) {
   const [expandedPosts, setExpandedPosts] = useState([]);
   const [commentsMap, setCommentsMap] = useState({}); // postId -> { items: [], loading: false }
   const [commentDrafts, setCommentDrafts] = useState({});
-  const [likingMap, setLikingMap] = useState({}); // postId -> boolean (true if liked in this session)
+  const [likingMap, setLikingMap] = useState({}); // postId -> boolean (tracks optimistic updates)
 
   const currentPage = postsPage.number ?? 0;
   const totalPages = postsPage.totalPages ?? 0;
@@ -88,6 +88,19 @@ export default function EventDiscussion({eventId, event, registration}) {
     setCommentDrafts({});
     setLikingMap({});
   }, [eventId, loadPosts]);
+
+  // Update likingMap when posts are loaded to reflect server state
+  useEffect(() => {
+    if (postsPage.content) {
+      const newLikingMap = {};
+      postsPage.content.forEach(post => {
+        if (post.isLiked !== undefined) {
+          newLikingMap[post.id] = post.isLiked;
+        }
+      });
+      setLikingMap(prev => ({...prev, ...newLikingMap}));
+    }
+  }, [postsPage.content]);
 
   const isAuthenticated = Boolean(user);
 
@@ -210,17 +223,24 @@ export default function EventDiscussion({eventId, event, registration}) {
       toast.warn('Chỉ tình nguyện viên đã được duyệt, người tổ chức hoặc quản trị viên mới có thể thích bài viết.');
       return;
     }
-    const currentlyLiked = likingMap[postId] ?? false;
+    // Get current like state from post data or optimistic state
+    const post = postsPage.content?.find(p => p.id === postId);
+    const currentlyLiked = likingMap[postId] ?? post?.isLiked ?? false;
+    
+    // Optimistic update
     setLikingMap(prev => ({...prev, [postId]: !currentlyLiked}));
+    
     try {
       if (currentlyLiked) {
         await postApi.unlikePost(postId);
       } else {
         await postApi.likePost(postId);
       }
+      // Reload posts to get updated like count and state
       await loadPosts(currentPage);
     } catch (err) {
       console.error('Failed to toggle like', err);
+      // Revert optimistic update on error
       setLikingMap(prev => ({...prev, [postId]: currentlyLiked}));
       toast.error(err.response?.data?.error || 'Không thể cập nhật lượt thích.');
     }
@@ -236,12 +256,24 @@ export default function EventDiscussion({eventId, event, registration}) {
     const draft = commentDrafts[postId] ?? '';
     const isExpanded = expandedPosts.includes(postId);
     const isSubmittingComment = Boolean(commentsState.submitting);
-    const liked = likingMap[postId] ?? false;
+    // Use optimistic state if available, otherwise use server state
+    const liked = likingMap[postId] ?? post.isLiked ?? false;
 
     return (
         <Card key={postId} sx={{mb: 3}}>
           <CardHeader
-              avatar={<Avatar>{post.userName?.charAt(0)?.toUpperCase() ?? '?'}</Avatar>}
+              avatar={
+                <Avatar 
+                  alt={post.userName || 'User'}
+                  src={post.userAvatarUrl ? (
+                    post.userAvatarUrl.startsWith('http') 
+                      ? post.userAvatarUrl 
+                      : `http://localhost:8080${post.userAvatarUrl}`
+                  ) : undefined}
+                >
+                  {post.userName?.charAt(0)?.toUpperCase() ?? '?'}
+                </Avatar>
+              }
               title={post.userName || 'Người dùng'}
               subheader={formatDateTime(post.createdAt)}
           />
@@ -282,15 +314,28 @@ export default function EventDiscussion({eventId, event, registration}) {
               ) : (
                   <Stack spacing={2}>
                     {(commentsState.items ?? []).map(comment => (
-                        <Box key={comment.id}>
-                          <Typography variant="subtitle2">{comment.userName}</Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            {formatDateTime(comment.createdAt)}
-                          </Typography>
-                          <Typography variant="body2" sx={{whiteSpace: 'pre-line'}}>
-                            {comment.content}
-                          </Typography>
-                          <Divider sx={{mt: 1}}/>
+                        <Box key={comment.id} sx={{display: 'flex', gap: 1.5}}>
+                          <Avatar 
+                            alt={comment.userName || 'User'}
+                            src={comment.userAvatarUrl ? (
+                              comment.userAvatarUrl.startsWith('http') 
+                                ? comment.userAvatarUrl 
+                                : `http://localhost:8080${comment.userAvatarUrl}`
+                            ) : undefined}
+                            sx={{width: 32, height: 32}}
+                          >
+                            {comment.userName?.charAt(0)?.toUpperCase() ?? '?'}
+                          </Avatar>
+                          <Box sx={{flex: 1}}>
+                            <Typography variant="subtitle2">{comment.userName}</Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              {formatDateTime(comment.createdAt)}
+                            </Typography>
+                            <Typography variant="body2" sx={{whiteSpace: 'pre-line', mt: 0.5}}>
+                              {comment.content}
+                            </Typography>
+                            <Divider sx={{mt: 1}}/>
+                          </Box>
                         </Box>
                     ))}
                     {isAuthenticated && canParticipate && (
@@ -415,3 +460,4 @@ export default function EventDiscussion({eventId, event, registration}) {
       </Box>
   );
 }
+

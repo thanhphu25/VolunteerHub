@@ -3,12 +3,15 @@ package com.volunteerhub.backend.controller;
 import com.volunteerhub.backend.dto.PostCreateRequest;
 import com.volunteerhub.backend.dto.PostResponse;
 import com.volunteerhub.backend.entity.EventEntity;
+import com.volunteerhub.backend.entity.EventStatus;
 import com.volunteerhub.backend.entity.PostEntity;
+import com.volunteerhub.backend.entity.RegistrationEntity;
 import com.volunteerhub.backend.entity.UserEntity;
 import com.volunteerhub.backend.exception.FileValidationException;
 import com.volunteerhub.backend.mapper.PostMapper;
 import com.volunteerhub.backend.repository.EventRepository;
 import com.volunteerhub.backend.repository.PostRepository;
+import com.volunteerhub.backend.repository.RegistrationRepository;
 import com.volunteerhub.backend.repository.UserRepository;
 import com.volunteerhub.backend.service.storage.FileValidationService;
 import com.volunteerhub.backend.service.storage.StorageService;
@@ -38,19 +41,22 @@ public class PostUploadController {
     private final UserRepository userRepository;
     private final PostRepository postRepository;
     private final PostMapper postMapper;
+    private final RegistrationRepository registrationRepository;
 
     public PostUploadController(StorageService storageService,
                                 FileValidationService fileValidationService,
                                 EventRepository eventRepository,
                                 UserRepository userRepository,
                                 PostRepository postRepository,
-                                PostMapper postMapper) {
+                                PostMapper postMapper,
+                                RegistrationRepository registrationRepository) {
         this.storageService = storageService;
         this.fileValidationService = fileValidationService;
         this.eventRepository = eventRepository;
         this.userRepository = userRepository;
         this.postRepository = postRepository;
         this.postMapper = postMapper;
+        this.registrationRepository = registrationRepository;
     }
 
     // ------------------------
@@ -105,6 +111,16 @@ public class PostUploadController {
         }
         EventEntity event = eventOpt.get();
 
+        // validate event is not deleted
+        if (Boolean.TRUE.equals(event.getIsDeleted())) {
+            return ResponseEntity.status(404).body(Map.of("error", "Event not found"));
+        }
+
+        // validate event status is approved
+        if (event.getStatus() == null || event.getStatus() != EventStatus.approved) {
+            return ResponseEntity.status(403).body(Map.of("error", "Event must be approved to open posts"));
+        }
+
         // determine user id from authentication principal
         Long userId = extractUserIdFromAuth(authentication);
         if (userId == null) return ResponseEntity.status(403).body(Map.of("error", "Cannot determine user id"));
@@ -112,6 +128,11 @@ public class PostUploadController {
         Optional<UserEntity> userOpt = userRepository.findById(userId);
         if (userOpt.isEmpty()) return ResponseEntity.status(404).body(Map.of("error", "User not found"));
         UserEntity user = userOpt.get();
+
+        // validate user is participant or staff (admin, organizer, or approved volunteer)
+        if (!isParticipantOrStaff(user, event)) {
+            return ResponseEntity.status(403).body(Map.of("error", "Not allowed to post on this event"));
+        }
 
         String imageUrl = null;
         try {
@@ -163,5 +184,19 @@ public class PostUploadController {
             }
         } catch (Throwable ignored) {}
         return null;
+    }
+
+    // Check if user is allowed to post on event (admin, organizer, or approved volunteer)
+    private boolean isParticipantOrStaff(UserEntity user, EventEntity event) {
+        // admin or organizer of event allowed
+        if (user.getRole() != null && "admin".equalsIgnoreCase(user.getRole().name())) return true;
+        if (event.getOrganizer() != null && event.getOrganizer().getId().equals(user.getId())) return true;
+        // check approved registration
+        var regOpt = registrationRepository.findByEventAndVolunteer(event, user);
+        if (regOpt.isPresent()) {
+            var r = regOpt.get();
+            return r.getStatus() == RegistrationEntity.RegistrationStatus.approved;
+        }
+        return false;
     }
 }

@@ -109,12 +109,36 @@ public class PostServiceImpl implements IPostService {
     }
 
     @Override
-    public Page<PostResponse> listPosts(Long eventId, Pageable pageable) {
+    public Page<PostResponse> listPosts(Long eventId, Pageable pageable, Authentication auth) {
         EventEntity event = eventRepo.findById(eventId).orElseThrow(() -> new IllegalArgumentException("Event not found"));
+        if (Boolean.TRUE.equals(event.getIsDeleted())) {
+            throw new IllegalArgumentException("Event not found");
+        }
         if (event.getStatus() == null || event.getStatus() != EventStatus.approved) {
             throw new SecurityException("Event must be approved to view discussion");
         }
-        return postRepo.findByEventAndIsDeletedFalseOrderByCreatedAtDesc(event, pageable).map(postMapper::toResponse);
+        
+        UserEntity currentUserEntity = null;
+        if (auth != null && auth.getPrincipal() instanceof CustomUserDetails) {
+            try {
+                currentUserEntity = currentUser(auth);
+            } catch (Exception e) {
+                // User not authenticated, continue without checking likes
+            }
+        }
+        
+        final UserEntity user = currentUserEntity;
+        return postRepo.findByEventAndIsDeletedFalseOrderByCreatedAtDesc(event, pageable).map(post -> {
+            PostResponse response = postMapper.toResponse(post);
+            // Check if current user has liked this post
+            if (user != null) {
+                boolean liked = likeRepo.findByPostAndUser(post, user).isPresent();
+                response.setIsLiked(liked);
+            } else {
+                response.setIsLiked(false);
+            }
+            return response;
+        });
     }
 
     @Override

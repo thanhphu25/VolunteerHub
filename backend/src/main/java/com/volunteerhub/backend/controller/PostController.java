@@ -44,7 +44,8 @@ public class PostController {
     @GetMapping("/events/{eventId}/posts")
     public ResponseEntity<?> listPosts(@PathVariable Long eventId,
                                        @RequestParam(defaultValue = "0") int page,
-                                       @RequestParam(defaultValue = "10") int size) {
+                                       @RequestParam(defaultValue = "10") int size,
+                                       Authentication auth) {
         try {
             EventEntity event = eventRepo.findById(eventId)
                     .orElseThrow(() -> new IllegalArgumentException("Event not found"));
@@ -54,7 +55,7 @@ public class PostController {
                         .body(java.util.Map.of("error", "Discussion channel is only available for approved events"));
             }
 
-            var posts = svc.listPosts(eventId, PageRequest.of(page, size));
+            var posts = svc.listPosts(eventId, PageRequest.of(page, size), auth);
             return ResponseEntity.ok(posts);
         } catch (SecurityException ex) {
             return ResponseEntity.status(403).body(java.util.Map.of("error", ex.getMessage()));

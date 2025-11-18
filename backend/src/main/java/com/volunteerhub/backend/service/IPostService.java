@@ -13,7 +13,7 @@ import java.util.List;
 
 public interface IPostService {
     PostResponse createPost(Long eventId, PostCreateRequest req, Authentication auth);
-    Page<PostResponse> listPosts(Long eventId, Pageable pageable);
+    Page<PostResponse> listPosts(Long eventId, Pageable pageable, Authentication auth);
     CommentResponse addComment(Long postId, CommentCreateRequest req, Authentication auth);
     List<CommentResponse> listComments(Long postId);
     void likePost(Long postId, Authentication auth);

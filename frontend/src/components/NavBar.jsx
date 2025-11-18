@@ -1,9 +1,10 @@
 import React from 'react';
 // 1. Import Link as RouterLink và useNavigate từ react-router-dom
-import {Link as RouterLink, Link, useNavigate} from 'react-router-dom';
+import {Link as RouterLink, Link, useNavigate, useLocation} from 'react-router-dom';
 import {
   AppBar,
   Avatar,
+  Badge,
   Box,
   Button,
   CircularProgress,
@@ -16,11 +17,14 @@ import {
   Typography,
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
+import NotificationsIcon from '@mui/icons-material/Notifications';
 import Brightness4Icon from '@mui/icons-material/Brightness4';
 import Brightness7Icon from '@mui/icons-material/Brightness7';
 import {useAuth} from '../context/AuthContext';
 import {useThemeMode} from '../context/ThemeContext';
 import authApi from '../api/authApi';
+import notificationApi from '../api/notificationApi';
+import profileApi from '../api/profileApi';
 import {toast} from 'react-toastify';
 
 const pages = [
@@ -43,9 +47,12 @@ const adminPages = [
 function NavBar() {
   const {user, logout, loading} = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const {mode, toggleColorMode} = useThemeMode();
   const [anchorElNav, setAnchorElNav] = React.useState(null);
   const [anchorElUser, setAnchorElUser] = React.useState(null);
+  const [unreadCount, setUnreadCount] = React.useState(0);
+  const [userProfile, setUserProfile] = React.useState(null);
 
   const handleOpenNavMenu = (event) => setAnchorElNav(event.currentTarget);
   const handleOpenUserMenu = (event) => setAnchorElUser(event.currentTarget);
@@ -78,145 +85,161 @@ function NavBar() {
     roleSpecificPages = [...organizerPages, ...adminPages];
   }
 
+  // Function to fetch user profile (including avatarUrl and fullName)
+  const fetchUserProfile = React.useCallback(async () => {
+    if (!user) {
+      setUserProfile(null);
+      return;
+    }
+    try {
+      const response = await profileApi.getProfileSummary();
+      setUserProfile(response.data?.user || null);
+    } catch (error) {
+      // Silently fail - profile is optional for navbar
+      // Only log non-network errors (backend down is expected in dev)
+      if (error.code !== 'ERR_NETWORK' && error.message !== 'Network Error') {
+        console.error('Failed to fetch user profile:', error);
+      }
+    }
+  }, [user]);
+
+  // Function to fetch unread notification count
+  const fetchNotifications = React.useCallback(async () => {
+    if (!user) {
+      setUnreadCount(0);
+      return;
+    }
+    try {
+      const response = await notificationApi.list();
+      const notifications = response.data || [];
+      const unread = notifications.filter(n => !n.isRead).length;
+      setUnreadCount(unread);
+    } catch (error) {
+      // Silently fail - notifications are optional
+      // Only log non-network errors (backend down is expected in dev)
+      if (error.code !== 'ERR_NETWORK' && error.message !== 'Network Error') {
+        console.error('Failed to fetch notifications:', error);
+      }
+    }
+  }, [user]);
+
+  // Fetch user profile and notifications on mount and when user changes
+  React.useEffect(() => {
+    fetchUserProfile();
+    fetchNotifications();
+  }, [fetchUserProfile, fetchNotifications]);
+
+  // Refresh notifications when navigating away from notifications page
+  const prevLocationRef = React.useRef(location.pathname);
+  React.useEffect(() => {
+    // Only refresh if we navigated away from notifications page
+    if (prevLocationRef.current === '/notifications' && location.pathname !== '/notifications') {
+      fetchNotifications();
+    }
+    prevLocationRef.current = location.pathname;
+  }, [location.pathname, fetchNotifications]);
+
+  // Refresh notifications when window gains focus (user switches back to tab)
+  React.useEffect(() => {
+    const handleFocus = () => {
+      if (user) {
+        fetchNotifications();
+      }
+    };
+    
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, [user, fetchNotifications]);
+
+  // Auto-refresh notifications every 30 seconds
+  React.useEffect(() => {
+    if (!user) return;
+    
+    const interval = setInterval(fetchNotifications, 30000);
+    return () => clearInterval(interval);
+  }, [user, fetchNotifications]);
+
   return (
       <AppBar position="static" color="primary">
-        <Toolbar sx={{display: "flex", justifyContent: "space-between"}}>
-          {/* Logo / Tên ứng dụng */}
+        <Toolbar>
+          {/* Desktop Logo */}
           <Typography
               variant="h6"
-              component={Link}
+              noWrap
+              component={RouterLink}
               to="/"
               sx={{
-                color: "inherit",
-                textDecoration: "none",
-                fontWeight: 600,
+                mr: 2,
+                display: {xs: 'none', md: 'flex'},
+                fontWeight: 700,
+                color: 'inherit',
+                textDecoration: 'none',
               }}
           >
             Volunteer Hub
           </Typography>
 
-          {/* Menu bên phải */}
-          <Box>
-            <Button color="inherit" component={Link} to="/">
-              Trang chủ
-            </Button>
-            <Button color="inherit" component={Link} to="/events">
-              Sự kiện
-            </Button>
-
-            {!token ? (
-                <>
-                  <Button color="inherit" component={Link} to="/login">
-                    Đăng nhập
-                  </Button>
-                  <Button
-                      color="inherit"
-                      component={Link}
-                      to="/register"
-                      sx={{ml: 1}}
-                  >
-                    Đăng ký
-                  </Button>
-                </>
-            ) : (
-                <>
-                  <Button color="inherit" component={Link} to="/profile">
-                    Trang cá nhân
-                  </Button>
-
-                  <Button color="inherit" component={Link} to="/notifications">
-                    Thông báo
-                  </Button>
-                  
-                  {/* Hiển thị link Đăng ký của tôi cho Volunteers */}
-                  {user?.role === 'volunteer' && (
-                    <Button color="inherit" component={Link} to="/my-registrations">
-                      Đăng ký của tôi
-                    </Button>
-                  )}
-                  
-                  {/* Hiển thị link Quản lý sự kiện cho Organizer và Admin */}
-                  {isOrganizer() && (
-                    <Button color="inherit" component={Link} to="/organizer/events">
-                      Sự kiện của tôi
-                    </Button>
-                  )}
-                  
-                  {/* Hiển thị link Quản lý Admin chỉ cho Admin */}
-                  {/*{isAdmin() && (*/}
-                  {/*  <Button color="inherit" component={Link} to="/admin/events">*/}
-                  {/*    Quản lý Sự kiện*/}
-                  {/*  </Button>*/}
-                  {/*)}*/}
-                  
-                  <Button
-                      color="inherit"
-                      onClick={handleLogout}
-                      sx={{ml: 1, textTransform: "none"}}
-                  >
-                    Đăng xuất
-                  </Button>
-                </>
-            )}
-
-            <IconButton
-                sx={{ml: 2}}
-                color="inherit"
-                onClick={toggleColorMode}
-                title="Chuyển giao diện sáng / tối"
+          {/* Mobile Menu Icon */}
+          <Box sx={{flexGrow: 1, display: {xs: 'flex', md: 'none'}}}>
+            <IconButton size="large" onClick={handleOpenNavMenu}
+                        color="inherit">
+              <MenuIcon/>
+            </IconButton>
+            <Menu
+                anchorEl={anchorElNav}
+                anchorOrigin={{vertical: 'bottom', horizontal: 'left'}}
+                keepMounted
+                transformOrigin={{vertical: 'top', horizontal: 'left'}}
+                open={Boolean(anchorElNav)}
+                onClose={handleCloseNavMenu}
+                sx={{display: {xs: 'block', md: 'none'}}}
             >
-              🌿 VolunteerHub
-            </Typography>
-
-            {/* Mobile Menu Icon */}
-            <Box sx={{flexGrow: 1, display: {xs: 'flex', md: 'none'}}}>
-              <IconButton size="large" onClick={handleOpenNavMenu}
-                          color="inherit">
-                <MenuIcon/>
-              </IconButton>
-              <Menu
-                  anchorEl={anchorElNav}
-                  anchorOrigin={{vertical: 'bottom', horizontal: 'left'}}
-                  keepMounted
-                  transformOrigin={{vertical: 'top', horizontal: 'left'}}
-                  open={Boolean(anchorElNav)}
-                  onClose={handleCloseNavMenu}
-                  sx={{display: {xs: 'block', md: 'none'}}}
-              >
-                {[...pages, ...roleSpecificPages].map((page) => (
-                    <MenuItem key={page.name} onClick={handleCloseNavMenu}
-                              component={RouterLink}
-                              to={page.path}> {/* Sử dụng RouterLink */}
-                      <Typography textAlign="center">{page.name}</Typography>
+              {[...pages, ...roleSpecificPages].map((page) => (
+                  <MenuItem key={page.name} onClick={handleCloseNavMenu}
+                            component={RouterLink}
+                            to={page.path}>
+                    <Typography textAlign="center">{page.name}</Typography>
+                  </MenuItem>
+              ))}
+              {!user && (
+                  <>
+                    <MenuItem onClick={handleCloseNavMenu}
+                              component={RouterLink} to="/login">
+                      <Typography textAlign="center">Đăng nhập</Typography>
                     </MenuItem>
-                ))}
-              </Menu>
-            </Box>
+                    <MenuItem onClick={handleCloseNavMenu}
+                              component={RouterLink} to="/register">
+                      <Typography textAlign="center">Đăng ký</Typography>
+                    </MenuItem>
+                  </>
+              )}
+            </Menu>
+          </Box>
 
-            {/* Mobile Logo */}
-            <Typography
-                variant="h5"
-                noWrap
-                component={RouterLink}
-                to="/"
-                sx={{
-                  mr: 2,
-                  display: {xs: 'flex', md: 'none'},
-                  flexGrow: 1,
-                  fontWeight: 700,
-                  color: 'inherit',
-                  textDecoration: 'none',
-                }}
-            >
-              🌿 VH
-            </Typography>
+          {/* Mobile Logo */}
+          <Typography
+              variant="h5"
+              noWrap
+              component={RouterLink}
+              to="/"
+              sx={{
+                mr: 2,
+                display: {xs: 'flex', md: 'none'},
+                flexGrow: 1,
+                fontWeight: 700,
+                color: 'inherit',
+                textDecoration: 'none',
+              }}
+          >
+            🌿 VH
+          </Typography>
 
             {/* Desktop Menu */}
             <Box sx={{flexGrow: 1, display: {xs: 'none', md: 'flex'}}}>
               {pages.map((page) => (
                   <Button
                       key={page.name}
-                      component={RouterLink} // Sử dụng RouterLink
+                      component={RouterLink}
                       to={page.path}
                       sx={{my: 2, color: 'white', display: 'block'}}
                   >
@@ -226,7 +249,7 @@ function NavBar() {
               {roleSpecificPages.map((page) => (
                   <Button
                       key={page.name}
-                      component={RouterLink} // Sử dụng RouterLink
+                      component={RouterLink}
                       to={page.path}
                       sx={{my: 2, color: 'white', display: 'block'}}
                   >
@@ -249,11 +272,34 @@ function NavBar() {
                   <CircularProgress size={24} color="inherit" sx={{ml: 1}}/>
               ) : user ? ( // Nếu đã đăng nhập (có user)
                   <>
+                    {/* Notification Icon with Badge */}
+                    <Tooltip title="Thông báo">
+                      <IconButton
+                          color="inherit"
+                          component={RouterLink}
+                          to="/notifications"
+                          sx={{ml: 1}}
+                      >
+                        <Badge 
+                          badgeContent={unreadCount} 
+                          color="error"
+                          invisible={unreadCount === 0}
+                        >
+                          <NotificationsIcon />
+                        </Badge>
+                      </IconButton>
+                    </Tooltip>
                     <Tooltip title="Mở cài đặt">
                       <IconButton onClick={handleOpenUserMenu}
                                   sx={{p: 0, ml: 1}}>
-                        <Avatar alt={user.fullName || user.email}
-                                src={user.avatarUrl}/>
+                        <Avatar 
+                          alt={userProfile?.fullName || user?.email || 'User'}
+                          src={userProfile?.avatarUrl ? (
+                            userProfile.avatarUrl.startsWith('http') 
+                              ? userProfile.avatarUrl 
+                              : `http://localhost:8080${userProfile.avatarUrl}`
+                          ) : undefined}
+                        />
                       </IconButton>
                     </Tooltip>
                     <Menu
@@ -266,11 +312,9 @@ function NavBar() {
                         onClose={handleCloseUserMenu}
                     >
                       <MenuItem onClick={handleCloseUserMenu}
-                                component={RouterLink} to="/dashboard">
-                        <Typography textAlign="center">Bảng điều
-                          khiển</Typography>
+                                component={RouterLink} to="/profile">
+                        <Typography textAlign="center">Trang cá nhân</Typography>
                       </MenuItem>
-                      {/* Có thể thêm link Profile ở đây nếu muốn */}
                       <MenuItem onClick={handleLogout}>
                         <Typography textAlign="center">Đăng xuất</Typography>
                       </MenuItem>
@@ -290,7 +334,6 @@ function NavBar() {
               )}
             </Box>
           </Toolbar>
-        </Container>
       </AppBar>
   );
 }

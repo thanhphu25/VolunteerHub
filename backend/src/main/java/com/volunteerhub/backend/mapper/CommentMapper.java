@@ -13,6 +13,7 @@ public interface CommentMapper {
     @Mapping(target = "postId", expression = "java(entity.getPost()!=null?entity.getPost().getId():null)")
     @Mapping(target = "userId", expression = "java(entity.getUser()!=null?entity.getUser().getId():null)")
     @Mapping(target = "userName", expression = "java(entity.getUser()!=null?entity.getUser().getFullName():null)")
+    @Mapping(target = "userAvatarUrl", expression = "java(entity.getUser()!=null?entity.getUser().getAvatarUrl():null)")
     @Mapping(target = "createdAt", source = "createdAt")
     CommentResponse toResponse(PostCommentEntity entity);
 }

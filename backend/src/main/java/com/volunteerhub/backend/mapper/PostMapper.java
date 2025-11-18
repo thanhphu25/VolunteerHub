@@ -27,6 +27,7 @@ public interface PostMapper {
     @Mapping(target = "eventId", expression = "java(entity.getEvent()!=null?entity.getEvent().getId():null)")
     @Mapping(target = "userId", expression = "java(entity.getUser()!=null?entity.getUser().getId():null)")
     @Mapping(target = "userName", expression = "java(entity.getUser()!=null?entity.getUser().getFullName():null)")
+    @Mapping(target = "userAvatarUrl", expression = "java(entity.getUser()!=null?entity.getUser().getAvatarUrl():null)")
     @Mapping(target = "likesCount", source = "likesCount")
     @Mapping(target = "commentsCount", source = "commentsCount")
     @Mapping(target = "createdAt", source = "createdAt")

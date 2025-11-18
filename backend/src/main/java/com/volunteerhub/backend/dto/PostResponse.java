@@ -14,10 +14,12 @@ public class PostResponse {
     private Long eventId;
     private Long userId;
     private String userName;
+    private String userAvatarUrl;
     private String content;
     private String imageUrl;
     private Integer likesCount;
     private Integer commentsCount;
+    private Boolean isLiked;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

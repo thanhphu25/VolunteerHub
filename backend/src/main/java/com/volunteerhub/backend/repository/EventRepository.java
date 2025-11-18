@@ -43,8 +43,8 @@ public interface EventRepository extends JpaRepository<EventEntity, Long> {
            "AND (:category IS NULL OR LOWER(e.category) LIKE LOWER(CONCAT('%', :category, '%'))) " +
            "AND (:location IS NULL OR LOWER(e.location) LIKE LOWER(CONCAT('%', :location, '%'))) " +
            "AND (:organizerName IS NULL OR LOWER(e.organizer.fullName) LIKE LOWER(CONCAT('%', :organizerName, '%'))) " +
-           "AND (:search IS NULL OR LOWER(e.name) LIKE LOWER(CONCAT('%', :search, '%')) " +
-           "OR LOWER(e.description) LIKE LOWER(CONCAT('%', :search, '%'))) " +
+           "AND (:search IS NULL OR (LOWER(e.name) LIKE LOWER(CONCAT('%', :search, '%')) " +
+           "OR LOWER(e.description) LIKE LOWER(CONCAT('%', :search, '%')))) " +
            "AND (:startDate IS NULL OR e.startDate >= :startDate) " +
            "AND (:endDate IS NULL OR e.endDate <= :endDate) " +
            "AND (:timeStatus IS NULL OR (" +

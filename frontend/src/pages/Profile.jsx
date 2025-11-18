@@ -64,7 +64,10 @@ export default function Profile() {
       const response = await profileApi.getProfileSummary();
       setSummary(response.data ?? null);
     } catch (err) {
-      console.error("Failed to load profile", err);
+      // Only log non-network errors (backend down is expected in dev)
+      if (err.code !== 'ERR_NETWORK' && err.message !== 'Network Error') {
+        console.error("Failed to load profile", err);
+      }
       setError("Không thể tải thông tin hồ sơ. Vui lòng thử lại sau.");
     } finally {
       setLoading(false);
@@ -77,8 +80,14 @@ export default function Profile() {
       const response = await profileApi.getFollowedOrganizers();
       setFollowing(response.data ?? []);
     } catch (err) {
-      console.error("Failed to load following organizers", err);
-      toast.error("Không thể tải danh sách tổ chức đang theo dõi");
+      // Only log non-network errors (backend down is expected in dev)
+      if (err.code !== 'ERR_NETWORK' && err.message !== 'Network Error') {
+        console.error("Failed to load following organizers", err);
+      }
+      // Only show toast for non-network errors
+      if (err.code !== 'ERR_NETWORK' && err.message !== 'Network Error') {
+        toast.error("Không thể tải danh sách tổ chức đang theo dõi");
+      }
     } finally {
       setFollowLoading(false);
     }

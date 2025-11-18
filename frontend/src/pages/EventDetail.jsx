@@ -36,7 +36,6 @@ import registrationApi from "../api/registrationApi"; // 1. Import registrationA
 import EventDiscussion from '../components/EventDiscussion'; // Import component
 import {useAuth} from "../context/AuthContext";
 import {toast} from "react-toastify";
-import EventDiscussion from "../components/EventDiscussion";
 import profileApi from "../api/profileApi";
 
 export default function EventDetail() {
@@ -390,13 +389,6 @@ export default function EventDetail() {
                 <Typography variant="body1" paragraph>
                   {event.contactInfo}
                 </Typography>
-              </>
-          )}
-
-          {event.status === 'approved' && user && ( // Chỉ hiển thị khi sự kiện đã duyệt và user đã đăng nhập
-              <>
-                <Divider sx={{my: 3}}/>
-                <EventDiscussion eventId={event.id}/> {/* Truyền eventId vào */}
               </>
           )}
 
