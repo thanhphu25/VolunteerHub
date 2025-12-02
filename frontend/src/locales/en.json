@@ -1,0 +1,132 @@
+{
+    "nav": {
+        "home": "Home",
+        "events": "Events",
+        "myRegistrations": "My Registrations",
+        "manageEvents": "Manage Events",
+        "approveEvents": "Approve Events",
+        "manageUsers": "Manage Users",
+        "login": "Login",
+        "register": "Register",
+        "profile": "Profile",
+        "logout": "Logout",
+        "notifications": "Notifications",
+        "account": "Account"
+    },
+    "home": {
+        "hero": {
+            "title": "Helping Organizations Better Recruit, Engage, and Manage Volunteers",
+            "subtitle": "Join the largest volunteer community in Vietnam",
+            "cta": "Explore Events",
+            "ctaSecondary": "Learn More"
+        },
+        "whyChoose": {
+            "title": "Why Choose Volunteer Hub?",
+            "features": {
+                "connect": {
+                    "title": "Connect Community",
+                    "desc": "Bridge connections between people with the same passion for helping society."
+                },
+                "experience": {
+                    "title": "Experience Opportunities",
+                    "desc": "Participate in meaningful and creative real-world activities."
+                },
+                "develop": {
+                    "title": "Personal Development",
+                    "desc": "Develop teamwork, leadership, and project management skills."
+                },
+                "spread": {
+                    "title": "Spread Love",
+                    "desc": "Contribute to bringing joy and hope to those in difficult circumstances."
+                }
+            }
+        },
+        "features": {
+            "title": "Essential Features",
+            "volunteerManagement": {
+                "title": "Volunteer Management",
+                "desc": "Efficiently track and manage volunteer information"
+            },
+            "eventManagement": {
+                "title": "Event Management",
+                "desc": "Easily create and manage volunteer events"
+            },
+            "communication": {
+                "title": "Communication",
+                "desc": "Connect and communicate with the volunteer community"
+            },
+            "tracking": {
+                "title": "Hour Tracking",
+                "desc": "Accurately track and record volunteer hours"
+            }
+        },
+        "testimonials": {
+            "title": "What Our Users Say",
+            "subtitle": "Trusted by thousands of organizations"
+        },
+        "events": {
+            "title": "Featured Events",
+            "viewAll": "View All Events",
+            "noEvents": "No approved events available yet."
+        }
+    },
+    "events": {
+        "title": "Events List",
+        "filters": "Filters",
+        "search": "Search",
+        "searchPlaceholder": "Search by event name or description...",
+        "category": "Category",
+        "location": "Location",
+        "organizer": "Organizer Name",
+        "timeStatus": "Time Status",
+        "fromDate": "From Date",
+        "toDate": "To Date",
+        "apply": "Apply Filters",
+        "clear": "Clear Filters",
+        "activeFilters": "Active Filters:",
+        "noResults": "No events found matching your filters.",
+        "noEvents": "No approved events available at this time.",
+        "manage": "Manage",
+        "ongoing": "Ongoing",
+        "upcoming": "Upcoming",
+        "ended": "Ended"
+    },
+    "auth": {
+        "login": {
+            "title": "Login",
+            "email": "Email",
+            "password": "Password",
+            "submit": "Login",
+            "noAccount": "Don't have an account?",
+            "register": "Register now",
+            "showPassword": "Show password",
+            "hidePassword": "Hide password"
+        },
+        "register": {
+            "title": "Register Account",
+            "fullName": "Full Name",
+            "email": "Email",
+            "phone": "Phone Number",
+            "password": "Password",
+            "confirmPassword": "Confirm Password",
+            "role": "Role",
+            "volunteer": "Volunteer",
+            "organizer": "Organizer",
+            "admin": "Administrator",
+            "submit": "Register",
+            "showPassword": "Show password",
+            "hidePassword": "Hide password"
+        }
+    },
+    "common": {
+        "loading": "Loading...",
+        "error": "An error occurred",
+        "success": "Success",
+        "viewDetails": "View Details",
+        "edit": "Edit",
+        "delete": "Delete",
+        "cancel": "Cancel",
+        "save": "Save",
+        "close": "Close"
+    }
+}

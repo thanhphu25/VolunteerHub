@@ -11,7 +11,11 @@ import {
   ListItem,
   ListItemText,
   Paper,
-  Typography
+  Typography,
+  Card,
+  CardContent,
+  Chip,
+  Divider,
 } from "@mui/material";
 import {
   Add as AddIcon,
@@ -20,8 +24,11 @@ import {
   NotificationsOff as NotificationsOffIcon,
   PendingActions as PendingActionsIcon,
   TaskAlt as TaskAltIcon,
+  People as PeopleIcon,
+  TrendingUp as TrendingUpIcon,
 } from "@mui/icons-material";
 import {useAuth} from "../context/AuthContext";
+import {useLanguage} from "../context/LanguageContext";
 import {Link as RouterLink, useNavigate} from "react-router-dom";
 import eventApi from "../api/eventApi";
 import registrationApi from "../api/registrationApi";
@@ -33,6 +40,7 @@ import {
 
 export default function Dashboard() {
   const {user} = useAuth();
+  const {t, language} = useLanguage();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -45,7 +53,6 @@ export default function Dashboard() {
     totalUsers: 0,
   });
 
-  // ... (useCallback loadDashboardData giữ nguyên) ...
   const loadDashboardData = useCallback(async () => {
     if (!user) {
       return;
@@ -91,17 +98,16 @@ export default function Dashboard() {
       setDashboardData(data);
     } catch (err) {
       console.error("Lỗi tải dữ liệu Dashboard:", err);
-      setError("Không thể tải dữ liệu dashboard.");
+      setError(language === "vi" ? "Không thể tải dữ liệu dashboard." : "Unable to load dashboard data.");
     } finally {
       setLoading(false);
     }
-  }, [user]);
+  }, [user, language]);
 
   useEffect(() => {
     loadDashboardData();
   }, [loadDashboardData]);
 
-  // ... (Logic Push Notification: useState, useEffect, handleSubscriptionToggle giữ nguyên) ...
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [checkingSubscription, setCheckingSubscription] = useState(true);
 
@@ -137,196 +143,359 @@ export default function Dashboard() {
   };
 
   if (loading) {
-    return <Box display="flex" justifyContent="center" p={5}><CircularProgress/></Box>;
+    return (
+        <Box
+            display="flex"
+            justifyContent="center"
+            alignItems="center"
+            minHeight="50vh"
+            sx={{bgcolor: "background.default"}}
+        >
+          <CircularProgress/>
+        </Box>
+    );
   }
 
   return (
-      <Container maxWidth="lg" sx={{py: 4}}> {/* Đã import Container */}
-        <Box display="flex" justifyContent="space-between" alignItems="center"
-             mb={3}>
-          <Typography variant="h4">
-            Xin chào, {user?.fullName || "bạn"} 👋
-          </Typography>
-          {user?.role === 'organizer' && (
-              <Button
-                  variant="contained"
-                  startIcon={<AddIcon/>}
-                  onClick={() => navigate('/organizer/events')}
-              >
-                Tạo sự kiện mới
-              </Button>
-          )}
-        </Box>
-
-        {error && <Alert severity="error" sx={{mb: 2}}>{error}</Alert>}
-
-        {/* === SỬA LỖI GRID === */}
-        <Grid container spacing={3}>
-
-          {/* Cột chính: Xóa 'item', giữ 'xs' và 'md' */}
-          <Grid xs={12} md={8}> {/* <<< ĐÃ SỬA: Xóa 'item' */}
-            {/* --- Dành cho Volunteer --- */}
-            {user?.role === 'volunteer' && (
-                <Paper sx={{p: 2, mb: 3}}>
-                  <Typography variant="h6" gutterBottom>Đăng ký của
-                    bạn</Typography>
-                  {dashboardData.myActiveRegistrations.length > 0 ? (
-                      <List dense>
-                        {dashboardData.myActiveRegistrations.map(reg => (
-                            <ListItem
-                                key={reg.id}
-                                component={RouterLink}
-                                to={`/events/${reg.eventId}`}
-                                // button // <<< ĐÃ SỬA: Xóa 'button'
-                            >
-                              <ListItemText
-                                  primary={reg.eventName}
-                                  secondary={`Trạng thái: ${reg.status
-                                  === 'pending' ? 'Chờ duyệt' : 'Đã duyệt'}`}
-                              />
-                              {reg.status === 'pending' ? <PendingActionsIcon
-                                  color="warning"/> : <TaskAltIcon
-                                  color="success"/>}
-                            </ListItem>
-                        ))}
-                      </List>
-                  ) : (
-                      <Typography>Bạn chưa có đăng ký nào đang hoạt
-                        động.</Typography>
-                  )}
-                </Paper>
-            )}
-
-            {/* --- Dành cho Organizer --- */}
+      <Box sx={{bgcolor: "background.default", minHeight: "calc(100vh - 64px)", py: 4}}>
+        <Container maxWidth="lg">
+          <Box
+              display="flex"
+              justifyContent="space-between"
+              alignItems="center"
+              mb={4}
+          >
+            <Typography variant="h3" fontWeight="bold" sx={{color: "primary.main"}}>
+              {language === "vi" ? `Xin chào, ${user?.fullName || "bạn"} 👋` : `Hello, ${user?.fullName || "you"} 👋`}
+            </Typography>
             {user?.role === 'organizer' && (
-                <Paper sx={{p: 2, mb: 3}}>
-                  <Typography variant="h6" gutterBottom>Sự kiện đang chờ
-                    duyệt</Typography>
-                  {dashboardData.myPendingEvents.length > 0 ? (
-                      <List dense>
-                        {dashboardData.myPendingEvents.map(event => (
-                            <ListItem
-                                key={event.id}
-                                component={RouterLink}
-                                to={`/organizer/events`}
-                                // button // <<< ĐÃ SỬA: Xóa 'button'
-                            >
-                              <ListItemText
-                                  primary={event.name}
-                                  secondary={`Tạo lúc: ${new Date(
-                                      event.createdAt).toLocaleDateString(
-                                      'vi-VN')}`}
-                              />
-                              <PendingActionsIcon color="warning"/>
-                            </ListItem>
-                        ))}
-                      </List>
-                  ) : (
-                      <Typography>Không có sự kiện nào đang chờ
-                        duyệt.</Typography>
-                  )}
-                </Paper>
+                <Button
+                    variant="contained"
+                    startIcon={<AddIcon/>}
+                    onClick={() => navigate('/organizer/events')}
+                    sx={{
+                      borderRadius: 2,
+                      textTransform: "none",
+                      fontWeight: 600,
+                      px: 4,
+                      py: 1.5,
+                      boxShadow: "0 4px 12px rgba(2, 136, 209, 0.3)",
+                      "&:hover": {
+                        boxShadow: "0 6px 16px rgba(2, 136, 209, 0.4)",
+                        transform: "translateY(-1px)",
+                      },
+                      transition: "all 0.3s ease",
+                    }}
+                >
+                  {language === "vi" ? "Tạo sự kiện mới" : "Create New Event"}
+                </Button>
             )}
+          </Box>
 
-            {/* --- Dành cho Admin --- */}
-            {user?.role === 'admin' && (
-                <Paper sx={{p: 2, mb: 3}}>
-                  <Typography variant="h6" gutterBottom>Sự kiện cần
-                    duyệt</Typography>
-                  {dashboardData.adminPendingEvents.length > 0 ? (
-                      <List dense>
-                        {dashboardData.adminPendingEvents.map(event => (
-                            <ListItem
-                                key={event.id}
-                                component={RouterLink}
-                                to={`/admin/events`}
-                                // button // <<< ĐÃ SỬA: Xóa 'button'
-                            >
-                              <ListItemText
-                                  primary={event.name}
-                                  secondary={`Tổ chức bởi: ${event.organizerName}`}
-                              />
-                              <PendingActionsIcon color="warning"/>
-                            </ListItem>
-                        ))}
-                      </List>
-                  ) : (
-                      <Typography>Không có sự kiện nào cần duyệt.</Typography>
-                  )}
-                </Paper>
-            )}
+          {error && (
+              <Alert severity="error" sx={{mb: 3, borderRadius: 2}}>
+                {error}
+              </Alert>
+          )}
 
-            {/* Cài đặt thông báo (Giữ nguyên) */}
-            <Paper sx={{p: 2, mt: 3}}>
-              <Typography variant="h6" gutterBottom>
-                Thông báo đẩy (Push Notification)
-              </Typography>
-              {/* ... (Code nút Bật/Tắt thông báo giữ nguyên) ... */}
-              <Button
-                  variant="contained"
-                  onClick={handleSubscriptionToggle}
-                  disabled={checkingSubscription || !('serviceWorker'
-                      in navigator) || !('PushManager' in window)}
-                  startIcon={isSubscribed ? <NotificationsOffIcon/> :
-                      <NotificationsIcon/>}
-                  color={isSubscribed ? 'warning' : 'primary'}
-              >
-                {checkingSubscription
-                    ? 'Đang kiểm tra...'
-                    : (isSubscribed ? 'Tắt thông báo' : 'Bật thông báo')}
-              </Button>
-            </Paper>
-          </Grid>
-
-          {/* Cột phụ: Xóa 'item', giữ 'xs' và 'md' */}
-          <Grid xs={12} md={4}> {/* <<< ĐÃ SỬA: Xóa 'item' */}
-            {/* Thống kê nhanh (Admin) */}
-            {user?.role === 'admin' && (
-                <Paper sx={{p: 2, mb: 3}}>
-                  {/* ... (Code thống kê admin giữ nguyên) ... */}
-                </Paper>
-            )}
-
-            {/* Sự kiện mới công bố (Chung) */}
-            <Paper sx={{p: 2}}>
-              <Typography variant="h6" gutterBottom>Sự kiện mới</Typography>
-              {dashboardData.newlyApprovedEvents.length > 0 ? (
-                  <Box>
-                    {dashboardData.newlyApprovedEvents.map(event => (
-                        <Paper key={event.id} sx={{p: 1.5, mb: 1.5}}
-                               variant="outlined">
-                          <Typography
-                              variant="subtitle2"
-                              fontWeight="bold"
-                              component={RouterLink} // Đây là Link, không phải ListItem
-                              to={`/events/${event.id}`}
-                              sx={{
-                                textDecoration: 'none',
-                                color: 'text.primary'
-                              }}
-                          >
-                            {event.name}
-                          </Typography>
-                          <Typography variant="caption" display="block"
-                                      color="text.secondary">
-                            <EventIcon sx={{
-                              fontSize: 14,
-                              verticalAlign: 'middle',
-                              mr: 0.5
-                            }}/>
-                            {event.category} | {event.location}
-                          </Typography>
-                        </Paper>
-                    ))}
-                  </Box>
-              ) : (
-                  <Typography variant="body2" color="text.secondary">Hiện chưa
-                    có sự kiện nào mới.</Typography>
+          <Grid container spacing={3}>
+            {/* Main Column */}
+            <Grid item xs={12} md={8}>
+              {/* Volunteer Section */}
+              {user?.role === 'volunteer' && (
+                  <Paper
+                      elevation={0}
+                      sx={{
+                        p: 4,
+                        mb: 3,
+                        borderRadius: 3,
+                        border: "1px solid",
+                        borderColor: "divider",
+                        boxShadow: "0 4px 16px rgba(0,0,0,0.05)",
+                      }}
+                  >
+                    <Typography variant="h5" fontWeight="bold" gutterBottom sx={{mb: 3, color: "primary.main"}}>
+                      {language === "vi" ? "Đăng ký của bạn" : "Your Registrations"}
+                    </Typography>
+                    {dashboardData.myActiveRegistrations.length > 0 ? (
+                        <List>
+                          {dashboardData.myActiveRegistrations.map((reg, index) => (
+                              <React.Fragment key={reg.id}>
+                                <ListItem
+                                    component={RouterLink}
+                                    to={`/events/${reg.eventId}`}
+                                    sx={{
+                                      borderRadius: 2,
+                                      mb: 1,
+                                      "&:hover": {
+                                        bgcolor: "action.hover",
+                                      },
+                                      transition: "all 0.2s ease",
+                                    }}
+                                >
+                                  <ListItemText
+                                      primary={reg.eventName}
+                                      secondary={language === "vi" 
+                                        ? `Trạng thái: ${reg.status === 'pending' ? 'Chờ duyệt' : 'Đã duyệt'}`
+                                        : `Status: ${reg.status === 'pending' ? 'Pending' : 'Approved'}`}
+                                  />
+                                  {reg.status === 'pending' ? (
+                                      <PendingActionsIcon color="warning"/>
+                                  ) : (
+                                      <TaskAltIcon color="success"/>
+                                  )}
+                                </ListItem>
+                                {index < dashboardData.myActiveRegistrations.length - 1 && <Divider/>}
+                              </React.Fragment>
+                          ))}
+                        </List>
+                    ) : (
+                        <Typography color="text.secondary">
+                          {language === "vi" ? "Bạn chưa có đăng ký nào đang hoạt động." : "You have no active registrations."}
+                        </Typography>
+                    )}
+                  </Paper>
               )}
-            </Paper>
-          </Grid>
 
-        </Grid>
-      </Container>
+              {/* Organizer Section */}
+              {user?.role === 'organizer' && (
+                  <Paper
+                      elevation={0}
+                      sx={{
+                        p: 4,
+                        mb: 3,
+                        borderRadius: 3,
+                        border: "1px solid",
+                        borderColor: "divider",
+                        boxShadow: "0 4px 16px rgba(0,0,0,0.05)",
+                      }}
+                  >
+                    <Typography variant="h5" fontWeight="bold" gutterBottom sx={{mb: 3, color: "primary.main"}}>
+                      {language === "vi" ? "Sự kiện đang chờ duyệt" : "Pending Events"}
+                    </Typography>
+                    {dashboardData.myPendingEvents.length > 0 ? (
+                        <List>
+                          {dashboardData.myPendingEvents.map((event, index) => (
+                              <React.Fragment key={event.id}>
+                                <ListItem
+                                    component={RouterLink}
+                                    to={`/organizer/events`}
+                                    sx={{
+                                      borderRadius: 2,
+                                      mb: 1,
+                                      "&:hover": {
+                                        bgcolor: "action.hover",
+                                      },
+                                      transition: "all 0.2s ease",
+                                    }}
+                                >
+                                  <ListItemText
+                                      primary={event.name}
+                                      secondary={language === "vi"
+                                        ? `Tạo lúc: ${new Date(event.createdAt).toLocaleDateString('vi-VN')}`
+                                        : `Created: ${new Date(event.createdAt).toLocaleDateString('en-US')}`}
+                                  />
+                                  <PendingActionsIcon color="warning"/>
+                                </ListItem>
+                                {index < dashboardData.myPendingEvents.length - 1 && <Divider/>}
+                              </React.Fragment>
+                          ))}
+                        </List>
+                    ) : (
+                        <Typography color="text.secondary">
+                          {language === "vi" ? "Không có sự kiện nào đang chờ duyệt." : "No pending events."}
+                        </Typography>
+                    )}
+                  </Paper>
+              )}
+
+              {/* Admin Section */}
+              {user?.role === 'admin' && (
+                  <Paper
+                      elevation={0}
+                      sx={{
+                        p: 4,
+                        mb: 3,
+                        borderRadius: 3,
+                        border: "1px solid",
+                        borderColor: "divider",
+                        boxShadow: "0 4px 16px rgba(0,0,0,0.05)",
+                      }}
+                  >
+                    <Typography variant="h5" fontWeight="bold" gutterBottom sx={{mb: 3, color: "primary.main"}}>
+                      {language === "vi" ? "Sự kiện cần duyệt" : "Events Pending Approval"}
+                    </Typography>
+                    {dashboardData.adminPendingEvents.length > 0 ? (
+                        <List>
+                          {dashboardData.adminPendingEvents.map((event, index) => (
+                              <React.Fragment key={event.id}>
+                                <ListItem
+                                    component={RouterLink}
+                                    to={`/admin/events`}
+                                    sx={{
+                                      borderRadius: 2,
+                                      mb: 1,
+                                      "&:hover": {
+                                        bgcolor: "action.hover",
+                                      },
+                                      transition: "all 0.2s ease",
+                                    }}
+                                >
+                                  <ListItemText
+                                      primary={event.name}
+                                      secondary={language === "vi"
+                                        ? `Tổ chức bởi: ${event.organizerName}`
+                                        : `Organized by: ${event.organizerName}`}
+                                  />
+                                  <PendingActionsIcon color="warning"/>
+                                </ListItem>
+                                {index < dashboardData.adminPendingEvents.length - 1 && <Divider/>}
+                              </React.Fragment>
+                          ))}
+                        </List>
+                    ) : (
+                        <Typography color="text.secondary">
+                          {language === "vi" ? "Không có sự kiện nào cần duyệt." : "No events pending approval."}
+                        </Typography>
+                    )}
+                  </Paper>
+              )}
+
+              {/* Push Notification Settings */}
+              <Paper
+                  elevation={0}
+                  sx={{
+                    p: 4,
+                    mt: 3,
+                    borderRadius: 3,
+                    border: "1px solid",
+                    borderColor: "divider",
+                    boxShadow: "0 4px 16px rgba(0,0,0,0.05)",
+                  }}
+              >
+                <Typography variant="h5" fontWeight="bold" gutterBottom sx={{mb: 3, color: "primary.main"}}>
+                  {language === "vi" ? "Thông báo đẩy (Push Notification)" : "Push Notifications"}
+                </Typography>
+                <Button
+                    variant="contained"
+                    onClick={handleSubscriptionToggle}
+                    disabled={checkingSubscription || !('serviceWorker' in navigator) || !('PushManager' in window)}
+                    startIcon={isSubscribed ? <NotificationsOffIcon/> : <NotificationsIcon/>}
+                    color={isSubscribed ? 'warning' : 'primary'}
+                    sx={{
+                      borderRadius: 2,
+                      textTransform: "none",
+                      fontWeight: 600,
+                      px: 4,
+                      py: 1.5,
+                    }}
+                >
+                  {checkingSubscription
+                      ? (language === "vi" ? 'Đang kiểm tra...' : 'Checking...')
+                      : (isSubscribed
+                          ? (language === "vi" ? 'Tắt thông báo' : 'Disable Notifications')
+                          : (language === "vi" ? 'Bật thông báo' : 'Enable Notifications'))}
+                </Button>
+              </Paper>
+            </Grid>
+
+            {/* Sidebar Column */}
+            <Grid item xs={12} md={4}>
+              {/* Admin Stats */}
+              {user?.role === 'admin' && (
+                  <Card
+                      elevation={0}
+                      sx={{
+                        mb: 3,
+                        borderRadius: 3,
+                        border: "1px solid",
+                        borderColor: "divider",
+                        boxShadow: "0 4px 16px rgba(0,0,0,0.05)",
+                        background: "linear-gradient(135deg, #0288d1 0%, #00bcd4 100%)",
+                        color: "white",
+                      }}
+                  >
+                    <CardContent sx={{p: 3}}>
+                      <Box display="flex" alignItems="center" gap={2} mb={2}>
+                        <PeopleIcon sx={{fontSize: 40}}/>
+                        <Box>
+                          <Typography variant="h4" fontWeight="bold">
+                            {dashboardData.totalUsers}
+                          </Typography>
+                          <Typography variant="body2" sx={{opacity: 0.9}}>
+                            {language === "vi" ? "Tổng số người dùng" : "Total Users"}
+                          </Typography>
+                        </Box>
+                      </Box>
+                    </CardContent>
+                  </Card>
+              )}
+
+              {/* New Events */}
+              <Paper
+                  elevation={0}
+                  sx={{
+                    p: 3,
+                    borderRadius: 3,
+                    border: "1px solid",
+                    borderColor: "divider",
+                    boxShadow: "0 4px 16px rgba(0,0,0,0.05)",
+                  }}
+              >
+                <Typography variant="h6" fontWeight="bold" gutterBottom sx={{mb: 3, color: "primary.main"}}>
+                  {language === "vi" ? "Sự kiện mới" : "New Events"}
+                </Typography>
+                {dashboardData.newlyApprovedEvents.length > 0 ? (
+                    <Box>
+                      {dashboardData.newlyApprovedEvents.map((event, index) => (
+                          <React.Fragment key={event.id}>
+                            <Card
+                                component={RouterLink}
+                                to={`/events/${event.id}`}
+                                elevation={0}
+                                sx={{
+                                  p: 2,
+                                  mb: 2,
+                                  borderRadius: 2,
+                                  border: "1px solid",
+                                  borderColor: "divider",
+                                  textDecoration: "none",
+                                  transition: "all 0.2s ease",
+                                  "&:hover": {
+                                    borderColor: "primary.main",
+                                    boxShadow: "0 4px 12px rgba(2, 136, 209, 0.15)",
+                                    transform: "translateY(-2px)",
+                                  },
+                                }}
+                            >
+                              <Typography
+                                  variant="subtitle2"
+                                  fontWeight="bold"
+                                  sx={{
+                                    color: 'text.primary',
+                                    mb: 1,
+                                  }}
+                              >
+                                {event.name}
+                              </Typography>
+                              <Typography variant="caption" display="block" color="text.secondary">
+                                <EventIcon sx={{fontSize: 14, verticalAlign: 'middle', mr: 0.5}}/>
+                                {event.category} | {event.location}
+                              </Typography>
+                            </Card>
+                            {index < dashboardData.newlyApprovedEvents.length - 1 && <Divider sx={{my: 1}}/>}
+                          </React.Fragment>
+                      ))}
+                    </Box>
+                ) : (
+                    <Typography variant="body2" color="text.secondary">
+                      {language === "vi" ? "Hiện chưa có sự kiện nào mới." : "No new events available."}
+                    </Typography>
+                )}
+              </Paper>
+            </Grid>
+          </Grid>
+        </Container>
+      </Box>
   );
 }

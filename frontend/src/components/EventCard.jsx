@@ -10,9 +10,9 @@ import {
   Chip,
   Typography
 } from "@mui/material";
-import {Link as RouterLink} from "react-router-dom"; // 1. Import RouterLink
+import {Link as RouterLink} from "react-router-dom";
+import {useLanguage} from "../context/LanguageContext";
 
-// ... (phần code statusColors, statusLabels, formatDate giữ nguyên) ...
 const statusColors = {
   pending: "warning",
   approved: "success",
@@ -22,19 +22,19 @@ const statusColors = {
 };
 
 const statusLabels = {
-  pending: "Chờ duyệt",
-  approved: "Đã duyệt",
-  rejected: "Đã từ chối",
-  cancelled: "Đã hủy",
-  completed: "Hoàn thành"
+  pending: {vi: "Chờ duyệt", en: "Pending"},
+  approved: {vi: "Đã duyệt", en: "Approved"},
+  rejected: {vi: "Đã từ chối", en: "Rejected"},
+  cancelled: {vi: "Đã hủy", en: "Cancelled"},
+  completed: {vi: "Hoàn thành", en: "Completed"}
 };
 
-const formatDate = (dateString) => {
+const formatDate = (dateString, language = "vi") => {
   if (!dateString) {
     return "";
   }
   const date = new Date(dateString);
-  return date.toLocaleString('vi-VN', {
+  return date.toLocaleString(language === "vi" ? 'vi-VN' : 'en-US', {
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
@@ -54,140 +54,275 @@ export default function EventCard({
   onApprove,
   onReject
 }) {
+  const {t, language} = useLanguage();
 
   return (
-      <Card sx={{
-        mb: 2,
-        display: 'flex',
-        flexDirection: 'column',
-        height: '100%'
-      }}>
-        {/* Thêm height: '100%' để đảm bảo CardActions ở cuối */}
-        {event.imageUrl && (
-            <CardMedia
-                component="img"
-                height="400"
-                image={event.imageUrl}
-                alt={event.name}
-                sx={{objectFit: 'contain'}}
-            />
-        )}
-        {/* Thêm flexGrow: 1 để nội dung chiếm không gian còn lại */}
-        <CardContent sx={{flexGrow: 1}}>
+      <Card
+          elevation={0}
+          sx={{
+            width: '100%',
+            maxWidth: '100%',
+            mb: 0,
+            display: 'flex',
+            flexDirection: 'column',
+            height: '100%',
+            minHeight: 0,
+            borderRadius: 3,
+            border: "1px solid",
+            borderColor: "divider",
+            transition: "all 0.3s ease",
+            "&:hover": {
+              boxShadow: "0 8px 24px rgba(2, 136, 209, 0.15)",
+              transform: "translateY(-4px)",
+              borderColor: "primary.main",
+            },
+          }}
+      >
+        <Box
+            sx={{
+              width: '100%',
+              height: 480,
+              minHeight: 480,
+              overflow: 'hidden',
+              borderTopLeftRadius: 12,
+              borderTopRightRadius: 12,
+              position: 'relative',
+              bgcolor: 'grey.200',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+        >
+          {event.imageUrl ? (
+              <Box
+                  component="img"
+                  src={event.imageUrl}
+                  alt={event.name}
+                  sx={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'fill',
+                    objectPosition: 'center',
+                    display: 'block',
+                  }}
+              />
+          ) : (
+              <Box
+                  sx={{
+                    width: '100%',
+                    height: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: 'text.secondary',
+                  }}
+              >
+                {/* Placeholder khi không có ảnh */}
+              </Box>
+          )}
+        </Box>
+        <CardContent sx={{flexGrow: 1, p: 3, display: 'flex', flexDirection: 'column', minHeight: 0, width: '100%', maxWidth: '100%', overflow: 'hidden'}}>
           <Box display="flex" justifyContent="space-between"
-               alignItems="flex-start" mb={1}>
-            <Typography variant="h6" component="div" sx={{flex: 1}}>
+               alignItems="flex-start" mb={1.5}>
+            <Typography
+                variant="h6"
+                component="div"
+                sx={{
+                  flex: 1,
+                  fontWeight: 700,
+                  fontSize: "1.25rem",
+                  lineHeight: 1.3,
+                  color: "text.primary",
+                }}
+            >
               {event.name}
             </Typography>
             {showStatus && (
                 <Chip
-                    label={statusLabels[event.status] || event.status}
+                    label={statusLabels[event.status]?.[language] || event.status}
                     color={statusColors[event.status] || "default"}
                     size="small"
+                    sx={{
+                      fontWeight: 600,
+                      ml: 1,
+                    }}
                 />
             )}
           </Box>
 
           {showOrganizerName && event.organizerName && (
-              <Typography variant="caption" color="text.secondary"
-                          display="block" mb={1}>
-                👤 Người tổ chức: {event.organizerName}
+              <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  display="block"
+                  mb={1.5}
+                  sx={{
+                    fontWeight: 500,
+                  }}
+              >
+                👤 {language === "vi" ? "Người tổ chức" : "Organizer"}: {event.organizerName}
               </Typography>
           )}
 
-          {/* Rút gọn mô tả nếu quá dài */}
-          <Typography variant="body2" color="text.secondary" mb={1}
-                      sx={{
-                        display: '-webkit-box',
-                        WebkitLineClamp: 3, // Giới hạn 3 dòng
-                        WebkitBoxOrient: 'vertical',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        minHeight: '3.6em' // Đảm bảo chiều cao tối thiểu cho 3 dòng
-                      }}>
+          <Typography
+              variant="body2"
+              color="text.secondary"
+              mb={2}
+              sx={{
+                display: '-webkit-box',
+                WebkitLineClamp: 3,
+                WebkitBoxOrient: 'vertical',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                minHeight: '3.6em',
+                lineHeight: 1.6,
+              }}
+          >
             {event.description}
           </Typography>
 
-          <Typography variant="caption" display="block" sx={{mt: 1}}>
-            🏷️ {event.category}
-          </Typography>
+          <Box sx={{display: "flex", flexDirection: "column", gap: 0.75, flexGrow: 1}}>
+            <Typography variant="caption" display="block" sx={{fontWeight: 500}}>
+              🏷️ {event.category}
+            </Typography>
 
-          <Typography variant="caption" display="block">
-            📍 {event.location}
-          </Typography>
+            <Typography variant="caption" display="block" sx={{fontWeight: 500}}>
+              📍 {event.location}
+            </Typography>
 
-          <Typography variant="caption" display="block">
-            📅 {formatDate(event.startDate)} - {formatDate(event.endDate)}
-          </Typography>
+            <Typography variant="caption" display="block" sx={{fontWeight: 500}}>
+              📅 {formatDate(event.startDate, language)} - {formatDate(event.endDate, language)}
+            </Typography>
 
-          <Typography variant="caption" display="block">
-            👥 {event.currentVolunteers ?? 0}
-            {event.maxVolunteers != null
-                ? ` / ${event.maxVolunteers} tình nguyện viên`
-                : " tình nguyện viên đã đăng ký"}
-          </Typography>
+            <Typography variant="caption" display="block" sx={{fontWeight: 500}}>
+              👥 {event.currentVolunteers ?? 0}
+              {event.maxVolunteers != null
+                  ? ` / ${event.maxVolunteers} ${language === "vi" ? "tình nguyện viên" : "volunteers"}`
+                  : ` ${language === "vi" ? "tình nguyện viên đã đăng ký" : "volunteers registered"}`}
+            </Typography>
+          </Box>
         </CardContent>
 
-        <CardActions>
+        <CardActions sx={{p: 2, pt: 0, gap: 1, flexWrap: "wrap", mt: 'auto', width: '100%', maxWidth: '100%'}}>
           <Button
-              size="small"
-              variant="outlined"
-              component={RouterLink} // Sử dụng RouterLink
-              to={`/events/${event.id}`} // Link tới trang chi tiết
+              size="medium"
+              variant="contained"
+              component={RouterLink}
+              to={`/events/${event.id}`}
+              sx={{
+                borderRadius: 2,
+                textTransform: "none",
+                fontWeight: 600,
+                px: 3,
+                boxShadow: "0 2px 8px rgba(2, 136, 209, 0.2)",
+                "&:hover": {
+                  boxShadow: "0 4px 12px rgba(2, 136, 209, 0.3)",
+                },
+              }}
           >
-            Xem chi tiết
+            {t("common.viewDetails")}
           </Button>
 
-          {/* Bỏ nút Tham gia ở đây vì đã có nút Đăng ký ở trang chi tiết */}
-          {/* {!showStatus && (
-          <Button size="small" variant="contained">
-            Tham gia
-          </Button>
-        )} */}
           {showViewRegistrationsButton && (
               <Button
-                  size="small"
+                  size="medium"
                   variant="outlined"
-                  color="secondary" // Màu khác để phân biệt
+                  color="secondary"
                   component={RouterLink}
-                  to={`/organizer/events/${event.id}/registrations`} // Link tới trang quản lý đăng ký
+                  to={`/organizer/events/${event.id}/registrations`}
+                  sx={{
+                    borderRadius: 2,
+                    textTransform: "none",
+                    fontWeight: 600,
+                    px: 3,
+                  }}
               >
-                Xem đăng ký
+                {language === "vi" ? "Xem đăng ký" : "View Registrations"}
               </Button>
           )}
-          {/* Giữ nguyên các nút hành động khác */}
+
           {onEdit && (
-              <Button size="small" variant="outlined" color="primary"
-                      onClick={() => onEdit(event)}>
-                Sửa
+              <Button
+                  size="medium"
+                  variant="outlined"
+                  color="primary"
+                  onClick={() => onEdit(event)}
+                  sx={{
+                    borderRadius: 2,
+                    textTransform: "none",
+                    fontWeight: 600,
+                    px: 3,
+                  }}
+              >
+                {t("common.edit")}
               </Button>
           )}
-          {/* ... (các nút khác giữ nguyên) ... */}
+
           {onCancel && event.status === 'approved' && (
-              <Button size="small" variant="outlined" color="warning"
-                      onClick={() => onCancel(event.id)}>
-                Hủy sự kiện
+              <Button
+                  size="medium"
+                  variant="outlined"
+                  color="warning"
+                  onClick={() => onCancel(event.id)}
+                  sx={{
+                    borderRadius: 2,
+                    textTransform: "none",
+                    fontWeight: 600,
+                    px: 3,
+                  }}
+              >
+                {language === "vi" ? "Hủy sự kiện" : "Cancel Event"}
               </Button>
           )}
 
           {onApprove && event.status === 'pending' && (
-              <Button size="small" variant="contained" color="success"
-                      onClick={() => onApprove(event.id)}>
-                Duyệt
+              <Button
+                  size="medium"
+                  variant="contained"
+                  color="success"
+                  onClick={() => onApprove(event.id)}
+                  sx={{
+                    borderRadius: 2,
+                    textTransform: "none",
+                    fontWeight: 600,
+                    px: 3,
+                  }}
+              >
+                {language === "vi" ? "Duyệt" : "Approve"}
               </Button>
           )}
 
           {onReject && event.status === 'pending' && (
-              <Button size="small" variant="outlined" color="error"
-                      onClick={() => onReject(event.id)}>
-                Từ chối
+              <Button
+                  size="medium"
+                  variant="outlined"
+                  color="error"
+                  onClick={() => onReject(event.id)}
+                  sx={{
+                    borderRadius: 2,
+                    textTransform: "none",
+                    fontWeight: 600,
+                    px: 3,
+                  }}
+              >
+                {language === "vi" ? "Từ chối" : "Reject"}
               </Button>
           )}
 
           {onDelete && (
-              <Button size="small" variant="outlined" color="error"
-                      onClick={() => onDelete(event.id)}>
-                Xóa
+              <Button
+                  size="medium"
+                  variant="outlined"
+                  color="error"
+                  onClick={() => onDelete(event.id)}
+                  sx={{
+                    borderRadius: 2,
+                    textTransform: "none",
+                    fontWeight: 600,
+                    px: 3,
+                  }}
+              >
+                {t("common.delete")}
               </Button>
           )}
         </CardActions>

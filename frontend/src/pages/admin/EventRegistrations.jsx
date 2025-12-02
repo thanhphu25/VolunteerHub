@@ -25,73 +25,71 @@ import {
   CheckCircle as ApproveIcon,
 } from "@mui/icons-material";
 import registrationApi from "../../api/registrationApi";
-import eventApi from "../../api/eventApi"; // Import để lấy tên sự kiện
+import eventApi from "../../api/eventApi";
 import {toast} from "react-toastify";
-
-// Nhãn và màu cho trạng thái đăng ký
-const statusLabels = {
-  pending: "Chờ duyệt",
-  approved: "Đã duyệt",
-  rejected: "Đã từ chối",
-  cancelled: "Đã hủy",
-  completed: "Hoàn thành",
-};
-const statusColors = {
-  pending: "warning",
-  approved: "success",
-  rejected: "error",
-  cancelled: "default",
-  completed: "info",
-};
+import {useLanguage} from "../../context/LanguageContext";
 
 export default function EventRegistrations() {
   const {eventId} = useParams();
   const navigate = useNavigate();
+  const {language} = useLanguage();
   const [registrations, setRegistrations] = useState([]);
-  const [eventName, setEventName] = useState(""); // Lưu tên sự kiện
+  const [eventName, setEventName] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [updatingId, setUpdatingId] = useState(null); // ID của đăng ký đang được cập nhật
+  const [updatingId, setUpdatingId] = useState(null);
 
-  // Hàm fetch dữ liệu đăng ký
+  const statusLabels = {
+    pending: {vi: "Chờ duyệt", en: "Pending"},
+    approved: {vi: "Đã duyệt", en: "Approved"},
+    rejected: {vi: "Đã từ chối", en: "Rejected"},
+    cancelled: {vi: "Đã hủy", en: "Cancelled"},
+    completed: {vi: "Hoàn thành", en: "Completed"},
+  };
+
+  const statusColors = {
+    pending: "warning",
+    approved: "success",
+    rejected: "error",
+    cancelled: "default",
+    completed: "info",
+  };
+
   const fetchRegistrations = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
-      // Lấy tên sự kiện
       try {
         const eventRes = await eventApi.getById(eventId);
-        setEventName(eventRes.data?.name || `Sự kiện #${eventId}`);
+        setEventName(eventRes.data?.name || (language === "vi" ? `Sự kiện #${eventId}` : `Event #${eventId}`));
       } catch (eventErr) {
         console.warn("Không thể lấy tên sự kiện:", eventErr);
-        setEventName(`Sự kiện #${eventId}`);
+        setEventName(language === "vi" ? `Sự kiện #${eventId}` : `Event #${eventId}`);
       }
-      // Lấy danh sách đăng ký
       const response = await registrationApi.getRegistrationsForEvent(eventId);
       setRegistrations(response.data || []);
     } catch (err) {
       console.error("Lỗi khi tải danh sách đăng ký:", err);
-      setError("Không thể tải danh sách đăng ký. Vui lòng thử lại.");
-      toast.error("Không thể tải danh sách đăng ký.");
+      const errorMsg = language === "vi" ? "Không thể tải danh sách đăng ký. Vui lòng thử lại." : "Unable to load registrations. Please try again.";
+      setError(errorMsg);
+      toast.error(errorMsg);
     } finally {
       setLoading(false);
     }
-  }, [eventId]);
+  }, [eventId, language]);
 
   useEffect(() => {
     fetchRegistrations();
   }, [fetchRegistrations]);
 
-  // Hàm xử lý duyệt đăng ký
   const handleApprove = async (registrationId) => {
     if (updatingId) {
       return;
-    } // Ngăn chặn click nhiều lần
+    }
     setUpdatingId(registrationId);
     try {
       await registrationApi.approve(eventId, registrationId);
-      toast.success("Đã duyệt đăng ký!");
-      // Cập nhật lại danh sách hoặc chỉ cập nhật trạng thái của item này
+      toast.success(language === "vi" ? "Đã duyệt đăng ký!" : "Registration approved!");
       setRegistrations((prev) =>
           prev.map((reg) =>
               reg.id === registrationId ? {...reg, status: "approved"} : reg
@@ -99,13 +97,12 @@ export default function EventRegistrations() {
       );
     } catch (err) {
       console.error("Lỗi khi duyệt đăng ký:", err);
-      toast.error(err.response?.data?.error || "Duyệt đăng ký thất bại.");
+      toast.error(err.response?.data?.error || (language === "vi" ? "Duyệt đăng ký thất bại." : "Failed to approve registration."));
     } finally {
       setUpdatingId(null);
     }
   };
 
-  // Hàm xử lý từ chối đăng ký
   const handleReject = async (registrationId) => {
     if (updatingId) {
       return;
@@ -113,7 +110,7 @@ export default function EventRegistrations() {
     setUpdatingId(registrationId);
     try {
       await registrationApi.reject(eventId, registrationId);
-      toast.info("Đã từ chối đăng ký.");
+      toast.info(language === "vi" ? "Đã từ chối đăng ký." : "Registration rejected.");
       setRegistrations((prev) =>
           prev.map((reg) =>
               reg.id === registrationId ? {...reg, status: "rejected"} : reg
@@ -121,136 +118,159 @@ export default function EventRegistrations() {
       );
     } catch (err) {
       console.error("Lỗi khi từ chối đăng ký:", err);
-      toast.error(err.response?.data?.error || "Từ chối đăng ký thất bại.");
+      toast.error(err.response?.data?.error || (language === "vi" ? "Từ chối đăng ký thất bại." : "Failed to reject registration."));
     } finally {
       setUpdatingId(null);
     }
   };
 
-  // ----- Render UI -----
-
   if (loading) {
     return (
-        <Container>
-          <Box display="flex" justifyContent="center" alignItems="center"
-               minHeight="50vh">
-            <CircularProgress/>
-          </Box>
-        </Container>
+        <Box sx={{bgcolor: "background.default", minHeight: "calc(100vh - 64px)"}}>
+          <Container>
+            <Box display="flex" justifyContent="center" alignItems="center" minHeight="50vh">
+              <CircularProgress/>
+            </Box>
+          </Container>
+        </Box>
     );
   }
 
   if (error) {
     return (
-        <Container sx={{py: 4}}>
-          <Alert severity="error">{error}</Alert>
-          <Button
-              startIcon={<BackIcon/>}
-              onClick={() => navigate(-1)} // Quay lại trang trước đó
-              sx={{mt: 2}}
-          >
-            Quay lại
-          </Button>
-        </Container>
+        <Box sx={{bgcolor: "background.default", minHeight: "calc(100vh - 64px)", py: 4}}>
+          <Container>
+            <Alert severity="error" sx={{mb: 3, borderRadius: 2}}>{error}</Alert>
+            <Button
+                variant="outlined"
+                startIcon={<BackIcon/>}
+                onClick={() => navigate(-1)}
+                sx={{
+                  borderRadius: 2,
+                  textTransform: "none",
+                  fontWeight: 600,
+                }}
+            >
+              {language === "vi" ? "Quay lại" : "Go Back"}
+            </Button>
+          </Container>
+        </Box>
     );
   }
 
   return (
-      <Container maxWidth="lg" sx={{py: 4}}>
-        <Box display="flex" alignItems="center" mb={3}>
-          <IconButton onClick={() => navigate(-1)}
-                      sx={{mr: 1}}> {/* Nút quay lại */}
-            <BackIcon/>
-          </IconButton>
-          <Typography variant="h5" component="h1">
-            Đơn đăng ký cho sự kiện: <strong>{eventName}</strong>
-          </Typography>
-        </Box>
+      <Box sx={{bgcolor: "background.default", minHeight: "calc(100vh - 64px)", py: 4}}>
+        <Container maxWidth="lg">
+          <Box display="flex" alignItems="center" mb={4}>
+            <IconButton
+                onClick={() => navigate(-1)}
+                sx={{
+                  mr: 2,
+                  borderRadius: 2,
+                }}
+            >
+              <BackIcon/>
+            </IconButton>
+            <Typography variant="h3" fontWeight="bold" sx={{color: "primary.main"}}>
+              {language === "vi" ? "Đơn đăng ký cho sự kiện:" : "Registrations for Event:"} <strong>{eventName}</strong>
+            </Typography>
+          </Box>
 
-
-        {registrations.length === 0 ? (
-            <Alert severity="info">Chưa có ai đăng ký tham gia sự kiện
-              này.</Alert>
-        ) : (
-            <Paper elevation={3} sx={{overflow: 'hidden'}}>
-              <TableContainer>
-                <Table stickyHeader aria-label="danh sách đăng ký">
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>Tình nguyện viên</TableCell>
-                      <TableCell>Email</TableCell>
-                      <TableCell>Ghi chú</TableCell>
-                      <TableCell align="center">Trạng thái</TableCell>
-                      <TableCell align="center">Hành động</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {registrations.map((reg) => (
-                        <TableRow hover key={reg.id}>
-                          <TableCell>{reg.volunteerName || "N/A"}</TableCell>
-                          <TableCell>{/* Cần thêm email vào RegistrationResponse backend */}</TableCell>
-                          <TableCell sx={{
-                            maxWidth: 200,
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap'
-                          }}>
-                            <Tooltip title={reg.note || ''}>
-                              <span>{reg.note || "-"}</span>
-                            </Tooltip>
-                          </TableCell>
-                          <TableCell align="center">
-                            <Chip
-                                label={statusLabels[reg.status] || reg.status}
-                                color={statusColors[reg.status] || "default"}
-                                size="small"
-                            />
-                          </TableCell>
-                          <TableCell align="center">
-                            {reg.status === "pending" ? (
-                                <Box>
-                                  <Tooltip title="Duyệt">
-                            <span> {/* Span để Tooltip hoạt động khi Button disabled */}
-                              <IconButton
-                                  color="success"
-                                  onClick={() => handleApprove(reg.id)}
-                                  disabled={updatingId
-                                      === reg.id} // Disable khi đang xử lý
+          {registrations.length === 0 ? (
+              <Alert severity="info" sx={{borderRadius: 2}}>
+                {language === "vi" ? "Chưa có ai đăng ký tham gia sự kiện này." : "No registrations for this event yet."}
+              </Alert>
+          ) : (
+              <Paper
+                  elevation={0}
+                  sx={{
+                    borderRadius: 3,
+                    border: "1px solid",
+                    borderColor: "divider",
+                    boxShadow: "0 4px 16px rgba(0,0,0,0.05)",
+                    overflow: 'hidden'
+                  }}
+              >
+                <TableContainer>
+                  <Table stickyHeader>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell sx={{fontWeight: 700}}>{language === "vi" ? "Tình nguyện viên" : "Volunteer"}</TableCell>
+                        <TableCell sx={{fontWeight: 700}}>Email</TableCell>
+                        <TableCell sx={{fontWeight: 700}}>{language === "vi" ? "Ghi chú" : "Note"}</TableCell>
+                        <TableCell align="center" sx={{fontWeight: 700}}>{language === "vi" ? "Trạng thái" : "Status"}</TableCell>
+                        <TableCell align="center" sx={{fontWeight: 700}}>{language === "vi" ? "Hành động" : "Actions"}</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {registrations.map((reg) => (
+                          <TableRow hover key={reg.id}>
+                            <TableCell>{reg.volunteerName || "N/A"}</TableCell>
+                            <TableCell>{reg.email || "-"}</TableCell>
+                            <TableCell
+                                sx={{
+                                  maxWidth: 200,
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                  whiteSpace: 'nowrap'
+                                }}
+                            >
+                              <Tooltip title={reg.note || ''}>
+                                <span>{reg.note || "-"}</span>
+                              </Tooltip>
+                            </TableCell>
+                            <TableCell align="center">
+                              <Chip
+                                  label={statusLabels[reg.status]?.[language] || reg.status}
+                                  color={statusColors[reg.status] || "default"}
                                   size="small"
-                              >
-                                <ApproveIcon/>
-                              </IconButton>
-                            </span>
-                                  </Tooltip>
-                                  <Tooltip title="Từ chối">
-                            <span>
-                              <IconButton
-                                  color="error"
-                                  onClick={() => handleReject(reg.id)}
-                                  disabled={updatingId === reg.id}
-                                  size="small"
-                                  sx={{ml: 1}}
-                              >
-                                <RejectIcon/>
-                              </IconButton>
-                            </span>
-                                  </Tooltip>
-                                  {/* Hiển thị loading nhỏ nếu đang cập nhật item này */}
-                                  {updatingId === reg.id && <CircularProgress
-                                      size={16}
-                                      sx={{ml: 1, verticalAlign: 'middle'}}/>}
-                                </Box>
-                            ) : (
-                                "-" // Không có hành động nếu không phải pending
-                            )}
-                          </TableCell>
-                        </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            </Paper>
-        )}
-      </Container>
+                                  sx={{fontWeight: 600}}
+                              />
+                            </TableCell>
+                            <TableCell align="center">
+                              {reg.status === "pending" ? (
+                                  <Box display="flex" alignItems="center" justifyContent="center" gap={1}>
+                                    <Tooltip title={language === "vi" ? "Duyệt" : "Approve"}>
+                                      <span>
+                                        <IconButton
+                                            color="success"
+                                            onClick={() => handleApprove(reg.id)}
+                                            disabled={updatingId === reg.id}
+                                            size="small"
+                                        >
+                                          {updatingId === reg.id ? (
+                                              <CircularProgress size={20}/>
+                                          ) : (
+                                              <ApproveIcon/>
+                                          )}
+                                        </IconButton>
+                                      </span>
+                                    </Tooltip>
+                                    <Tooltip title={language === "vi" ? "Từ chối" : "Reject"}>
+                                      <span>
+                                        <IconButton
+                                            color="error"
+                                            onClick={() => handleReject(reg.id)}
+                                            disabled={updatingId === reg.id}
+                                            size="small"
+                                        >
+                                          <RejectIcon/>
+                                        </IconButton>
+                                      </span>
+                                    </Tooltip>
+                                  </Box>
+                              ) : (
+                                  "-"
+                              )}
+                            </TableCell>
+                          </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </Paper>
+          )}
+        </Container>
+      </Box>
   );
 }

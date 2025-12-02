@@ -8,25 +8,37 @@ import {
   Grid,
   Paper,
   Typography,
+  Card,
+  CardContent,
+  Avatar,
+  Stack,
 } from "@mui/material";
 import {Link as RouterLink} from "react-router-dom";
 import {useNavigate} from "react-router-dom";
 import eventApi from "../api/eventApi";
-import heroImg from "../assets/hero.jpg";
 import EventCard from "../components/EventCard";
+import {useLanguage} from "../context/LanguageContext";
+import {
+  People as PeopleIcon,
+  Event as EventIcon,
+  Chat as ChatIcon,
+  AccessTime as AccessTimeIcon,
+  VolunteerActivism as VolunteerIcon,
+  Campaign as CampaignIcon,
+} from "@mui/icons-material";
 
 export default function Home() {
   const navigate = useNavigate();
+  const {t} = useLanguage();
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null); // Thêm state cho lỗi
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchEvents = async () => {
       try {
-        setLoading(true); // Bắt đầu loading
-        setError(null);   // Reset lỗi
-        // Lấy trang đầu, 3 sự kiện đã duyệt, mới nhất (thêm tham số)
+        setLoading(true);
+        setError(null);
         const res = await eventApi.getAll({
           page: 0,
           size: 3,
@@ -34,191 +46,421 @@ export default function Home() {
           sort: 'createdAt,desc'
         });
 
-        // *** SỬA LỖI Ở ĐÂY ***
-        // API trả về đối tượng Page, mảng sự kiện nằm trong 'content'
         const eventsArray = res.data.content;
-
-        // Kiểm tra xem eventsArray có phải là mảng không
         if (Array.isArray(eventsArray)) {
-          setEvents(eventsArray); // API đã giới hạn size=3, không cần slice
+          setEvents(eventsArray);
         } else {
           console.error("Dữ liệu sự kiện không phải mảng:", res.data);
-          setEvents([]); // Đặt thành mảng rỗng nếu dữ liệu sai
-          setError("Không thể xử lý dữ liệu sự kiện nhận được."); // Thông báo lỗi
+          setEvents([]);
+          setError("Không thể xử lý dữ liệu sự kiện nhận được.");
         }
       } catch (err) {
         console.error("Không thể tải sự kiện:", err);
-        setError("Đã xảy ra lỗi khi tải sự kiện nổi bật."); // Set lỗi
+        setError("Đã xảy ra lỗi khi tải sự kiện nổi bật.");
       } finally {
-        setLoading(false); // Kết thúc loading
+        setLoading(false);
       }
     };
     fetchEvents();
-  }, []); // Dependency rỗng để chỉ chạy 1 lần khi mount
+  }, []);
+
+  const features = [
+    {
+      icon: <PeopleIcon sx={{fontSize: 48}}/>,
+      title: t("home.features.volunteerManagement.title"),
+      description: t("home.features.volunteerManagement.desc"),
+      color: "#0288d1",
+    },
+    {
+      icon: <EventIcon sx={{fontSize: 48}}/>,
+      title: t("home.features.eventManagement.title"),
+      description: t("home.features.eventManagement.desc"),
+      color: "#00bcd4",
+    },
+    {
+      icon: <ChatIcon sx={{fontSize: 48}}/>,
+      title: t("home.features.communication.title"),
+      description: t("home.features.communication.desc"),
+      color: "#0288d1",
+    },
+    {
+      icon: <AccessTimeIcon sx={{fontSize: 48}}/>,
+      title: t("home.features.tracking.title"),
+      description: t("home.features.tracking.desc"),
+      color: "#00bcd4",
+    },
+  ];
+
+  const whyChooseFeatures = [
+    {
+      title: t("home.whyChoose.features.connect.title"),
+      desc: t("home.whyChoose.features.connect.desc"),
+      icon: <VolunteerIcon sx={{fontSize: 40}}/>,
+    },
+    {
+      title: t("home.whyChoose.features.experience.title"),
+      desc: t("home.whyChoose.features.experience.desc"),
+      icon: <CampaignIcon sx={{fontSize: 40}}/>,
+    },
+    {
+      title: t("home.whyChoose.features.develop.title"),
+      desc: t("home.whyChoose.features.develop.desc"),
+      icon: <PeopleIcon sx={{fontSize: 40}}/>,
+    },
+    {
+      title: t("home.whyChoose.features.spread.title"),
+      desc: t("home.whyChoose.features.spread.desc"),
+      icon: <VolunteerIcon sx={{fontSize: 40}}/>,
+    },
+  ];
+
+  const testimonials = [
+    {
+      name: "Nguyễn Văn A",
+      role: "Tình nguyện viên",
+      organization: "Tổ chức X",
+      quote: "VolunteerHub đã giúp tôi tìm được nhiều cơ hội tình nguyện ý nghĩa. Giao diện dễ sử dụng và cộng đồng rất tích cực!",
+      avatar: null,
+    },
+    {
+      name: "Trần Thị B",
+      role: "Người tổ chức",
+      organization: "Tổ chức Y",
+      quote: "Công cụ quản lý sự kiện tuyệt vời! Tôi có thể dễ dàng tạo và quản lý các sự kiện tình nguyện của mình.",
+      avatar: null,
+    },
+    {
+      name: "Lê Văn C",
+      role: "Tình nguyện viên",
+      organization: "Tổ chức Z",
+      quote: "Trải nghiệm tuyệt vời! Tôi đã tham gia nhiều hoạt động và gặp gỡ được nhiều người bạn mới.",
+      avatar: null,
+    },
+  ];
 
   return (
       <Box>
-        {/* HERO (Giữ nguyên) */}
+        {/* HERO SECTION */}
         <Box
             sx={{
-              height: "70vh",
+              minHeight: "85vh",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              backgroundImage: `url(${heroImg})`,
-              backgroundSize: "cover",
-              backgroundPosition: "center",
+              background: "linear-gradient(135deg, #0288d1 0%, #00bcd4 100%)",
               color: "white",
               textAlign: "center",
               position: "relative",
+              overflow: "hidden",
               "&::before": {
                 content: '""',
                 position: "absolute",
                 inset: 0,
-                backgroundColor: "rgba(0,0,0,0.5)",
+                backgroundImage: "radial-gradient(circle at 20% 50%, rgba(255,255,255,0.1) 0%, transparent 50%), radial-gradient(circle at 80% 80%, rgba(255,255,255,0.1) 0%, transparent 50%)",
               },
             }}
         >
-          <Box sx={{position: "relative", zIndex: 2}}>
-            <Typography variant="h3" fontWeight="bold" gutterBottom>
-              Kết nối trái tim – Lan tỏa yêu thương ❤️
-            </Typography>
-            <Typography variant="h6" sx={{mb: 3}}>
-              Tham gia cộng đồng tình nguyện lớn nhất Việt Nam
-            </Typography>
-            <Button
-                variant="contained"
-                color="secondary"
-                size="large"
-                onClick={() => navigate("/events")}
+          <Container maxWidth="lg" sx={{position: "relative", zIndex: 2, py: 8}}>
+            <Typography
+                variant="h1"
+                sx={{
+                  fontWeight: 800,
+                  mb: 3,
+                  fontSize: {xs: "2rem", md: "3.5rem"},
+                  lineHeight: 1.2,
+                }}
             >
-              Khám phá sự kiện
-            </Button>
-          </Box>
+              {t("home.hero.title")}
+            </Typography>
+            <Typography
+                variant="h5"
+                sx={{
+                  mb: 5,
+                  fontWeight: 400,
+                  opacity: 0.95,
+                  fontSize: {xs: "1.1rem", md: "1.5rem"},
+                  maxWidth: "800px",
+                  mx: "auto",
+                }}
+            >
+              {t("home.hero.subtitle")}
+            </Typography>
+            <Stack direction={{xs: "column", sm: "row"}} spacing={2} justifyContent="center">
+              <Button
+                  variant="contained"
+                  size="large"
+                  onClick={() => navigate("/events")}
+                  sx={{
+                    px: 4,
+                    py: 1.5,
+                    fontSize: "1.1rem",
+                    fontWeight: 600,
+                    bgcolor: "white",
+                    color: "primary.main",
+                    "&:hover": {
+                      bgcolor: "rgba(255,255,255,0.9)",
+                      transform: "translateY(-2px)",
+                    },
+                    transition: "all 0.3s ease",
+                    boxShadow: "0 4px 20px rgba(0,0,0,0.2)",
+                  }}
+              >
+                {t("home.hero.cta")}
+              </Button>
+              <Button
+                  variant="outlined"
+                  size="large"
+                  onClick={() => navigate("/events")}
+                  sx={{
+                    px: 4,
+                    py: 1.5,
+                    fontSize: "1.1rem",
+                    fontWeight: 600,
+                    borderColor: "white",
+                    color: "white",
+                    "&:hover": {
+                      borderColor: "white",
+                      bgcolor: "rgba(255,255,255,0.1)",
+                      transform: "translateY(-2px)",
+                    },
+                    transition: "all 0.3s ease",
+                  }}
+              >
+                {t("home.hero.ctaSecondary")}
+              </Button>
+            </Stack>
+          </Container>
         </Box>
 
-        {/* WHY CHOOSE US (Giữ nguyên) */}
-        <Container maxWidth="lg" sx={{mt: 8}}>
+        {/* WHY CHOOSE US SECTION */}
+        <Container maxWidth="lg" sx={{mt: 10, mb: 8}}>
           <Typography
-              variant="h4"
+              variant="h2"
               align="center"
               fontWeight="bold"
               gutterBottom
-              color="primary"
+              sx={{mb: 6, color: "primary.main"}}
           >
-            Vì sao chọn Volunteer Hub?
+            {t("home.whyChoose.title")}
           </Typography>
-          <Grid
-              container
-              spacing={4}
-              sx={{
-                mt: 2,
-                display: "grid",
-                gridTemplateColumns: {
-                  xs: "1fr",      // mobile: 1 cột
-                  sm: "1fr 1fr",  // tablet trở lên: 2 cột
-                },
-                gap: 4,           // khoảng cách giữa các ô
-                justifyItems: "center",
-                alignItems: "stretch",
-              }}
-          >
-            {[
-              {
-                title: "Kết nối cộng đồng",
-                desc: "Tạo cầu nối giữa những người có cùng đam mê giúp đỡ xã hội."
-              },
-              {
-                title: "Cơ hội trải nghiệm",
-                desc: "Tham gia các hoạt động thực tế đầy ý nghĩa và sáng tạo."
-              },
-              {
-                title: "Phát triển bản thân",
-                desc: "Rèn luyện kỹ năng làm việc nhóm, lãnh đạo và quản lý dự án."
-              },
-              {
-                title: "Lan tỏa yêu thương",
-                desc: "Góp phần mang lại niềm vui và hy vọng cho những hoàn cảnh khó khăn."
-              },
-            ].map((item, i) => (
-                <Paper
-                    key={i}
-                    elevation={6}
-                    sx={{
-                      width: "100%",
-                      minHeight: 200,
-                      p: 4,
-                      borderRadius: 4,
-                      textAlign: "center",
-                      display: "flex",
-                      flexDirection: "column",
-                      justifyContent: "center",
-                      alignItems: "center",
-                      transition: "0.3s",
-                      "&:hover": {transform: "translateY(-5px)", boxShadow: 8,},
-                    }}
-                >
-                  <Typography variant="h6" fontWeight="bold" gutterBottom>
-                    {item.title}
-                  </Typography>
-                  <Typography variant="body1" color="text.secondary" sx={{
-                    wordWrap: "break-word",
-                    overflowWrap: "break-word",
-                    whiteSpace: "normal",
-                    textAlign: "center",
-                    display: "-webkit-box",
-                    WebkitLineClamp: 3,
-                    WebkitBoxOrient: "vertical",
-                    overflow: "hidden",
-                  }}>
-                    {item.desc}
-                  </Typography>
-                </Paper>
+          <Grid container spacing={4}>
+            {whyChooseFeatures.map((item, i) => (
+                <Grid item xs={12} sm={6} md={3} key={i}>
+                  <Paper
+                      elevation={0}
+                      sx={{
+                        p: 4,
+                        height: "100%",
+                        borderRadius: 3,
+                        textAlign: "center",
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        transition: "all 0.3s ease",
+                        border: "1px solid",
+                        borderColor: "divider",
+                        "&:hover": {
+                          transform: "translateY(-8px)",
+                          boxShadow: "0 8px 24px rgba(2, 136, 209, 0.15)",
+                          borderColor: "primary.main",
+                        },
+                      }}
+                  >
+                    <Box
+                        sx={{
+                          mb: 2,
+                          color: "primary.main",
+                        }}
+                    >
+                      {item.icon}
+                    </Box>
+                    <Typography variant="h6" fontWeight="bold" gutterBottom>
+                      {item.title}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{mt: 1}}>
+                      {item.desc}
+                    </Typography>
+                  </Paper>
+                </Grid>
             ))}
           </Grid>
         </Container>
 
-        {/* SỰ KIỆN NỔI BẬT */}
-        <Container maxWidth="lg" sx={{mt: 8, mb: 10}}>
+        {/* FEATURES SECTION */}
+        <Box sx={{bgcolor: "background.default", py: 10}}>
+          <Container maxWidth="lg">
+            <Typography
+                variant="h2"
+                align="center"
+                fontWeight="bold"
+                gutterBottom
+                sx={{mb: 6, color: "primary.main"}}
+            >
+              {t("home.features.title")}
+            </Typography>
+            <Grid container spacing={4}>
+              {features.map((feature, i) => (
+                  <Grid item xs={12} sm={6} md={3} key={i}>
+                    <Card
+                        elevation={0}
+                        sx={{
+                          height: "100%",
+                          borderRadius: 3,
+                          textAlign: "center",
+                          p: 3,
+                          transition: "all 0.3s ease",
+                          border: "1px solid",
+                          borderColor: "divider",
+                          "&:hover": {
+                            transform: "translateY(-8px)",
+                            boxShadow: "0 12px 32px rgba(2, 136, 209, 0.2)",
+                            borderColor: feature.color,
+                          },
+                        }}
+                    >
+                      <CardContent>
+                        <Box sx={{color: feature.color, mb: 2}}>
+                          {feature.icon}
+                        </Box>
+                        <Typography variant="h6" fontWeight="bold" gutterBottom>
+                          {feature.title}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          {feature.description}
+                        </Typography>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+              ))}
+            </Grid>
+          </Container>
+        </Box>
+
+        {/* TESTIMONIALS SECTION */}
+        <Container maxWidth="lg" sx={{mt: 10, mb: 8}}>
           <Typography
-              variant="h4"
+              variant="h2"
               align="center"
               fontWeight="bold"
               gutterBottom
-              color="primary"
+              sx={{mb: 2, color: "primary.main"}}
           >
-            Sự kiện nổi bật 🌟
+            {t("home.testimonials.title")}
           </Typography>
-
-          {loading ? (
-              <Box display="flex" justifyContent="center" mt={4}>
-                <CircularProgress/>
-              </Box>
-          ) : error ? (
-              <Alert severity="error" sx={{mt: 4}}>{error}</Alert>
-          ) : events.length > 0 ? (
-              <>
-                <Grid container spacing={4} sx={{mt: 2}}>
-                  {events.map((event) => (
-                      <Grid xs={12} sm={6} md={4} key={event.id}>
-                        <EventCard event={event} showOrganizerName={true}/>
-                      </Grid>
-                  ))}
+          <Typography
+              variant="body1"
+              align="center"
+              color="text.secondary"
+              sx={{mb: 6}}
+          >
+            {t("home.testimonials.subtitle")}
+          </Typography>
+          <Grid container spacing={4}>
+            {testimonials.map((testimonial, i) => (
+                <Grid item xs={12} md={4} key={i}>
+                  <Paper
+                      elevation={0}
+                      sx={{
+                        p: 4,
+                        height: "100%",
+                        borderRadius: 3,
+                        border: "1px solid",
+                        borderColor: "divider",
+                        transition: "all 0.3s ease",
+                        "&:hover": {
+                          boxShadow: "0 8px 24px rgba(0,0,0,0.1)",
+                          transform: "translateY(-4px)",
+                        },
+                      }}
+                  >
+                    <Typography
+                        variant="body1"
+                        sx={{
+                          fontStyle: "italic",
+                          mb: 3,
+                          color: "text.primary",
+                          lineHeight: 1.7,
+                        }}
+                    >
+                      "{testimonial.quote}"
+                    </Typography>
+                    <Box display="flex" alignItems="center" gap={2}>
+                      <Avatar
+                          sx={{
+                            bgcolor: "primary.main",
+                            width: 56,
+                            height: 56,
+                          }}
+                      >
+                        {testimonial.name.charAt(0)}
+                      </Avatar>
+                      <Box>
+                        <Typography variant="subtitle1" fontWeight="bold">
+                          {testimonial.name}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {testimonial.role} • {testimonial.organization}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  </Paper>
                 </Grid>
-                {/* Nút xem thêm */}
-                <Box textAlign="center" mt={4}>
-                  <Button variant="outlined" component={RouterLink}
-                          to="/events">
-                    Xem tất cả sự kiện
-                  </Button>
-                </Box>
-              </>
-          ) : (
-              <Typography align="center" sx={{mt: 4}}>
-                Hiện chưa có sự kiện nào được duyệt.
-              </Typography>
-          )}
+            ))}
+          </Grid>
         </Container>
+
+        {/* FEATURED EVENTS SECTION */}
+        <Box sx={{bgcolor: "background.default", py: 10}}>
+          <Container maxWidth="lg">
+            <Typography
+                variant="h2"
+                align="center"
+                fontWeight="bold"
+                gutterBottom
+                sx={{mb: 6, color: "primary.main"}}
+            >
+              {t("home.events.title")}
+            </Typography>
+
+            {loading ? (
+                <Box display="flex" justifyContent="center" mt={4}>
+                  <CircularProgress/>
+                </Box>
+            ) : error ? (
+                <Alert severity="error" sx={{mt: 4}}>{error}</Alert>
+            ) : events.length > 0 ? (
+                <>
+                  <Grid container spacing={4} sx={{mt: 2}}>
+                    {events.map((event) => (
+                        <Grid item xs={12} sm={6} md={4} key={event.id}>
+                          <EventCard event={event} showOrganizerName={true}/>
+                        </Grid>
+                    ))}
+                  </Grid>
+                  <Box textAlign="center" mt={6}>
+                    <Button
+                        variant="contained"
+                        size="large"
+                        component={RouterLink}
+                        to="/events"
+                        sx={{
+                          px: 5,
+                          py: 1.5,
+                          fontSize: "1.1rem",
+                          fontWeight: 600,
+                        }}
+                    >
+                      {t("home.events.viewAll")}
+                    </Button>
+                  </Box>
+                </>
+            ) : (
+                <Typography align="center" sx={{mt: 4}} color="text.secondary">
+                  {t("home.events.noEvents")}
+                </Typography>
+            )}
+          </Container>
+        </Box>
       </Box>
   );
 }
