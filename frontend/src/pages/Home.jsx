@@ -243,7 +243,7 @@ export default function Home() {
           >
             {t("home.whyChoose.title")}
           </Typography>
-          <Grid container spacing={4}>
+          <Grid container spacing={4} justifyContent="center">
             {whyChooseFeatures.map((item, i) => (
                 <Grid item xs={12} sm={6} md={3} key={i}>
                   <Paper
@@ -298,7 +298,7 @@ export default function Home() {
             >
               {t("home.features.title")}
             </Typography>
-            <Grid container spacing={4}>
+            <Grid container spacing={4} justifyContent="center">
               {features.map((feature, i) => (
                   <Grid item xs={12} sm={6} md={3} key={i}>
                     <Card

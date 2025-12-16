@@ -163,7 +163,12 @@ function NavBar() {
       position="sticky"
       color="transparent"
       elevation={0}
-      className="backdrop-blur-md bg-white/80 dark:bg-slate-900/80 border-b border-slate-200 dark:border-slate-800 transition-colors duration-300"
+      sx={{
+          backgroundColor: mode === "dark" ? "#0f172a" : "#ffffff",
+          transition: "background-color 0.3s ease", // Smooth transition when switching themes
+      }}
+        // CHANGE 2: Removed background classes from here to avoid conflicts
+      className="border-b border-slate-200 dark:border-slate-800"
     >
       <Container maxWidth="xl">
         <Toolbar disableGutters>
@@ -173,9 +178,8 @@ function NavBar() {
             noWrap
             component={RouterLink}
             to="/"
-            className="mr-8 hidden md:flex font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-teal-600 to-cyan-600 hover:opacity-80 transition-opacity cursor-pointer"
+            className="mr-8 hidden md:flex font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-teal-600 to-cyan-600 hover:opacity-80 transition-opacity cursor-pointer pr-3"
             sx={{ textDecoration: "none" }}
-            padding={0}
           >
             VOLUNTEER HUB
           </Typography>
