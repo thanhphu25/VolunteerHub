@@ -18,7 +18,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
-
+import org.springframework.data.domain.PageRequest;
+import java.util.stream.Collectors;
 import java.text.Normalizer;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -262,6 +263,16 @@ public class EventServiceImpl implements IEventService {
     @Override
     public Page<EventResponse> listOrganizerEvents(Long organizerId, Pageable pageable) {
         return repo.findByOrganizerIdAndIsDeletedFalse(organizerId, pageable).map(mapper::toResponse);
+    }
+
+    @Override
+    public List<EventResponse> getTrendingEvents(int limit) {
+        // Gọi Repository lấy danh sách top trending
+        // PageRequest.of(0, limit) nghĩa là lấy trang đầu tiên với số lượng 'limit' phần tử
+        return repo.findTrendingEvents(PageRequest.of(0, limit))
+                .stream()
+                .map(mapper::toResponse)
+                .collect(Collectors.toList());
     }
 
     private UserEntity currentUserEntity(Authentication auth) {

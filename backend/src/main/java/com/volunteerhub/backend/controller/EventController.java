@@ -18,6 +18,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeParseException;
+import java.util.List;
 import java.util.Optional;
 
 @RestController
@@ -34,8 +35,7 @@ public class EventController {
     /**
      * Parse a date string that may be either a full datetime (ISO-8601) or date-only.
      * For date-only strings, converts to start of day for startDate or end of day for endDate.
-     * 
-     * @param dateStr The date string to parse
+     * * @param dateStr The date string to parse
      * @param isEndDate If true, date-only strings are converted to end of day; if false, start of day
      * @return Parsed LocalDateTime
      * @throws DateTimeParseException if the string cannot be parsed as either format
@@ -53,8 +53,8 @@ public class EventController {
             } catch (DateTimeParseException e2) {
                 // If both fail, throw with a helpful message
                 throw new DateTimeParseException(
-                    "Date string must be in ISO-8601 format (e.g., '2025-11-18T10:30:00' or '2025-11-18')",
-                    dateStr, 0, e2);
+                        "Date string must be in ISO-8601 format (e.g., '2025-11-18T10:30:00' or '2025-11-18')",
+                        dateStr, 0, e2);
             }
         }
     }
@@ -86,28 +86,28 @@ public class EventController {
             @RequestParam(defaultValue = "10") int size) {
         try {
             // Check if any advanced filters are provided
-            boolean hasAdvancedFilters = category.isPresent() || location.isPresent() || 
-                                       search.isPresent() || organizerName.isPresent() ||
-                                       startDate.isPresent() || endDate.isPresent();
-            
+            boolean hasAdvancedFilters = category.isPresent() || location.isPresent() ||
+                    search.isPresent() || organizerName.isPresent() ||
+                    startDate.isPresent() || endDate.isPresent();
+
             if (hasAdvancedFilters) {
                 // Use advanced filtering
                 LocalDateTime startDateTime = null;
                 LocalDateTime endDateTime = null;
-                
+
                 if (startDate.isPresent()) {
                     startDateTime = parseFlexibleDateTime(startDate.get(), false);
                 }
                 if (endDate.isPresent()) {
                     endDateTime = parseFlexibleDateTime(endDate.get(), true);
                 }
-                
+
                 Page<EventResponse> p = svc.listEventsWithFilters(
-                    status, category, location, search, 
-                    Optional.ofNullable(startDateTime), Optional.ofNullable(endDateTime), 
-                    organizerName,
-                    timeStatus,
-                    PageRequest.of(page, size)
+                        status, category, location, search,
+                        Optional.ofNullable(startDateTime), Optional.ofNullable(endDateTime),
+                        organizerName,
+                        timeStatus,
+                        PageRequest.of(page, size)
                 );
                 return ResponseEntity.ok(p);
             } else {
@@ -117,6 +117,16 @@ public class EventController {
             }
         } catch (Exception ex) {
             return ResponseEntity.badRequest().body(java.util.Map.of("error", "Invalid filter parameters: " + ex.getMessage()));
+        }
+    }
+
+    @GetMapping("/trending")
+    public ResponseEntity<?> getTrendingEvents(@RequestParam(defaultValue = "5") int limit) {
+        try {
+            List<EventResponse> trendingEvents = svc.getTrendingEvents(limit);
+            return ResponseEntity.ok(trendingEvents);
+        } catch (Exception ex) {
+            return ResponseEntity.status(500).body(java.util.Map.of("error", "Unable to fetch trending events: " + ex.getMessage()));
         }
     }
 
@@ -217,8 +227,8 @@ public class EventController {
             if (!(auth.getPrincipal() instanceof com.volunteerhub.backend.security.CustomUserDetails)) {
                 return ResponseEntity.status(401).body(java.util.Map.of("error", "Invalid authentication"));
             }
-            com.volunteerhub.backend.security.CustomUserDetails userDetails = 
-                (com.volunteerhub.backend.security.CustomUserDetails) auth.getPrincipal();
+            com.volunteerhub.backend.security.CustomUserDetails userDetails =
+                    (com.volunteerhub.backend.security.CustomUserDetails) auth.getPrincipal();
             organizerId = userDetails.getUserEntity().getId();
             Page<EventResponse> p = svc.listOrganizerEvents(organizerId, PageRequest.of(page, size));
             return ResponseEntity.ok(p);

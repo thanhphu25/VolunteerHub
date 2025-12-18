@@ -1,0 +1,16 @@
+[
+  { "organizerId": 1, "followerId": 11 },
+  { "organizerId": 1, "followerId": 12 },
+  { "organizerId": 1, "followerId": 15 },
+  { "organizerId": 2, "followerId": 11 },
+  { "organizerId": 2, "followerId": 16 },
+  { "organizerId": 3, "followerId": 20 },
+  { "organizerId": 3, "followerId": 21 },
+  { "organizerId": 4, "followerId": 25 },
+  { "organizerId": 5, "followerId": 30 },
+  { "organizerId": 6, "followerId": 35 },
+  { "organizerId": 7, "followerId": 12 },
+  { "organizerId": 8, "followerId": 40 },
+  { "organizerId": 9, "followerId": 45 },
+  { "organizerId": 10, "followerId": 50 }
+]
