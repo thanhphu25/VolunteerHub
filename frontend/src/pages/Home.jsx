@@ -42,16 +42,12 @@ export default function Home() {
 
         const res = await eventApi.getAll({
           page: 0,
-          size: 20, // Lấy nhiều hơn để lọc top 3
+          size: 3,
           status: "approved",
+          sort: "popularity",
         });
 
-        const eventsArray = res.data.content
-          ?.sort(
-            (a, b) =>
-              (b.currentVolunteers || 0) - (a.currentVolunteers || 0)
-          )
-          .slice(0, 3); // Chỉ lấy 3 sự kiện nổi bật nhất
+        const eventsArray = res.data.content || [];
 
         if (Array.isArray(eventsArray)) {
           setEvents(eventsArray);
@@ -149,177 +145,6 @@ export default function Home() {
       {/* HERO SLIDER */}
       <HeroSlider />
 
-        {/* WHY CHOOSE US SECTION */}
-        <Container maxWidth="lg" sx={{mt: 10, mb: 8}}>
-          <Typography
-              variant="h2"
-              align="center"
-              fontWeight="bold"
-              gutterBottom
-              sx={{mb: 6, color: "primary.main"}}
-          >
-            {t("home.whyChoose.title")}
-          </Typography>
-          <Grid container spacing={4}>
-            {whyChooseFeatures.map((item, i) => (
-                <Grid item xs={12} sm={6} md={3} key={i}>
-                  <Paper
-                      elevation={0}
-                      sx={{
-                        p: 4,
-                        height: "100%",
-                        borderRadius: 3,
-                        textAlign: "center",
-                        display: "flex",
-                        flexDirection: "column",
-                        alignItems: "center",
-                        transition: "all 0.3s ease",
-                        border: "1px solid",
-                        borderColor: "divider",
-                        "&:hover": {
-                          transform: "translateY(-8px)",
-                          boxShadow: "0 8px 24px rgba(2, 136, 209, 0.15)",
-                          borderColor: "primary.main",
-                        },
-                      }}
-                  >
-                    <Box
-                        sx={{
-                          mb: 2,
-                          color: "primary.main",
-                        }}
-                    >
-                      {item.icon}
-                    </Box>
-                    <Typography variant="h6" fontWeight="bold" gutterBottom>
-                      {item.title}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary" sx={{mt: 1}}>
-                      {item.desc}
-                    </Typography>
-                  </Paper>
-                </Grid>
-            ))}
-          </Grid>
-        </Container>
-
-        {/* FEATURES SECTION */}
-        <Box sx={{bgcolor: "background.default", py: 10}}>
-          <Container maxWidth="lg">
-            <Typography
-                variant="h2"
-                align="center"
-                fontWeight="bold"
-                gutterBottom
-                sx={{mb: 6, color: "primary.main"}}
-            >
-              {t("home.features.title")}
-            </Typography>
-            <Grid container spacing={4}>
-              {features.map((feature, i) => (
-                  <Grid item xs={12} sm={6} md={3} key={i}>
-                    <Card
-                        elevation={0}
-                        sx={{
-                          height: "100%",
-                          borderRadius: 3,
-                          textAlign: "center",
-                          p: 3,
-                          transition: "all 0.3s ease",
-                          border: "1px solid",
-                          borderColor: "divider",
-                          "&:hover": {
-                            transform: "translateY(-8px)",
-                            boxShadow: "0 12px 32px rgba(2, 136, 209, 0.2)",
-                            borderColor: feature.color,
-                          },
-                        }}
-                    >
-                      <CardContent>
-                        <Box sx={{color: feature.color, mb: 2}}>
-                          {feature.icon}
-                        </Box>
-                        <Typography variant="h6" fontWeight="bold" gutterBottom>
-                          {feature.title}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          {feature.description}
-                        </Typography>
-                      </CardContent>
-                    </Card>
-                  </Grid>
-              ))}
-            </Grid>
-          </Container>
-        </Box>
-
-      {/* TESTIMONIALS SECTION */}
-      <Container maxWidth="lg" sx={{ mt: 10, mb: 8 }}>
-        <Typography
-          variant="h2"
-          align="center"
-          fontWeight="bold"
-          gutterBottom
-          sx={{ mb: 2, color: "primary.main" }}
-        >
-          {t("home.testimonials.title")}
-        </Typography>
-        <Typography
-          variant="body1"
-          align="center"
-          color="text.secondary"
-          sx={{ mb: 6 }}
-        >
-          {t("home.testimonials.subtitle")}
-        </Typography>
-        <Grid container spacing={4}>
-          {testimonials.map((testimonial, i) => (
-            <Grid item xs={12} md={4} key={i}>
-              <Paper
-                elevation={0}
-                sx={{
-                  p: 4,
-                  height: "100%",
-                  borderRadius: 3,
-                  border: "1px solid",
-                  borderColor: "divider",
-                  transition: "all 0.3s ease",
-                  "&:hover": {
-                    boxShadow: "0 8px 24px rgba(0,0,0,0.1)",
-                    transform: "translateY(-4px)",
-                  },
-                }}
-              >
-                <Typography
-                  variant="body1"
-                  sx={{
-                    fontStyle: "italic",
-                    mb: 3,
-                    color: "text.primary",
-                    lineHeight: 1.7,
-                  }}
-                >
-                  "{testimonial.quote}"
-                </Typography>
-                <Box display="flex" alignItems="center" gap={2}>
-                  <Avatar sx={{ bgcolor: "primary.main", width: 56, height: 56 }}>
-                    {testimonial.name.charAt(0)}
-                  </Avatar>
-                  <Box>
-                    <Typography variant="subtitle1" fontWeight="bold">
-                      {testimonial.name}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      {testimonial.role} • {testimonial.organization}
-                    </Typography>
-                  </Box>
-                </Box>
-              </Paper>
-            </Grid>
-          ))}
-        </Grid>
-      </Container>
-
       {/* FEATURED EVENTS SECTION */}
       <Box sx={{ bgcolor: "background.paper", py: 10 }}>
         <Container maxWidth="lg">
@@ -398,6 +223,177 @@ export default function Home() {
           )}
         </Container>
       </Box>
+
+      {/* WHY CHOOSE US SECTION */}
+      <Container id="why-choose-us" maxWidth="lg" sx={{ mt: 10, mb: 8, scrollMarginTop: "100px" }}>
+        <Typography
+          variant="h2"
+          align="center"
+          fontWeight="bold"
+          gutterBottom
+          sx={{ mb: 6, color: "primary.main" }}
+        >
+          {t("home.whyChoose.title")}
+        </Typography>
+        <Grid container spacing={4} justifyContent="center">
+          {whyChooseFeatures.map((item, i) => (
+            <Grid item xs={12} sm={6} md={3} key={i}>
+              <Paper
+                elevation={0}
+                sx={{
+                  p: 4,
+                  height: "100%",
+                  borderRadius: 3,
+                  textAlign: "center",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  transition: "all 0.3s ease",
+                  border: "1px solid",
+                  borderColor: "divider",
+                  "&:hover": {
+                    transform: "translateY(-8px)",
+                    boxShadow: "0 8px 24px rgba(2, 136, 209, 0.15)",
+                    borderColor: "primary.main",
+                  },
+                }}
+              >
+                <Box
+                  sx={{
+                    mb: 2,
+                    color: "primary.main",
+                  }}
+                >
+                  {item.icon}
+                </Box>
+                <Typography variant="h6" fontWeight="bold" gutterBottom>
+                  {item.title}
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                  {item.desc}
+                </Typography>
+              </Paper>
+            </Grid>
+          ))}
+        </Grid>
+      </Container>
+
+      {/* FEATURES SECTION */}
+      <Box sx={{ bgcolor: "background.default", py: 10 }}>
+        <Container maxWidth="lg">
+          <Typography
+            variant="h2"
+            align="center"
+            fontWeight="bold"
+            gutterBottom
+            sx={{ mb: 6, color: "primary.main" }}
+          >
+            {t("home.features.title")}
+          </Typography>
+          <Grid container spacing={4} justifyContent="center">
+            {features.map((feature, i) => (
+              <Grid item xs={12} sm={6} md={3} key={i}>
+                <Card
+                  elevation={0}
+                  sx={{
+                    height: "100%",
+                    borderRadius: 3,
+                    textAlign: "center",
+                    p: 3,
+                    transition: "all 0.3s ease",
+                    border: "1px solid",
+                    borderColor: "divider",
+                    "&:hover": {
+                      transform: "translateY(-8px)",
+                      boxShadow: "0 12px 32px rgba(2, 136, 209, 0.2)",
+                      borderColor: feature.color,
+                    },
+                  }}
+                >
+                  <CardContent>
+                    <Box sx={{ color: feature.color, mb: 2 }}>
+                      {feature.icon}
+                    </Box>
+                    <Typography variant="h6" fontWeight="bold" gutterBottom>
+                      {feature.title}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {feature.description}
+                    </Typography>
+                  </CardContent>
+                </Card>
+              </Grid>
+            ))}
+          </Grid>
+        </Container>
+      </Box>
+
+      {/* TESTIMONIALS SECTION */}
+      <Container maxWidth="lg" sx={{ mt: 10, mb: 8 }}>
+        <Typography
+          variant="h2"
+          align="center"
+          fontWeight="bold"
+          gutterBottom
+          sx={{ mb: 2, color: "primary.main" }}
+        >
+          {t("home.testimonials.title")}
+        </Typography>
+        <Typography
+          variant="body1"
+          align="center"
+          color="text.secondary"
+          sx={{ mb: 6 }}
+        >
+          {t("home.testimonials.subtitle")}
+        </Typography>
+        <Grid container spacing={4}>
+          {testimonials.map((testimonial, i) => (
+            <Grid item xs={12} md={4} key={i}>
+              <Paper
+                elevation={0}
+                sx={{
+                  p: 4,
+                  height: "100%",
+                  borderRadius: 3,
+                  border: "1px solid",
+                  borderColor: "divider",
+                  transition: "all 0.3s ease",
+                  "&:hover": {
+                    boxShadow: "0 8px 24px rgba(0,0,0,0.1)",
+                    transform: "translateY(-4px)",
+                  },
+                }}
+              >
+                <Typography
+                  variant="body1"
+                  sx={{
+                    fontStyle: "italic",
+                    mb: 3,
+                    color: "text.primary",
+                    lineHeight: 1.7,
+                  }}
+                >
+                  "{testimonial.quote}"
+                </Typography>
+                <Box display="flex" alignItems="center" gap={2}>
+                  <Avatar sx={{ bgcolor: "primary.main", width: 56, height: 56 }}>
+                    {testimonial.name.charAt(0)}
+                  </Avatar>
+                  <Box>
+                    <Typography variant="subtitle1" fontWeight="bold">
+                      {testimonial.name}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      {testimonial.role} • {testimonial.organization}
+                    </Typography>
+                  </Box>
+                </Box>
+              </Paper>
+            </Grid>
+          ))}
+        </Grid>
+      </Container>
     </Box>
   );
 }

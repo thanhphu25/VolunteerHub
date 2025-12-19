@@ -36,9 +36,9 @@ public class EventServiceImpl implements IEventService {
     private final INotificationService notificationService;
 
     public EventServiceImpl(EventRepository repo,
-                            UserRepository userRepository,
-                            EventMapper mapper,
-                            INotificationService notificationService) {
+            UserRepository userRepository,
+            EventMapper mapper,
+            INotificationService notificationService) {
         this.repo = repo;
         this.userRepository = userRepository;
         this.mapper = mapper;
@@ -46,7 +46,8 @@ public class EventServiceImpl implements IEventService {
     }
 
     private String toSlug(String input) {
-        if (!StringUtils.hasText(input)) return null;
+        if (!StringUtils.hasText(input))
+            return null;
         String nowhitespace = Pattern.compile("\\s").matcher(input).replaceAll("-");
         String normalized = Normalizer.normalize(nowhitespace, Normalizer.Form.NFD);
         String slug = Pattern.compile("[^\\w\\-]").matcher(normalized).replaceAll("");
@@ -76,7 +77,8 @@ public class EventServiceImpl implements IEventService {
     }
 
     @Override
-    public Page<EventResponse> listEvents(Optional<String> statusOpt, Optional<String> timeStatusOpt, Pageable pageable) {
+    public Page<EventResponse> listEvents(Optional<String> statusOpt, Optional<String> timeStatusOpt,
+            Pageable pageable) {
         EventStatus status = null;
         if (statusOpt.isPresent()) {
             try {
@@ -104,19 +106,19 @@ public class EventServiceImpl implements IEventService {
                 null,
                 null,
                 null,
+                null,
                 timeStatus,
                 now,
-                pageable
-        ).map(mapper::toResponse);
+                pageable).map(mapper::toResponse);
     }
 
     @Override
     public Page<EventResponse> listEventsWithFilters(Optional<String> statusOpt, Optional<String> category,
-                                                    Optional<String> location, Optional<String> search,
-                                                    Optional<LocalDateTime> startDate, Optional<LocalDateTime> endDate,
-                                                    Optional<String> organizerNameOpt,
-                                                    Optional<String> timeStatusOpt,
-                                                    Pageable pageable) {
+            Optional<String> location, Optional<String> search,
+            Optional<LocalDateTime> startDate, Optional<LocalDateTime> endDate,
+            Optional<String> organizerNameOpt,
+            Optional<String> timeStatusOpt,
+            Pageable pageable) {
         EventStatus status = null;
         if (statusOpt.isPresent()) {
             try {
@@ -129,18 +131,37 @@ public class EventServiceImpl implements IEventService {
         String timeStatus = normalizeTimeStatus(timeStatusOpt);
         LocalDateTime now = LocalDateTime.now();
 
+        boolean sortByPopularity = pageable.getSort().getOrderFor("popularity") != null;
+
+        if (sortByPopularity) {
+            // Remove sort from pageable to avoid conflict with hardcoded ORDER BY in query
+            Pageable unsortedPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
+            return repo.findEventsWithFiltersAndPopularity(
+                    status,
+                    category.orElse(null),
+                    location.orElse(null),
+                    null,
+                    organizerNameOpt.map(String::trim).filter(StringUtils::hasText).orElse(null),
+                    search.orElse(null),
+                    startDate.orElse(null),
+                    endDate.orElse(null),
+                    timeStatus,
+                    now,
+                    unsortedPageable).map(mapper::toResponse);
+        }
+
         return repo.findEventsWithFilters(
-            status,
-            category.orElse(null),
-            location.orElse(null),
-            organizerNameOpt.map(String::trim).filter(StringUtils::hasText).orElse(null),
-            search.orElse(null),
-            startDate.orElse(null),
-            endDate.orElse(null),
-            timeStatus,
-            now,
-            pageable
-        ).map(mapper::toResponse);
+                status,
+                category.orElse(null),
+                location.orElse(null),
+                null,
+                organizerNameOpt.map(String::trim).filter(StringUtils::hasText).orElse(null),
+                search.orElse(null),
+                startDate.orElse(null),
+                endDate.orElse(null),
+                timeStatus,
+                now,
+                pageable).map(mapper::toResponse);
     }
 
     @Override
@@ -162,7 +183,8 @@ public class EventServiceImpl implements IEventService {
         UserEntity current = currentUserEntity(auth);
         boolean isOwner = e.getOrganizer() != null && e.getOrganizer().getId().equals(current.getId());
         boolean isAdmin = current.getRole() != null && "admin".equalsIgnoreCase(current.getRole().name());
-        if (!isOwner && !isAdmin) throw new SecurityException("Not allowed to update this event");
+        if (!isOwner && !isAdmin)
+            throw new SecurityException("Not allowed to update this event");
         if (e.getStatus() == EventStatus.completed) {
             throw new IllegalArgumentException("Cannot update completed events");
         }
@@ -261,14 +283,44 @@ public class EventServiceImpl implements IEventService {
     }
 
     @Override
-    public Page<EventResponse> listOrganizerEvents(Long organizerId, Pageable pageable) {
-        return repo.findByOrganizerIdAndIsDeletedFalse(organizerId, pageable).map(mapper::toResponse);
+    public Page<EventResponse> listOrganizerEvents(Long organizerId,
+            Optional<String> statusOpt,
+            Optional<String> category,
+            Optional<String> location,
+            Optional<String> search,
+            Optional<LocalDateTime> startDate,
+            Optional<LocalDateTime> endDate,
+            Pageable pageable) {
+        EventStatus status = null;
+        if (statusOpt.isPresent() && !statusOpt.get().equals("all")) {
+            try {
+                status = EventStatus.valueOf(statusOpt.get());
+            } catch (Exception ex) {
+                // ignore or throw
+            }
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+
+        return repo.findEventsWithFilters(
+                status,
+                category.orElse(null),
+                location.orElse(null),
+                organizerId,
+                null,
+                search.orElse(null),
+                startDate.orElse(null),
+                endDate.orElse(null),
+                null,
+                now,
+                pageable).map(mapper::toResponse);
     }
 
     @Override
     public List<EventResponse> getTrendingEvents(int limit) {
         // Gọi Repository lấy danh sách top trending
-        // PageRequest.of(0, limit) nghĩa là lấy trang đầu tiên với số lượng 'limit' phần tử
+        // PageRequest.of(0, limit) nghĩa là lấy trang đầu tiên với số lượng 'limit'
+        // phần tử
         return repo.findTrendingEvents(PageRequest.of(0, limit))
                 .stream()
                 .map(mapper::toResponse)
@@ -312,8 +364,7 @@ public class EventServiceImpl implements IEventService {
                         title,
                         message,
                         payload,
-                        link
-                );
+                        link);
             }
         } catch (Exception ignored) {
         }
@@ -322,7 +373,8 @@ public class EventServiceImpl implements IEventService {
     private void notifyOrganizerOfRejection(EventEntity event, String reason) {
         try {
             UserEntity organizer = event.getOrganizer();
-            if (organizer == null) return;
+            if (organizer == null)
+                return;
             String message = "Sự kiện \"" + event.getName() + "\" đã bị từ chối: " + (reason != null ? reason : "");
             String payload = buildEventPayload(event.getId(), reason);
 
@@ -332,15 +384,16 @@ public class EventServiceImpl implements IEventService {
                     "Sự kiện bị từ chối",
                     message,
                     payload,
-                    "/events/" + event.getId()
-            );
-        } catch (Exception ignored) {}
+                    "/events/" + event.getId());
+        } catch (Exception ignored) {
+        }
     }
 
     private void notifyOrganizerOfApproval(EventEntity event) {
         try {
             UserEntity organizer = event.getOrganizer();
-            if (organizer == null) return;
+            if (organizer == null)
+                return;
             String payload = buildEventPayload(event.getId(), null);
             notificationService.createNotification(
                     organizer.getId(),
@@ -348,9 +401,9 @@ public class EventServiceImpl implements IEventService {
                     "Sự kiện đã được duyệt",
                     "Sự kiện \"" + event.getName() + "\" đã được duyệt.",
                     payload,
-                    "/events/" + event.getId()
-            );
-        } catch (Exception ignored) {}
+                    "/events/" + event.getId());
+        } catch (Exception ignored) {
+        }
     }
 
     private String buildEventPayload(Long eventId, String reason) {
