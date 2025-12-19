@@ -131,8 +131,11 @@ public class RegistrationController {
                                       @RequestParam(required = false) String note,
                                       Authentication auth) {
         try {
+            // Gọi Service với đầy đủ tham số
             RegistrationResponse resp = svc.markCompleted(eventId, registrationId, present, note, auth);
             return ResponseEntity.ok(resp);
+        } catch (SecurityException ex) {
+            return ResponseEntity.status(403).body(java.util.Map.of("error", ex.getMessage()));
         } catch (IllegalArgumentException ex) {
             return ResponseEntity.badRequest().body(java.util.Map.of("error", ex.getMessage()));
         } catch (Exception ex) {

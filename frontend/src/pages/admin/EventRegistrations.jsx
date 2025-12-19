@@ -2,27 +2,32 @@
 import React, {useCallback, useEffect, useState} from "react";
 import {useNavigate, useParams} from "react-router-dom";
 import {
-  Alert,
-  Box,
-  Button,
-  Chip,
-  CircularProgress,
-  Container,
-  IconButton,
-  Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Tooltip,
-  Typography,
+    Alert,
+    Box,
+    Button,
+    Chip,
+    CircularProgress,
+    Container,
+    IconButton,
+    Paper,
+    Table,
+    TableBody,
+    TableCell,
+    TableContainer,
+    TableHead,
+    TableRow,
+    Tooltip,
+    Typography,
+    // --- THÊM IMPORT MỚI ---
+    Dialog, DialogTitle, DialogContent, DialogActions,
+    FormControl, FormLabel, RadioGroup, FormControlLabel, Radio, TextField,
+    Stack
 } from "@mui/material";
 import {
-  ArrowBack as BackIcon,
-  Cancel as RejectIcon,
-  CheckCircle as ApproveIcon,
+    ArrowBack as BackIcon,
+    Cancel as RejectIcon,
+    CheckCircle as ApproveIcon,
+    EventAvailable as AttendanceIcon // Icon chấm công
 } from "@mui/icons-material";
 import registrationApi from "../../api/registrationApi";
 import eventApi from "../../api/eventApi";
@@ -30,247 +35,296 @@ import {toast} from "react-toastify";
 import {useLanguage} from "../../context/LanguageContext";
 
 export default function EventRegistrations() {
-  const {eventId} = useParams();
-  const navigate = useNavigate();
-  const {language} = useLanguage();
-  const [registrations, setRegistrations] = useState([]);
-  const [eventName, setEventName] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [updatingId, setUpdatingId] = useState(null);
+    const {eventId} = useParams(); // Lấy ID từ URL (lưu ý: kiểm tra router đặt tên param là :id hay :eventId)
+    // Nếu router của bạn là path="/organizer/events/:id/registrations" thì dùng const { id } = useParams();
+    // Ở đây tôi giả định bạn dùng :id, nếu code cũ dùng :eventId thì sửa lại dòng dưới:
+    // const { id: eventId } = useParams();
 
-  const statusLabels = {
-    pending: {vi: "Chờ duyệt", en: "Pending"},
-    approved: {vi: "Đã duyệt", en: "Approved"},
-    rejected: {vi: "Đã từ chối", en: "Rejected"},
-    cancelled: {vi: "Đã hủy", en: "Cancelled"},
-    completed: {vi: "Hoàn thành", en: "Completed"},
-  };
+    const navigate = useNavigate();
+    const {language} = useLanguage();
+    const [registrations, setRegistrations] = useState([]);
+    const [eventName, setEventName] = useState("");
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const [updatingId, setUpdatingId] = useState(null);
 
-  const statusColors = {
-    pending: "warning",
-    approved: "success",
-    rejected: "error",
-    cancelled: "default",
-    completed: "info",
-  };
+    // --- STATE CHO CHỨC NĂNG CHẤM CÔNG ---
+    const [attendanceOpen, setAttendanceOpen] = useState(false);
+    const [selectedReg, setSelectedReg] = useState(null);
+    const [attendanceNote, setAttendanceNote] = useState('');
+    const [isPresent, setIsPresent] = useState(true);
 
-  const fetchRegistrations = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      try {
-        const eventRes = await eventApi.getById(eventId);
-        setEventName(eventRes.data?.name || (language === "vi" ? `Sự kiện #${eventId}` : `Event #${eventId}`));
-      } catch (eventErr) {
-        console.warn("Không thể lấy tên sự kiện:", eventErr);
-        setEventName(language === "vi" ? `Sự kiện #${eventId}` : `Event #${eventId}`);
-      }
-      const response = await registrationApi.getRegistrationsForEvent(eventId);
-      setRegistrations(response.data || []);
-    } catch (err) {
-      console.error("Lỗi khi tải danh sách đăng ký:", err);
-      const errorMsg = language === "vi" ? "Không thể tải danh sách đăng ký. Vui lòng thử lại." : "Unable to load registrations. Please try again.";
-      setError(errorMsg);
-      toast.error(errorMsg);
-    } finally {
-      setLoading(false);
-    }
-  }, [eventId, language]);
+    const statusLabels = {
+        pending: {vi: "Chờ duyệt", en: "Pending"},
+        approved: {vi: "Đã duyệt", en: "Approved"},
+        rejected: {vi: "Đã từ chối", en: "Rejected"},
+        cancelled: {vi: "Đã hủy", en: "Cancelled"},
+        completed: {vi: "Hoàn thành", en: "Completed"},
+    };
 
-  useEffect(() => {
-    fetchRegistrations();
-  }, [fetchRegistrations]);
+    const statusColors = {
+        pending: "warning",
+        approved: "success",
+        rejected: "error",
+        cancelled: "default",
+        completed: "info",
+    };
 
-  const handleApprove = async (registrationId) => {
-    if (updatingId) {
-      return;
-    }
-    setUpdatingId(registrationId);
-    try {
-      await registrationApi.approve(eventId, registrationId);
-      toast.success(language === "vi" ? "Đã duyệt đăng ký!" : "Registration approved!");
-      setRegistrations((prev) =>
-          prev.map((reg) =>
-              reg.id === registrationId ? {...reg, status: "approved"} : reg
-          )
-      );
-    } catch (err) {
-      console.error("Lỗi khi duyệt đăng ký:", err);
-      toast.error(err.response?.data?.error || (language === "vi" ? "Duyệt đăng ký thất bại." : "Failed to approve registration."));
-    } finally {
-      setUpdatingId(null);
-    }
-  };
+    const fetchRegistrations = useCallback(async () => {
+        try {
+            setLoading(true);
+            setError(null);
+            try {
+                const eventRes = await eventApi.getById(eventId); // Dùng eventId lấy từ params
+                setEventName(eventRes.data?.name || (language === "vi" ? `Sự kiện #${eventId}` : `Event #${eventId}`));
+            } catch (eventErr) {
+                console.warn("Không thể lấy tên sự kiện:", eventErr);
+            }
+            const response = await registrationApi.getRegistrationsForEvent(eventId);
+            setRegistrations(response.data || []);
+        } catch (err) {
+            console.error("Lỗi khi tải danh sách đăng ký:", err);
+            const errorMsg = language === "vi" ? "Không thể tải danh sách đăng ký." : "Unable to load registrations.";
+            setError(errorMsg);
+            toast.error(errorMsg);
+        } finally {
+            setLoading(false);
+        }
+    }, [eventId, language]);
 
-  const handleReject = async (registrationId) => {
-    if (updatingId) {
-      return;
-    }
-    setUpdatingId(registrationId);
-    try {
-      await registrationApi.reject(eventId, registrationId);
-      toast.info(language === "vi" ? "Đã từ chối đăng ký." : "Registration rejected.");
-      setRegistrations((prev) =>
-          prev.map((reg) =>
-              reg.id === registrationId ? {...reg, status: "rejected"} : reg
-          )
-      );
-    } catch (err) {
-      console.error("Lỗi khi từ chối đăng ký:", err);
-      toast.error(err.response?.data?.error || (language === "vi" ? "Từ chối đăng ký thất bại." : "Failed to reject registration."));
-    } finally {
-      setUpdatingId(null);
-    }
-  };
+    useEffect(() => {
+        fetchRegistrations();
+    }, [fetchRegistrations]);
 
-  if (loading) {
-    return (
-        <Box sx={{bgcolor: "background.default", minHeight: "calc(100vh - 64px)"}}>
-          <Container>
-            <Box display="flex" justifyContent="center" alignItems="center" minHeight="50vh">
-              <CircularProgress/>
+    const handleApprove = async (registrationId) => {
+        if (updatingId) return;
+        setUpdatingId(registrationId);
+        try {
+            await registrationApi.approve(eventId, registrationId);
+            toast.success(language === "vi" ? "Đã duyệt đăng ký!" : "Registration approved!");
+            fetchRegistrations(); // Reload lại để cập nhật trạng thái mới nhất
+        } catch (err) {
+            toast.error(err.response?.data?.error || "Error approving");
+        } finally {
+            setUpdatingId(null);
+        }
+    };
+
+    const handleReject = async (registrationId) => {
+        if (updatingId) return;
+        if (!window.confirm(language === "vi" ? "Bạn chắc chắn muốn từ chối?" : "Reject this volunteer?")) return;
+
+        setUpdatingId(registrationId);
+        try {
+            await registrationApi.reject(eventId, registrationId);
+            toast.info(language === "vi" ? "Đã từ chối đăng ký." : "Registration rejected.");
+            fetchRegistrations();
+        } catch (err) {
+            toast.error(err.response?.data?.error || "Error rejecting");
+        } finally {
+            setUpdatingId(null);
+        }
+    };
+
+    // --- HÀM MỞ DIALOG CHẤM CÔNG ---
+    const handleOpenAttendance = (reg) => {
+        setSelectedReg(reg);
+        setAttendanceNote('');
+        setIsPresent(true);
+        setAttendanceOpen(true);
+    };
+
+    // --- HÀM GỬI API CHẤM CÔNG ---
+    const handleSubmitAttendance = async () => {
+        if (!selectedReg) return;
+        try {
+            // Gọi API complete
+            await registrationApi.markCompleted(eventId, selectedReg.id, isPresent, attendanceNote);
+            toast.success(language === "vi" ? "Đã chấm công thành công!" : "Marked as completed!");
+
+            setAttendanceOpen(false);
+            fetchRegistrations(); // Reload lại danh sách
+        } catch (err) {
+            console.error(err);
+            toast.error(language === "vi" ? "Lỗi chấm công." : "Error marking completion.");
+        }
+    };
+
+    if (loading) {
+        return (
+            <Box sx={{bgcolor: "background.default", minHeight: "calc(100vh - 64px)"}}>
+                <Container>
+                    <Box display="flex" justifyContent="center" alignItems="center" minHeight="50vh">
+                        <CircularProgress/>
+                    </Box>
+                </Container>
             </Box>
-          </Container>
-        </Box>
-    );
-  }
+        );
+    }
 
-  if (error) {
+    if (error) {
+        return (
+            <Box sx={{bgcolor: "background.default", minHeight: "calc(100vh - 64px)", py: 4}}>
+                <Container>
+                    <Alert severity="error" sx={{mb: 3, borderRadius: 2}}>{error}</Alert>
+                    <Button variant="outlined" startIcon={<BackIcon/>} onClick={() => navigate(-1)}>
+                        {language === "vi" ? "Quay lại" : "Go Back"}
+                    </Button>
+                </Container>
+            </Box>
+        );
+    }
+
     return (
         <Box sx={{bgcolor: "background.default", minHeight: "calc(100vh - 64px)", py: 4}}>
-          <Container>
-            <Alert severity="error" sx={{mb: 3, borderRadius: 2}}>{error}</Alert>
-            <Button
-                variant="outlined"
-                startIcon={<BackIcon/>}
-                onClick={() => navigate(-1)}
-                sx={{
-                  borderRadius: 2,
-                  textTransform: "none",
-                  fontWeight: 600,
-                }}
-            >
-              {language === "vi" ? "Quay lại" : "Go Back"}
-            </Button>
-          </Container>
+            <Container maxWidth="lg">
+                <Box display="flex" alignItems="center" mb={4}>
+                    <IconButton onClick={() => navigate(-1)} sx={{ mr: 2, borderRadius: 2 }}>
+                        <BackIcon/>
+                    </IconButton>
+                    <Box>
+                        <Typography variant="h4" fontWeight="bold" sx={{color: "primary.main"}}>
+                            {language === "vi" ? "Quản lý Tình nguyện viên" : "Volunteer Management"}
+                        </Typography>
+                        <Typography variant="subtitle1" color="text.secondary">
+                            {eventName}
+                        </Typography>
+                    </Box>
+                </Box>
+
+                {registrations.length === 0 ? (
+                    <Alert severity="info" sx={{borderRadius: 2}}>
+                        {language === "vi" ? "Chưa có ai đăng ký tham gia sự kiện này." : "No registrations yet."}
+                    </Alert>
+                ) : (
+                    <Paper elevation={0} sx={{ borderRadius: 3, border: "1px solid", borderColor: "divider", overflow: 'hidden' }}>
+                        <TableContainer>
+                            <Table stickyHeader>
+                                <TableHead sx={{ bgcolor: 'grey.50' }}>
+                                    <TableRow>
+                                        <TableCell sx={{fontWeight: 700}}>{language === "vi" ? "Tên TNV" : "Volunteer"}</TableCell>
+                                        <TableCell sx={{fontWeight: 700}}>Email</TableCell>
+                                        <TableCell sx={{fontWeight: 700}}>{language === "vi" ? "Ghi chú" : "Note"}</TableCell>
+                                        <TableCell sx={{fontWeight: 700}}>{language === "vi" ? "Trạng thái" : "Status"}</TableCell>
+                                        <TableCell align="right" sx={{fontWeight: 700}}>{language === "vi" ? "Hành động" : "Actions"}</TableCell>
+                                    </TableRow>
+                                </TableHead>
+                                <TableBody>
+                                    {registrations.map((reg) => (
+                                        <TableRow hover key={reg.id}>
+                                            <TableCell>{reg.volunteerName || "N/A"}</TableCell>
+                                            <TableCell>{reg.email || "-"}</TableCell>
+                                            <TableCell sx={{ maxWidth: 200 }}>
+                                                <Tooltip title={reg.completionNote || reg.note || ''}>
+                                                    <Typography noWrap variant="body2" sx={{ cursor: 'help' }}>
+                                                        {reg.completionNote ? (
+                                                            // Nếu có ghi chú chấm công -> Hiện màu xanh đậm
+                                                            <span style={{ fontWeight: 'bold', color: '#1976d2' }}>{reg.completionNote}</span>
+                                                        ) : (
+                                                            // Nếu chỉ có ghi chú đăng ký -> Hiện màu xám
+                                                            <span style={{ color: 'gray' }}>{reg.note || "-"}</span>
+                                                        )}
+                                                    </Typography>
+                                                </Tooltip>
+                                            </TableCell>
+                                            <TableCell>
+                                                <Chip
+                                                    label={statusLabels[reg.status]?.[language] || reg.status}
+                                                    color={statusColors[reg.status] || "default"}
+                                                    size="small"
+                                                    sx={{fontWeight: 600}}
+                                                />
+                                            </TableCell>
+                                            <TableCell align="right">
+                                                {/* NẾU LÀ PENDING -> HIỆN DUYỆT / TỪ CHỐI */}
+                                                {reg.status === "pending" && (
+                                                    <Stack direction="row" spacing={1} justifyContent="flex-end">
+                                                        <Tooltip title={language === "vi" ? "Duyệt" : "Approve"}>
+                                                            <IconButton color="success" onClick={() => handleApprove(reg.id)} disabled={updatingId === reg.id}>
+                                                                <ApproveIcon/>
+                                                            </IconButton>
+                                                        </Tooltip>
+                                                        <Tooltip title={language === "vi" ? "Từ chối" : "Reject"}>
+                                                            <IconButton color="error" onClick={() => handleReject(reg.id)} disabled={updatingId === reg.id}>
+                                                                <RejectIcon/>
+                                                            </IconButton>
+                                                        </Tooltip>
+                                                    </Stack>
+                                                )}
+
+                                                {/* ✅ NẾU LÀ APPROVED -> HIỆN NÚT CHẤM CÔNG */}
+                                                {reg.status === "approved" && (
+                                                    <Button
+                                                        variant="contained"
+                                                        color="success"
+                                                        size="small"
+                                                        startIcon={<AttendanceIcon />}
+                                                        onClick={() => handleOpenAttendance(reg)}
+                                                        sx={{ textTransform: 'none' }}
+                                                    >
+                                                        {language === "vi" ? "Chấm công" : "Mark Complete"}
+                                                    </Button>
+                                                )}
+
+                                                {/* NẾU LÀ COMPLETED -> HIỆN CHỮ */}
+                                                {reg.status === "completed" && (
+                                                    <Typography variant="caption" color="success.main" fontWeight="bold">
+                                                        {language === "vi" ? "Đã hoàn thành" : "Confirmed"}
+                                                    </Typography>
+                                                )}
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </TableContainer>
+                    </Paper>
+                )}
+            </Container>
+
+            {/* --- DIALOG CHẤM CÔNG (MODAL) --- */}
+            <Dialog open={attendanceOpen} onClose={() => setAttendanceOpen(false)} maxWidth="sm" fullWidth>
+                <DialogTitle sx={{ fontWeight: 'bold' }}>
+                    {language === "vi" ? "Xác nhận hoàn thành nhiệm vụ" : "Confirm Completion"}
+                </DialogTitle>
+                <DialogContent dividers>
+                    <Typography variant="subtitle1" gutterBottom>
+                        {language === "vi" ? "Tình nguyện viên:" : "Volunteer:"} <strong>{selectedReg?.volunteerName}</strong>
+                    </Typography>
+
+                    <FormControl component="fieldset" sx={{ mt: 2, mb: 2 }}>
+                        <FormLabel component="legend" sx={{ fontWeight: 600 }}>
+                            {language === "vi" ? "Trạng thái tham gia" : "Attendance Status"}
+                        </FormLabel>
+                        <RadioGroup
+                            row
+                            value={isPresent}
+                            onChange={(e) => setIsPresent(e.target.value === 'true')}
+                        >
+                            <FormControlLabel value={true} control={<Radio />} label={language === "vi" ? "Có mặt" : "Present"} />
+                            <FormControlLabel value={false} control={<Radio />} label={language === "vi" ? "Vắng mặt" : "Absent"} />
+                        </RadioGroup>
+                    </FormControl>
+
+                    <TextField
+                        label={language === "vi" ? "Nhận xét / Ghi chú" : "Note / Feedback"}
+                        multiline
+                        rows={3}
+                        fullWidth
+                        value={attendanceNote}
+                        onChange={(e) => setAttendanceNote(e.target.value)}
+                        placeholder={language === "vi" ? "VD: Làm việc tích cực, đến đúng giờ..." : "e.g., Hardworking, on time..."}
+                    />
+                </DialogContent>
+                <DialogActions sx={{ px: 3, py: 2 }}>
+                    <Button onClick={() => setAttendanceOpen(false)} color="inherit">
+                        {language === "vi" ? "Hủy" : "Cancel"}
+                    </Button>
+                    <Button onClick={handleSubmitAttendance} variant="contained" color="success">
+                        {language === "vi" ? "Xác nhận" : "Confirm"}
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </Box>
     );
-  }
-
-  return (
-      <Box sx={{bgcolor: "background.default", minHeight: "calc(100vh - 64px)", py: 4}}>
-        <Container maxWidth="lg">
-          <Box display="flex" alignItems="center" mb={4}>
-            <IconButton
-                onClick={() => navigate(-1)}
-                sx={{
-                  mr: 2,
-                  borderRadius: 2,
-                }}
-            >
-              <BackIcon/>
-            </IconButton>
-            <Typography variant="h3" fontWeight="bold" sx={{color: "primary.main"}}>
-              {language === "vi" ? "Đơn đăng ký cho sự kiện:" : "Registrations for Event:"} <strong>{eventName}</strong>
-            </Typography>
-          </Box>
-
-          {registrations.length === 0 ? (
-              <Alert severity="info" sx={{borderRadius: 2}}>
-                {language === "vi" ? "Chưa có ai đăng ký tham gia sự kiện này." : "No registrations for this event yet."}
-              </Alert>
-          ) : (
-              <Paper
-                  elevation={0}
-                  sx={{
-                    borderRadius: 3,
-                    border: "1px solid",
-                    borderColor: "divider",
-                    boxShadow: "0 4px 16px rgba(0,0,0,0.05)",
-                    overflow: 'hidden'
-                  }}
-              >
-                <TableContainer>
-                  <Table stickyHeader>
-                    <TableHead>
-                      <TableRow>
-                        <TableCell sx={{fontWeight: 700}}>{language === "vi" ? "Tình nguyện viên" : "Volunteer"}</TableCell>
-                        <TableCell sx={{fontWeight: 700}}>Email</TableCell>
-                        <TableCell sx={{fontWeight: 700}}>{language === "vi" ? "Ghi chú" : "Note"}</TableCell>
-                        <TableCell align="center" sx={{fontWeight: 700}}>{language === "vi" ? "Trạng thái" : "Status"}</TableCell>
-                        <TableCell align="center" sx={{fontWeight: 700}}>{language === "vi" ? "Hành động" : "Actions"}</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {registrations.map((reg) => (
-                          <TableRow hover key={reg.id}>
-                            <TableCell>{reg.volunteerName || "N/A"}</TableCell>
-                            <TableCell>{reg.email || "-"}</TableCell>
-                            <TableCell
-                                sx={{
-                                  maxWidth: 200,
-                                  overflow: 'hidden',
-                                  textOverflow: 'ellipsis',
-                                  whiteSpace: 'nowrap'
-                                }}
-                            >
-                              <Tooltip title={reg.note || ''}>
-                                <span>{reg.note || "-"}</span>
-                              </Tooltip>
-                            </TableCell>
-                            <TableCell align="center">
-                              <Chip
-                                  label={statusLabels[reg.status]?.[language] || reg.status}
-                                  color={statusColors[reg.status] || "default"}
-                                  size="small"
-                                  sx={{fontWeight: 600}}
-                              />
-                            </TableCell>
-                            <TableCell align="center">
-                              {reg.status === "pending" ? (
-                                  <Box display="flex" alignItems="center" justifyContent="center" gap={1}>
-                                    <Tooltip title={language === "vi" ? "Duyệt" : "Approve"}>
-                                      <span>
-                                        <IconButton
-                                            color="success"
-                                            onClick={() => handleApprove(reg.id)}
-                                            disabled={updatingId === reg.id}
-                                            size="small"
-                                        >
-                                          {updatingId === reg.id ? (
-                                              <CircularProgress size={20}/>
-                                          ) : (
-                                              <ApproveIcon/>
-                                          )}
-                                        </IconButton>
-                                      </span>
-                                    </Tooltip>
-                                    <Tooltip title={language === "vi" ? "Từ chối" : "Reject"}>
-                                      <span>
-                                        <IconButton
-                                            color="error"
-                                            onClick={() => handleReject(reg.id)}
-                                            disabled={updatingId === reg.id}
-                                            size="small"
-                                        >
-                                          <RejectIcon/>
-                                        </IconButton>
-                                      </span>
-                                    </Tooltip>
-                                  </Box>
-                              ) : (
-                                  "-"
-                              )}
-                            </TableCell>
-                          </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-              </Paper>
-          )}
-        </Container>
-      </Box>
-  );
 }
