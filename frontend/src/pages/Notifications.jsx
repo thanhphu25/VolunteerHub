@@ -1,4 +1,4 @@
-import React, {useEffect, useMemo, useState} from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   Box,
   Button,
@@ -21,7 +21,7 @@ import RefreshIcon from "@mui/icons-material/Refresh";
 import DoneAllIcon from "@mui/icons-material/DoneAll";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import CircleIcon from "@mui/icons-material/Circle";
-import {Link as RouterLink} from "react-router-dom";
+import { Link as RouterLink } from "react-router-dom";
 import notificationApi from "../api/notificationApi";
 
 export default function Notifications() {
@@ -70,7 +70,7 @@ export default function Notifications() {
   const handleMarkRead = async (id) => {
     try {
       await notificationApi.markRead(id);
-      setNotifications(prev => prev.map(item => item.id === id ? {...item, isRead: true} : item));
+      setNotifications(prev => prev.map(item => item.id === id ? { ...item, isRead: true } : item));
     } catch (err) {
       console.error("Failed to mark read", err);
     }
@@ -80,7 +80,7 @@ export default function Notifications() {
     try {
       setMarkingAll(true);
       await notificationApi.markAllRead();
-      setNotifications(prev => prev.map(item => ({...item, isRead: true})));
+      setNotifications(prev => prev.map(item => ({ ...item, isRead: true })));
     } catch (err) {
       console.error("Failed to mark all read", err);
     } finally {
@@ -90,119 +90,134 @@ export default function Notifications() {
 
   if (loading) {
     return (
-        <Container maxWidth="md" sx={{py: 6, display: "flex", justifyContent: "center"}}>
-          <CircularProgress/>
-        </Container>
+      <Container maxWidth="md" sx={{ py: 6, display: "flex", justifyContent: "center" }}>
+        <CircularProgress />
+      </Container>
     );
   }
 
   return (
-      <Container maxWidth="md" sx={{py: 4}}>
-        <Stack direction={{xs: "column", sm: "row"}} spacing={2} justifyContent="space-between" alignItems={{xs: "stretch", sm: "center"}} mb={3}>
-          <Typography variant="h4" fontWeight={600}>
-            Thông báo
-          </Typography>
-          <Stack direction="row" spacing={1}>
-            <Button
-                variant="outlined"
-                startIcon={<RefreshIcon/>}
-                onClick={fetchNotifications}
-            >
-              Làm mới
-            </Button>
-            <Button
-                variant="contained"
-                color="primary"
-                startIcon={<DoneAllIcon/>}
-                onClick={handleMarkAllRead}
-                disabled={markingAll}
-            >
-              {markingAll ? "Đang xử lý..." : "Đánh dấu tất cả đã đọc"}
-            </Button>
-          </Stack>
+    <Container maxWidth="md" sx={{ py: 4 }}>
+      <Stack direction={{ xs: "column", sm: "row" }} spacing={2} justifyContent="space-between" alignItems={{ xs: "stretch", sm: "center" }} mb={3}>
+        <Typography variant="h4" fontWeight={600}>
+          Thông báo
+        </Typography>
+        <Stack direction="row" spacing={1}>
+          <Button
+            variant="outlined"
+            startIcon={<RefreshIcon />}
+            onClick={fetchNotifications}
+          >
+            Làm mới
+          </Button>
+          <Button
+            variant="contained"
+            color="primary"
+            startIcon={<DoneAllIcon />}
+            onClick={handleMarkAllRead}
+            disabled={markingAll}
+          >
+            {markingAll ? "Đang xử lý..." : "Đánh dấu tất cả đã đọc"}
+          </Button>
         </Stack>
+      </Stack>
 
-        {error && (
-            <Typography color="error" sx={{mb: 2}}>
-              {error}
-            </Typography>
-        )}
+      {error && (
+        <Typography color="error" sx={{ mb: 2 }}>
+          {error}
+        </Typography>
+      )}
 
-        {notifications.length === 0 ? (
-            <Card>
-              <CardContent>
-                <Typography color="text.secondary">Chưa có thông báo nào.</Typography>
-              </CardContent>
-            </Card>
-        ) : (
-            <Stack spacing={3}>
-              {groupedNotifications.map(([category, items]) => (
-                  <Card key={category} variant="outlined">
-                    <CardHeader
-                        title={category}
-                        subheader={`${items.length} thông báo`}
-                    />
-                    <CardContent sx={{pt: 0}}>
-                      <List>
-                        {items.map((item, idx) => (
-                            <React.Fragment key={item.id ?? idx}>
-                              <ListItem alignItems="flex-start" sx={{py: 1.5}}>
-                                <Box sx={{mr: 1, mt: 0.5}}>
-                                  {item.isRead ? (
-                                      <CheckCircleIcon fontSize="small" color="success"/>
-                                  ) : (
-                                      <CircleIcon fontSize="small" color="primary"/>
+      {notifications.length === 0 ? (
+        <Card>
+          <CardContent>
+            <Typography color="text.secondary">Chưa có thông báo nào.</Typography>
+          </CardContent>
+        </Card>
+      ) : (
+        <Stack spacing={3}>
+          {groupedNotifications.map(([category, items]) => (
+            <Card key={category} variant="outlined">
+              <CardHeader
+                title={category}
+                subheader={`${items.length} thông báo`}
+              />
+              <CardContent sx={{ pt: 0 }}>
+                <List>
+                  {items.map((item, idx) => (
+                    <React.Fragment key={item.id ?? idx}>
+                      <ListItem
+                        alignItems="flex-start"
+                        sx={{
+                          py: 2,
+                          flexDirection: { xs: 'column', md: 'row' },
+                          gap: { xs: 2, md: 0 }
+                        }}
+                      >
+                        <Box sx={{ display: 'flex', flex: 1, width: '100%', mr: { md: 2 } }}>
+                          <Box sx={{ mr: 2, mt: 0.5, flexShrink: 0 }}>
+                            {item.isRead ? (
+                              <CheckCircleIcon fontSize="small" color="success" />
+                            ) : (
+                              <CircleIcon fontSize="small" color="primary" />
+                            )}
+                          </Box>
+                          <ListItemText
+                            primary={item.title ?? "Thông báo"}
+                            secondaryTypographyProps={{ component: 'div' }}
+                            secondary={
+                              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                                <Typography component="div" variant="body2" color="text.primary">
+                                  {item.message ?? item.body ?? ""}
+                                </Typography>
+                                <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>
+                                  <Typography component="span" variant="caption" color="text.secondary">
+                                    {formatDateTime(item.createdAt)}
+                                  </Typography>
+                                  {item.meta?.eventName && (
+                                    <Chip label={item.meta.eventName} size="small" />
                                   )}
                                 </Box>
-                                <ListItemText
-                                    primary={item.title ?? "Thông báo"}
-                                    secondaryTypographyProps={{component: 'div'}}
-                                    secondary={
-                                      <Box sx={{display: 'flex', flexDirection: 'column', gap: 0.5}}>
-                                        <Typography component="div" variant="body2" color="text.primary">
-                                          {item.message ?? item.body ?? ""}
-                                        </Typography>
-                                        <Box sx={{display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center'}}>
-                                          <Typography component="span" variant="caption" color="text.secondary">
-                                            {formatDateTime(item.createdAt)}
-                                          </Typography>
-                                          {item.meta?.eventName && (
-                                              <Chip label={item.meta.eventName} size="small"/>
-                                          )}
-                                        </Box>
-                                      </Box>
-                                    }
-                                />
-                                <ListItemSecondaryAction>
-                                  <Stack direction="row" spacing={1}>
-                                    {item.link && (
-                                        <Button
-                                            size="small"
-                                            component={RouterLink}
-                                            to={item.link}
-                                            onClick={() => handleMarkRead(item.id)}
-                                        >
-                                          Xem chi tiết
-                                        </Button>
-                                    )}
-                                    {!item.isRead && (
-                                        <Button size="small" onClick={() => handleMarkRead(item.id)}>
-                                          Đánh dấu đã đọc
-                                        </Button>
-                                    )}
-                                  </Stack>
-                                </ListItemSecondaryAction>
-                              </ListItem>
-                              {idx < items.length - 1 && <Divider component="li"/>}
-                            </React.Fragment>
-                        ))}
-                      </List>
-                    </CardContent>
-                  </Card>
-              ))}
-            </Stack>
-        )}
-      </Container>
+                              </Box>
+                            }
+                          />
+                        </Box>
+
+                        <Box sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          alignSelf: { xs: 'flex-start', md: 'center' },
+                          ml: { xs: 4, md: 0 } // Indent on mobile to align with text roughly if desired, or 0
+                        }}>
+                          <Stack direction="row" spacing={1}>
+                            {item.link && (
+                              <Button
+                                size="small"
+                                component={RouterLink}
+                                to={item.link}
+                                onClick={() => handleMarkRead(item.id)}
+                              >
+                                Xem chi tiết
+                              </Button>
+                            )}
+                            {!item.isRead && (
+                              <Button size="small" onClick={() => handleMarkRead(item.id)}>
+                                Đánh dấu đã đọc
+                              </Button>
+                            )}
+                          </Stack>
+                        </Box>
+                      </ListItem>
+                      {idx < items.length - 1 && <Divider component="li" />}
+                    </React.Fragment>
+                  ))}
+                </List>
+              </CardContent>
+            </Card>
+          ))}
+        </Stack>
+      )}
+    </Container>
   );
 }
 

@@ -92,7 +92,7 @@ function NavBar() {
   } else if (user?.role === "organizer") {
     roleSpecificPages = organizerPages;
   } else if (user?.role === "admin") {
-    roleSpecificPages = [...organizerPages, ...adminPages];
+    roleSpecificPages = [...adminPages];
   }
 
   const fetchUserProfile = React.useCallback(async () => {
@@ -164,10 +164,10 @@ function NavBar() {
       color="transparent"
       elevation={0}
       sx={{
-          backgroundColor: mode === "dark" ? "#0f172a" : "#ffffff",
-          transition: "background-color 0.3s ease", // Smooth transition when switching themes
+        backgroundColor: mode === "dark" ? "#0f172a" : "#ffffff",
+        transition: "background-color 0.3s ease", // Smooth transition when switching themes
       }}
-        // CHANGE 2: Removed background classes from here to avoid conflicts
+      // CHANGE 2: Removed background classes from here to avoid conflicts
       className="border-b border-slate-200 dark:border-slate-800"
     >
       <Container maxWidth="xl">
@@ -273,10 +273,9 @@ function NavBar() {
                   onClick={handleCloseNavMenu}
                   className={`
                     normal-case px-4 py-2 rounded-full text-sm font-semibold transition-all duration-200
-                    ${
-                      isActive
-                        ? "bg-teal-50 text-teal-700 dark:bg-teal-900/30 dark:text-teal-300"
-                        : "text-slate-600 hover:bg-slate-100 hover:text-teal-600 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
+                    ${isActive
+                      ? "bg-teal-50 text-teal-700 dark:bg-teal-900/30 dark:text-teal-300"
+                      : "text-slate-600 hover:bg-slate-100 hover:text-teal-600 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
                     }
                   `}
                 >

@@ -53,7 +53,7 @@ export default function HeroSlider() {
             <Slider {...settings}>
                 {slides.map((slide) => (
                     <Box key={slide.id} sx={{ position: 'relative', outline: 'none' }}>
-                        
+
                         {/* 1. ẢNH NỀN */}
                         <Box
                             sx={{
@@ -77,22 +77,22 @@ export default function HeroSlider() {
                             maxWidth="lg"
                             sx={{
                                 position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-                                display: 'flex', 
-                                flexDirection: 'column', 
-                                justifyContent: 'center', 
+                                display: 'flex',
+                                flexDirection: 'column',
+                                justifyContent: 'center',
                                 alignItems: 'center',
-                                textAlign: 'center', 
-                                zIndex: 2, 
+                                textAlign: 'center',
+                                zIndex: 2,
                                 px: 2,
                                 color: 'white'
                             }}
                         >
-                            <Typography 
-                                variant="h2" 
-                                component="h1" 
+                            <Typography
+                                variant="h2"
+                                component="h1"
                                 fontWeight="800"
                                 gutterBottom
-                                sx={{ 
+                                sx={{
                                     fontSize: { xs: '2rem', md: '4rem' },
                                     textShadow: '2px 2px 10px rgba(0,0,0,0.5)',
                                     animation: 'fadeInUp 1s ease-out' // Hiệu ứng chữ hiện lên
@@ -101,12 +101,12 @@ export default function HeroSlider() {
                                 {slide.title}
                             </Typography>
 
-                            <Typography 
-                                variant="h5" 
+                            <Typography
+                                variant="h5"
                                 paragraph
-                                sx={{ 
-                                    maxWidth: '800px', 
-                                    mb: 4, 
+                                sx={{
+                                    maxWidth: '800px',
+                                    mb: 4,
                                     opacity: 0.9,
                                     fontSize: { xs: '1rem', md: '1.5rem' },
                                     textShadow: '1px 1px 5px rgba(0,0,0,0.5)',
@@ -116,16 +116,16 @@ export default function HeroSlider() {
                             </Typography>
 
                             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-                                <Button 
-                                    variant="contained" 
+                                <Button
+                                    variant="contained"
                                     size="large"
                                     onClick={() => navigate("/events")}
-                                    sx={{ 
-                                        px: 4, py: 1.5, 
-                                        fontSize: '1.1rem', 
-                                        fontWeight: 'bold', 
+                                    sx={{
+                                        px: 4, py: 1.5,
+                                        fontSize: '1.1rem',
+                                        fontWeight: 'bold',
                                         borderRadius: 2,
-                                        bgcolor: 'primary.main', 
+                                        bgcolor: 'primary.main',
                                         boxShadow: 3,
                                         '&:hover': { bgcolor: 'primary.dark', transform: 'translateY(-2px)' },
                                         transition: 'all 0.3s'
@@ -133,20 +133,25 @@ export default function HeroSlider() {
                                 >
                                     Khám phá sự kiện
                                 </Button>
-                                <Button 
-                                    variant="outlined" 
+                                <Button
+                                    variant="outlined"
                                     size="large"
-                                    onClick={() => navigate("/about")} // Ví dụ link đến trang giới thiệu
-                                    sx={{ 
-                                        px: 4, py: 1.5, 
-                                        fontSize: '1.1rem', 
-                                        fontWeight: 'bold', 
+                                    onClick={() => {
+                                        const element = document.getElementById('why-choose-us');
+                                        if (element) {
+                                            element.scrollIntoView({ behavior: 'smooth' });
+                                        }
+                                    }}
+                                    sx={{
+                                        px: 4, py: 1.5,
+                                        fontSize: '1.1rem',
+                                        fontWeight: 'bold',
                                         borderRadius: 2,
-                                        color: 'white', 
-                                        borderColor: 'white', 
+                                        color: 'white',
+                                        borderColor: 'white',
                                         borderWidth: 2,
-                                        '&:hover': { 
-                                            borderColor: 'white', 
+                                        '&:hover': {
+                                            borderColor: 'white',
                                             bgcolor: 'rgba(255,255,255,0.1)',
                                             borderWidth: 2
                                         }
