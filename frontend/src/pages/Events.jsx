@@ -22,10 +22,14 @@ import eventApi from "../api/eventApi";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useLanguage } from "../context/LanguageContext";
+import EventFilter from "../components/EventFilter";
 
 const DEFAULT_FILTERS = {
   search: "",
   category: "all",
+  location: "all",
+  startDate: null,
+  endDate: null,
   sort: "createdAt,desc",
 };
 
@@ -51,9 +55,13 @@ export default function Events() {
         sort: filters.sort,
       };
 
+
+
       if (filters.search) params.search = filters.search;
-      if (filters.category && filters.category !== "all")
-        params.category = filters.category;
+      if (filters.category && filters.category !== "all") params.category = filters.category;
+      if (filters.location && filters.location !== "all") params.location = filters.location;
+      if (filters.startDate) params.startDate = filters.startDate;
+      if (filters.endDate) params.endDate = filters.endDate;
 
       const response = await eventApi.getAll(params);
       setEvents(response.data.content || []);
@@ -90,7 +98,7 @@ export default function Events() {
       <Box
         sx={{
           bgcolor: "background.paper",
-          py: 6,
+          py: 3,
           borderBottom: "1px solid",
           borderColor: "divider",
           mb: 5,
@@ -101,7 +109,7 @@ export default function Events() {
           <Box display="flex" justifyContent="space-between" alignItems="center">
             <Box>
               <Typography
-                variant="h3"
+                variant="h4"
                 fontWeight="800"
                 color="primary.main"
                 gutterBottom
@@ -109,7 +117,7 @@ export default function Events() {
               >
                 {t("events.title")}
               </Typography>
-              <Typography variant="h6" color="text.secondary" fontWeight="normal">
+              <Typography variant="body2" color="text.secondary" fontWeight="normal">
                 {language === "vi"
                   ? "Khám phá và tham gia các hoạt động ý nghĩa."
                   : "Discover and join meaningful activities."}
@@ -134,6 +142,14 @@ export default function Events() {
           </Box>
         </Container>
       </Box>
+
+
+      <Container maxWidth="lg" sx={{ mb: 4 }}>
+        <EventFilter
+          filters={filters}
+          onChange={handleFilterChange}
+        />
+      </Container>
 
       <Container maxWidth="lg">
         {/* EVENT GRID */}
@@ -196,6 +212,6 @@ export default function Events() {
           </Box>
         )}
       </Container>
-    </Box>
+    </Box >
   );
 }

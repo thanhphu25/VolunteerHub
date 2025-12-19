@@ -269,11 +269,45 @@ public class RegistrationServiceImpl implements IRegistrationService {
     @Override
     @Transactional
     public RegistrationResponse markCompleted(Long eventId, Long registrationId, boolean present, String completionNote, Authentication auth) {
-        RegistrationEntity reg = regRepo.findById(registrationId).orElseThrow(() -> new IllegalArgumentException("Registration not found"));
-        reg.setStatus(RegistrationEntity.RegistrationStatus.completed);
+        // 1. Tìm bản ghi
+        RegistrationEntity reg = regRepo.findById(registrationId)
+                .orElseThrow(() -> new IllegalArgumentException("Registration not found"));
+
+        // 2. Validate: Có đúng sự kiện không?
+        if (!reg.getEvent().getId().equals(eventId)) {
+            throw new IllegalArgumentException("Registration does not belong to this event");
+        }
+
+        // 3. Validate quyền Organizer/Admin
+        UserEntity currentUser = currentUser(auth);
+        boolean isOrganizer = reg.getEvent().getOrganizer().getId().equals(currentUser.getId());
+        boolean isAdmin = currentUser.getRole().name().equalsIgnoreCase("ADMIN");
+
+        if (!isOrganizer && !isAdmin) {
+            throw new SecurityException("Bạn không có quyền chấm công cho sự kiện này");
+        }
+
+        // 4. Cập nhật thông tin chi tiết (Theo code của bạn)
         reg.setCompletedAt(LocalDateTime.now());
+
+        // Lưu trạng thái điểm danh (Present/Absent) vào trường riêng
         reg.setAttendanceStatus(present ? RegistrationEntity.AttendanceStatus.present : RegistrationEntity.AttendanceStatus.absent);
-        reg.setCompletionNote(completionNote);
+
+        // Lưu ghi chú
+        String notePrefix = present ? "[CÓ MẶT] " : "[VẮNG MẶT] ";
+        reg.setCompletionNote(notePrefix + (completionNote != null ? completionNote : ""));
+
+        // 5. QUAN TRỌNG: Cập nhật Trạng thái chính (Status) để Frontend hiển thị đúng
+        if (present) {
+            // Nếu có mặt -> Trạng thái là HOÀN THÀNH
+            reg.setStatus(RegistrationEntity.RegistrationStatus.completed);
+        } else {
+            // Nếu vắng mặt -> Trạng thái là TỪ CHỐI (hoặc Không hoàn thành)
+            // Để Frontend hiện nút màu đỏ thay vì nút xanh "Đã hoàn thành"
+            reg.setStatus(RegistrationEntity.RegistrationStatus.rejected);
+        }
+
+        // 6. Lưu và trả về
         RegistrationEntity saved = regRepo.save(reg);
         return mapper.toResponse(saved);
     }

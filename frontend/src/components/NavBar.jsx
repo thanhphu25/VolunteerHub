@@ -84,7 +84,7 @@ function NavBar() {
   } else if (user?.role === "organizer") {
     roleSpecificPages = organizerPages;
   } else if (user?.role === "admin") {
-    roleSpecificPages = [...organizerPages, ...adminPages];
+    roleSpecificPages = [...adminPages];
   }
 
   const fetchUserProfile = React.useCallback(async () => {
@@ -155,7 +155,12 @@ function NavBar() {
       position="sticky"
       color="transparent"
       elevation={0}
-      className="backdrop-blur-md bg-white/80 dark:bg-slate-900/80 border-b border-slate-200 dark:border-slate-800 transition-colors duration-300"
+      sx={{
+        backgroundColor: mode === "dark" ? "#0f172a" : "#ffffff",
+        transition: "background-color 0.3s ease", // Smooth transition when switching themes
+      }}
+      // CHANGE 2: Removed background classes from here to avoid conflicts
+      className="border-b border-slate-200 dark:border-slate-800"
     >
       <Container maxWidth="xl">
         <Toolbar disableGutters>
@@ -165,9 +170,8 @@ function NavBar() {
             noWrap
             component={RouterLink}
             to="/"
-            className="mr-8 hidden md:flex font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-teal-600 to-cyan-600 hover:opacity-80 transition-opacity cursor-pointer"
+            className="mr-8 hidden md:flex font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-teal-600 to-cyan-600 hover:opacity-80 transition-opacity cursor-pointer pr-3"
             sx={{ textDecoration: "none" }}
-            padding={0}
           >
             VOLUNTEER HUB
           </Typography>
@@ -261,10 +265,9 @@ function NavBar() {
                   onClick={handleCloseNavMenu}
                   className={`
                     normal-case px-4 py-2 rounded-full text-sm font-semibold transition-all duration-200
-                    ${
-                      isActive
-                        ? "bg-teal-50 text-teal-700 dark:bg-teal-900/30 dark:text-teal-300"
-                        : "text-slate-600 hover:bg-slate-100 hover:text-teal-600 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
+                    ${isActive
+                      ? "bg-teal-50 text-teal-700 dark:bg-teal-900/30 dark:text-teal-300"
+                      : "text-slate-600 hover:bg-slate-100 hover:text-teal-600 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
                     }
                   `}
                 >

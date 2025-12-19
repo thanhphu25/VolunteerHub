@@ -42,16 +42,12 @@ export default function Home() {
 
         const res = await eventApi.getAll({
           page: 0,
-          size: 20, // Lấy nhiều hơn để lọc top 3
+          size: 3,
           status: "approved",
+          sort: "popularity",
         });
 
-        const eventsArray = res.data.content
-          ?.sort(
-            (a, b) =>
-              (b.currentVolunteers || 0) - (a.currentVolunteers || 0)
-          )
-          .slice(0, 3); // Chỉ lấy 3 sự kiện nổi bật nhất
+        const eventsArray = res.data.content || [];
 
         if (Array.isArray(eventsArray)) {
           setEvents(eventsArray);
@@ -149,8 +145,87 @@ export default function Home() {
       {/* HERO SLIDER */}
       <HeroSlider />
 
+      {/* FEATURED EVENTS SECTION */}
+      <Box sx={{ bgcolor: "background.paper", py: 10 }}>
+        <Container maxWidth="lg">
+          <Typography
+            variant="h2"
+            align="center"
+            fontWeight="bold"
+            gutterBottom
+            sx={{ mb: 6, color: "primary.main" }}
+          >
+            {t("home.events.title")}
+          </Typography>
+
+          {loading ? (
+            <Box display="flex" justifyContent="center" mt={4}>
+              <CircularProgress />
+            </Box>
+          ) : error ? (
+            <Alert severity="error" sx={{ mt: 4 }}>
+              {error}
+            </Alert>
+          ) : events.length > 0 ? (
+            <>
+              <Box
+                display="grid"
+                gridTemplateColumns={{
+                  xs: "1fr",             // 📱 1 cột
+                  sm: "1fr 1fr",         // 💻 2 cột
+                  md: "1fr 1fr 1fr",     // 🖥️ 3 cột
+                }}
+                gap={{ xs: 2, sm: 3, md: 4 }}
+                justifyContent="center"
+                sx={{
+                  width: "100%",
+                  alignItems: "stretch",
+                  mt: 2,
+                }}
+              >
+                {events.map((event) => (
+                  <EventCard
+                    key={event.id}
+                    event={event}
+                    showOrganizerName={true}
+                    sx={{
+                      height: "100%",
+                      width: "100%",
+                      maxWidth: 420,
+                      justifySelf: "center",
+                    }}
+                  />
+                ))}
+              </Box>
+
+              <Box textAlign="center" mt={6}>
+                <Button
+                  variant="contained"
+                  size="large"
+                  component={RouterLink}
+                  to="/events"
+                  sx={{
+                    px: 5,
+                    py: 1.5,
+                    fontSize: "1.1rem",
+                    fontWeight: 600,
+                    borderRadius: 3,
+                  }}
+                >
+                  {t("home.events.viewAll")}
+                </Button>
+              </Box>
+            </>
+          ) : (
+            <Typography align="center" sx={{ mt: 4 }} color="text.secondary">
+              {t("home.events.noEvents")}
+            </Typography>
+          )}
+        </Container>
+      </Box>
+
       {/* WHY CHOOSE US SECTION */}
-      <Container maxWidth="lg" sx={{ mt: 10, mb: 8 }}>
+      <Container id="why-choose-us" maxWidth="lg" sx={{ mt: 10, mb: 8, scrollMarginTop: "100px" }}>
         <Typography
           variant="h2"
           align="center"
@@ -160,7 +235,7 @@ export default function Home() {
         >
           {t("home.whyChoose.title")}
         </Typography>
-        <Grid container spacing={4}>
+        <Grid container spacing={4} justifyContent="center">
           {whyChooseFeatures.map((item, i) => (
             <Grid item xs={12} sm={6} md={3} key={i}>
               <Paper
@@ -183,7 +258,14 @@ export default function Home() {
                   },
                 }}
               >
-                <Box sx={{ mb: 2, color: "primary.main" }}>{item.icon}</Box>
+                <Box
+                  sx={{
+                    mb: 2,
+                    color: "primary.main",
+                  }}
+                >
+                  {item.icon}
+                </Box>
                 <Typography variant="h6" fontWeight="bold" gutterBottom>
                   {item.title}
                 </Typography>
@@ -197,7 +279,7 @@ export default function Home() {
       </Container>
 
       {/* FEATURES SECTION */}
-      <Box sx={{ bgcolor: "background.paper", py: 10 }}>
+      <Box sx={{ bgcolor: "background.default", py: 10 }}>
         <Container maxWidth="lg">
           <Typography
             variant="h2"
@@ -208,7 +290,7 @@ export default function Home() {
           >
             {t("home.features.title")}
           </Typography>
-          <Grid container spacing={4}>
+          <Grid container spacing={4} justifyContent="center">
             {features.map((feature, i) => (
               <Grid item xs={12} sm={6} md={3} key={i}>
                 <Card
@@ -218,10 +300,9 @@ export default function Home() {
                     borderRadius: 3,
                     textAlign: "center",
                     p: 3,
+                    transition: "all 0.3s ease",
                     border: "1px solid",
                     borderColor: "divider",
-                    bgcolor: "background.default",
-                    transition: "all 0.3s ease",
                     "&:hover": {
                       transform: "translateY(-8px)",
                       boxShadow: "0 12px 32px rgba(2, 136, 209, 0.2)",
@@ -313,85 +394,6 @@ export default function Home() {
           ))}
         </Grid>
       </Container>
-
-      {/* FEATURED EVENTS SECTION */}
-      <Box sx={{ bgcolor: "background.paper", py: 10 }}>
-        <Container maxWidth="lg">
-          <Typography
-            variant="h2"
-            align="center"
-            fontWeight="bold"
-            gutterBottom
-            sx={{ mb: 6, color: "primary.main" }}
-          >
-            {t("home.events.title")}
-          </Typography>
-
-          {loading ? (
-            <Box display="flex" justifyContent="center" mt={4}>
-              <CircularProgress />
-            </Box>
-          ) : error ? (
-            <Alert severity="error" sx={{ mt: 4 }}>
-              {error}
-            </Alert>
-          ) : events.length > 0 ? (
-            <>
-              <Box
-                display="grid"
-                gridTemplateColumns={{
-                  xs: "1fr",             // 📱 1 cột
-                  sm: "1fr 1fr",         // 💻 2 cột
-                  md: "1fr 1fr 1fr",     // 🖥️ 3 cột
-                }}
-                gap={{ xs: 2, sm: 3, md: 4 }}
-                justifyContent="center"
-                sx={{
-                  width: "100%",
-                  alignItems: "stretch",
-                  mt: 2,
-                }}
-              >
-                {events.map((event) => (
-                  <EventCard
-                    key={event.id}
-                    event={event}
-                    showOrganizerName={true}
-                    sx={{
-                      height: "100%",
-                      width: "100%",
-                      maxWidth: 420,
-                      justifySelf: "center",
-                    }}
-                  />
-                ))}
-              </Box>
-
-              <Box textAlign="center" mt={6}>
-                <Button
-                  variant="contained"
-                  size="large"
-                  component={RouterLink}
-                  to="/events"
-                  sx={{
-                    px: 5,
-                    py: 1.5,
-                    fontSize: "1.1rem",
-                    fontWeight: 600,
-                    borderRadius: 3,
-                  }}
-                >
-                  {t("home.events.viewAll")}
-                </Button>
-              </Box>
-            </>
-          ) : (
-            <Typography align="center" sx={{ mt: 4 }} color="text.secondary">
-              {t("home.events.noEvents")}
-            </Typography>
-          )}
-        </Container>
-      </Box>
     </Box>
   );
 }

@@ -68,31 +68,32 @@ export default function EventDetail() {
     });
   };
 
-  const checkRegistration = async () => {
-    if (user?.role !== "volunteer") return;
-    try {
-      const response = await registrationApi.getMyRegistrationForEvent(eventId);
-      const data = response.data;
-      const status = data?.status;
+  // Hàm kiểm tra trạng thái đăng ký của user hiện tại cho sự kiện này
+    const checkRegistration = async () => {
+        if (user?.role !== 'volunteer') return;
 
-      if (status === "pending" || status === "approved") {
-        setRegistration(data);
-        setLastRegistrationStatus(status);
-      } else if (status) {
-        setRegistration(null);
-        setLastRegistrationStatus(status);
-      } else {
-        setRegistration(null);
-        setLastRegistrationStatus(null);
-      }
-    } catch (err) {
-      if (err.response?.status === 404) {
-        setRegistration(null);
-        setLastRegistrationStatus(null);
-      } else {
-        console.error("Lỗi khi kiểm tra đăng ký:", err);
-      }
-    }
+        try {
+            const response = await registrationApi.getMyRegistrationForEvent(eventId);
+            const data = response.data;
+
+            // --- SỬA ĐOẠN NÀY: Lưu tất cả trạng thái, không lọc bỏ completed/rejected ---
+            if (data && data.status) {
+                setRegistration(data);
+                setLastRegistrationStatus(data.status);
+            } else {
+                setRegistration(null);
+                setLastRegistrationStatus(null);
+            }
+            // ---------------------------------------------------------------------------
+
+        } catch (err) {
+            if (err.response?.status === 404) {
+                setRegistration(null);
+                setLastRegistrationStatus(null);
+            } else {
+                console.error("Lỗi khi kiểm tra đăng ký:", err);
+            }
+        }
   };
 
   useEffect(() => {
@@ -448,124 +449,168 @@ export default function EventDetail() {
                 <Typography variant="body2" color="text.secondary">
                   {event.contactInfo}
                 </Typography>
+              </>
+          )}
+
+          {/* 3. Cập nhật logic hiển thị nút đăng ký */}
+            {/* LOGIC HIỂN THỊ NÚT ĐĂNG KÝ VÀ TRẠNG THÁI */}
+            {isVolunteer && (
+                <Box sx={{mt: 4, textAlign: 'center'}}>
+                    {registration ? (
+                        // === TRƯỜNG HỢP 1: ĐÃ CÓ DỮ LIỆU ĐĂNG KÝ ===
+                        <Box display="flex" flexDirection="column" gap={2} alignItems="center">
+
+                            {/* 1. Trạng thái: Đã duyệt */}
+                            {registration.status === 'approved' && (
+                                <Button variant="contained" color="success" size="large" disabled startIcon={<CheckCircleIcon/>}>
+                                    Đã tham gia (Chờ sự kiện)
+                                </Button>
+                            )}
+
+                            {/* 2. Trạng thái: Chờ duyệt */}
+                            {registration.status === 'pending' && (
+                                <Button variant="contained" color="warning" size="large" disabled>
+                                    Đang chờ duyệt
+                                </Button>
+                            )}
+
+                            {/* 3. Trạng thái: Hoàn thành (CÓ MẶT) */}
+                            {registration.status === 'completed' && (
+                                <Button variant="contained" color="primary" size="large" disabled startIcon={<CheckCircleIcon/>}>
+                                    Đã hoàn thành sự kiện
+                                </Button>
+                            )}
+
+                            {/* 4. Trạng thái: Từ chối / Vắng mặt */}
+                            {registration.status === 'rejected' && (
+                                <Button variant="contained" color="error" size="large" disabled>
+                                    Không hoàn thành / Bị từ chối
+                                </Button>
+                            )}
+
+                            {/* Nút Hủy: Chỉ hiện khi Chờ duyệt hoặc Đã duyệt */}
+                            {(registration.status === 'pending' || registration.status === 'approved') && !eventEnded && (
+                                <Button
+                                    variant="outlined"
+                                    color="error"
+                                    size="medium"
+                                    onClick={handleCancelRegistration}
+                                    disabled={isCancelling}
+                                >
+                                    {isCancelling ? 'Đang hủy...' : 'Hủy đăng ký'}
+                                </Button>
+                            )}
+
+                            {/* --- KHUNG HIỂN THỊ NHẬN XÉT TỪ BTC (MỚI) --- */}
+                            {(registration.status === 'completed' || registration.status === 'rejected') &&
+                                (registration.completionNote || registration.note) && (
+                                    <Box sx={{ mt: 2, width: '100%', maxWidth: 600 }}>
+                                        <Alert
+                                            severity={registration.status === 'completed' ? "success" : "error"}
+                                            variant="outlined"
+                                            sx={{ borderRadius: 2, textAlign: 'left' }}
+                                        >
+                                            <Typography variant="subtitle2" fontWeight="bold" gutterBottom>
+                                                Phản hồi từ Ban Tổ Chức:
+                                            </Typography>
+                                            <Typography variant="body2">
+                                                {registration.completionNote || registration.note}
+                                            </Typography>
+                                        </Alert>
+                                    </Box>
+                                )}
+                        </Box>
+                    ) : (
+                        // === TRƯỜNG HỢP 2: CHƯA ĐĂNG KÝ (HOẶC ĐÃ HỦY) ===
+                        !eventEnded ? (
+                            canRegister ? (
+                                <>
+                                    {lastRegistrationStatus === 'rejected' && (
+                                        <Alert severity="warning" sx={{mb: 2, display: 'inline-flex'}}>
+                                            Bạn từng bị từ chối ở sự kiện này. Bạn có thể thử đăng ký lại.
+                                        </Alert>
+                                    )}
+                                    <br />
+                                    <Button
+                                        variant="contained"
+                                        color="primary"
+                                        size="large"
+                                        onClick={handleRegister}
+                                        disabled={isRegistering}
+                                    >
+                                        {isRegistering ? 'Đang xử lý...' : 'Đăng ký tham gia'}
+                                    </Button>
+                                </>
+                            ) : (
+                                <Button variant="contained" color="inherit" size="large" disabled>
+                                    {event.status !== 'approved' ? 'Sự kiện chưa được duyệt' : 'Đã đủ số lượng'}
+                                </Button>
+                            )
+                        ) : (
+                            <Alert severity="info" sx={{mt: 2, display: 'inline-flex'}}>Sự kiện này đã kết thúc.</Alert>
+                        )
+                    )}
+                </Box>
+            )}
+          {eventEnded && ( // Hiển thị thông báo nếu sự kiện đã kết thúc
+              <Alert severity="info" sx={{mt: 4}}>Sự kiện này đã kết
+                thúc.</Alert>
+          )}
+
+          {isAdmin && (
+              <Box sx={{mt: 4, display: 'flex', gap: 2, flexWrap: 'wrap'}}>
+                {event.status === 'pending' && (
+                    <>
+                      <Button
+                          variant="contained"
+                          color="success"
+                          onClick={async () => {
+                            setApproving(true);
+                            try {
+                              const res = await eventApi.approve(eventId);
+                              setEvent(res.data);
+                              toast.success('Đã duyệt sự kiện');
+                            } catch (err) {
+                              console.error('Approve event failed', err);
+                              toast.error(err.response?.data?.error || 'Không thể duyệt sự kiện');
+                            } finally {
+                              setApproving(false);
+                            }
+                          }}
+                          disabled={approving || rejecting}
+                      >
+                        {approving ? 'Đang duyệt...' : 'Duyệt'}
+                      </Button>
+
+                      <Button
+                          variant="outlined"
+                          color="error"
+                          onClick={() => {
+                            setRejectReason("");
+                            setRejectDialogOpen(true);
+                          }}
+                          disabled={approving || rejecting}
+                      >
+                        Từ chối
+                      </Button>
+                    </>
+                )}
               </Box>
-            )}
-          </Grid>
-        </Grid>
+          )}
 
-        {/* 5. KHU VỰC ĐĂNG KÝ */}
-        {isVolunteer && !eventEnded && (
-          <Box
-            sx={{
-              mt: 6,
-              py: 3,
-              borderTop: "1px solid #eee",
-              textAlign: "center",
-            }}
-          >
-            {registration ? (
-              <Stack alignItems="center" spacing={2}>
-                <Button
-                  variant="contained"
-                  color={
-                    registration.status === "approved" ? "success" : "warning"
-                  }
-                  size="large"
-                  disabled
-                  startIcon={<CheckCircleIcon />}
-                >
-                  {registration.status === "approved"
-                    ? "Đã được duyệt tham gia"
-                    : "Đang chờ duyệt hồ sơ"}
-                </Button>
-                <Button
-                  variant="text"
-                  color="error"
-                  onClick={handleCancelRegistration}
-                  disabled={isCancelling}
-                >
-                  Hủy đăng ký tham gia
-                </Button>
-              </Stack>
-            ) : canRegister ? (
-              <Button
-                variant="contained"
-                color="primary"
-                size="large"
-                onClick={handleRegister}
-                disabled={isRegistering}
-                sx={{ px: 8, py: 2, fontSize: "1.1rem", borderRadius: 2 }}
-              >
-                {isRegistering ? "Đang gửi..." : "Đăng ký tham gia ngay"}
-              </Button>
-            ) : (
-              <Alert severity="error" sx={{ maxWidth: 400, mx: "auto" }}>
-                {event.status !== "approved"
-                  ? "Sự kiện này hiện chưa nhận đăng ký."
-                  : "Sự kiện đã đủ số lượng tình nguyện viên."}
-              </Alert>
-            )}
+
+          {event.status === 'approved' && (
+              <EventDiscussion eventId={eventId} event={event} registration={registration}/>
+          )}
+
+
+          {/* Nút quay lại */}
+          <Box sx={{mt: 4}}>
+            <Button component={RouterLink} to="/events">
+              ← Quay lại danh sách sự kiện
+            </Button>
           </Box>
-        )}
-
-        {eventEnded && (
-          <Alert severity="info" sx={{ mt: 4 }}>
-            Sự kiện này đã kết thúc.
-          </Alert>
-        )}
-
-        {isAdmin && event.status === "pending" && (
-          <Stack
-            direction="row"
-            spacing={2}
-            sx={{ mt: 4, justifyContent: "center" }}
-          >
-            <Button
-              variant="contained"
-              color="success"
-              onClick={async () => {
-                setApproving(true);
-                try {
-                  const res = await eventApi.approve(eventId);
-                  setEvent(res.data);
-                  toast.success("Đã duyệt sự kiện");
-                } finally {
-                  setApproving(false);
-                }
-              }}
-              disabled={approving || rejecting}
-            >
-              Duyệt sự kiện
-            </Button>
-            <Button
-              variant="outlined"
-              color="error"
-              onClick={() => setRejectDialogOpen(true)}
-              disabled={approving || rejecting}
-            >
-              Từ chối
-            </Button>
-          </Stack>
-        )}
-
-        {event.status === "approved" && (
-          <EventDiscussion
-            eventId={eventId}
-            event={event}
-            registration={registration}
-          />
-        )}
-
-        <Box sx={{ mt: 4 }}>
-          <Button
-            component={RouterLink}
-            to="/events"
-            startIcon={<span>←</span>}
-          >
-            Quay lại danh sách
-          </Button>
-        </Box>
-      </Paper>
+        </Paper>
 
       {/* DIALOG TỪ CHỐI */}
       <Dialog

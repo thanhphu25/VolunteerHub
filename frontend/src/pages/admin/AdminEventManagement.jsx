@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from "react";
+import React, { useEffect, useState } from "react";
 import {
   Alert,
   Box,
@@ -11,12 +11,13 @@ import {
   Grid,
   Paper,
 } from "@mui/material";
-import {Refresh as RefreshIcon, FileDownload as FileDownloadIcon} from "@mui/icons-material";
+import { Refresh as RefreshIcon, FileDownload as FileDownloadIcon } from "@mui/icons-material";
 import EventCard from "../../components/EventCard";
 import eventApi from "../../api/eventApi";
-import {toast} from "react-toastify";
+import { toast } from "react-toastify";
 import adminApi from "../../api/adminApi.js";
-import {useLanguage} from "../../context/LanguageContext";
+import { useLanguage } from "../../context/LanguageContext";
+import EventFilter from "../../components/EventFilter";
 
 const downloadFile = (blob, filename) => {
   const url = window.URL.createObjectURL(blob);
@@ -31,24 +32,36 @@ const downloadFile = (blob, filename) => {
 };
 
 export default function AdminEventManagement() {
-  const {t, language} = useLanguage();
+  const { t, language } = useLanguage();
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [statusFilter, setStatusFilter] = useState("pending");
+  const [filters, setFilters] = useState({
+    status: "pending",
+    search: "",
+    category: "all",
+    location: "all",
+    startDate: null,
+    endDate: null,
+    sort: "createdAt,desc"
+  });
   const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
     fetchEvents();
-  }, [statusFilter]);
+  }, [filters]);
 
   const fetchEvents = async () => {
     try {
       setLoading(true);
       setError(null);
-      const response = statusFilter === "all"
-          ? await eventApi.getAll()
-          : await eventApi.getByStatus(statusFilter);
+
+      const params = { ...filters };
+      if (params.status === 'all') delete params.status;
+      if (params.category === 'all') delete params.category;
+      if (params.location === 'all') delete params.location;
+
+      const response = await eventApi.getAll(params);
       setEvents(response.data.content || []);
     } catch (err) {
       console.error("Error fetching events:", err);
@@ -56,6 +69,10 @@ export default function AdminEventManagement() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleFilterChange = (field, value) => {
+    setFilters((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleApproveEvent = async (eventId) => {
@@ -88,9 +105,9 @@ export default function AdminEventManagement() {
 
   const handleDeleteEvent = async (eventId) => {
     if (!window.confirm(
-        language === "vi"
-            ? "Bạn có chắc chắn muốn xóa sự kiện này? Hành động này không thể hoàn tác."
-            : "Are you sure you want to delete this event? This action cannot be undone.")) {
+      language === "vi"
+        ? "Bạn có chắc chắn muốn xóa sự kiện này? Hành động này không thể hoàn tác."
+        : "Are you sure you want to delete this event? This action cannot be undone.")) {
       return;
     }
     try {
@@ -104,7 +121,7 @@ export default function AdminEventManagement() {
   };
 
   const handleTabChange = (event, newValue) => {
-    setStatusFilter(newValue);
+    setFilters(prev => ({ ...prev, status: newValue }));
   };
 
   const handleExportEvents = async (format) => {
@@ -129,136 +146,162 @@ export default function AdminEventManagement() {
   };
 
   const statusTabs = [
-    {value: "pending", label: language === "vi" ? "Chờ duyệt" : "Pending"},
-    {value: "approved", label: language === "vi" ? "Đã duyệt" : "Approved"},
-    {value: "rejected", label: language === "vi" ? "Đã từ chối" : "Rejected"},
-    {value: "cancelled", label: language === "vi" ? "Đã hủy" : "Cancelled"},
-    {value: "all", label: language === "vi" ? "Tất cả" : "All"},
+    { value: "pending", label: language === "vi" ? "Chờ duyệt" : "Pending" },
+    { value: "approved", label: language === "vi" ? "Đã duyệt" : "Approved" },
+    { value: "rejected", label: language === "vi" ? "Đã từ chối" : "Rejected" },
+    { value: "cancelled", label: language === "vi" ? "Đã hủy" : "Cancelled" },
+    { value: "all", label: language === "vi" ? "Tất cả" : "All" },
   ];
 
-  if (loading) {
-    return (
-        <Box sx={{bgcolor: "background.default", minHeight: "calc(100vh - 64px)"}}>
-          <Container>
-            <Box display="flex" justifyContent="center" alignItems="center" minHeight="50vh">
-              <CircularProgress/>
-            </Box>
-          </Container>
-        </Box>
-    );
-  }
-
   return (
-      <Box sx={{bgcolor: "background.default", minHeight: "calc(100vh - 64px)", py: 4}}>
-        <Container maxWidth="lg">
-          <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
-            <Typography variant="h3" fontWeight="bold" sx={{color: "primary.main"}}>
-              {language === "vi" ? "Quản lý sự kiện" : "Event Management"}
-            </Typography>
-            <Box display="flex" gap={2}>
-              <Button
-                  variant="outlined"
-                  startIcon={<FileDownloadIcon/>}
-                  onClick={() => handleExportEvents('csv')}
-                  disabled={exporting}
+    <Box sx={{ bgcolor: "background.default", minHeight: "calc(100vh - 64px)", py: 4 }}>
+      <Container maxWidth="lg">
+        {error && (
+          <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>
+            {error}
+          </Alert>
+        )}
+
+        <EventFilter
+          filters={filters}
+          onChange={handleFilterChange}
+          showStatus={false} // Status managed by Tabs below
+        />
+
+        <Paper
+          elevation={0}
+          sx={{
+            mb: 4,
+            borderRadius: 3,
+            border: "1px solid",
+            borderColor: "divider",
+            boxShadow: "0 4px 16px rgba(0,0,0,0.05)",
+            overflow: 'hidden' // Ensure content doesn't overflow rounded corners
+          }}
+        >
+          <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ pr: 2 }}>
+            <Tabs
+              value={filters.status}
+              onChange={handleTabChange}
+              variant="scrollable"
+              scrollButtons="auto"
+              sx={{
+                flexGrow: 1,
+                borderBottom: 0, // Remove bottom border since it is in a row
+                px: 2,
+                '& .MuiTabs-indicator': {
+                  height: 3,
+                  borderRadius: '3px 3px 0 0'
+                }
+              }}
+            >
+              {statusTabs.map((tab) => (
+                <Tab
+                  key={tab.value}
+                  label={tab.label}
+                  value={tab.value}
                   sx={{
-                    borderRadius: 2,
                     textTransform: "none",
                     fontWeight: 600,
+                    fontSize: '0.95rem',
+                    minHeight: 60
                   }}
+                />
+              ))}
+            </Tabs>
+
+            <Box display="flex" gap={1.5}>
+              <Button
+                variant="outlined"
+                size="small"
+                startIcon={<FileDownloadIcon fontSize="small" />}
+                onClick={() => handleExportEvents('csv')}
+                disabled={exporting}
+                sx={{
+                  borderRadius: 2,
+                  textTransform: "none",
+                  fontWeight: 600,
+                  borderColor: 'divider',
+                  color: 'text.secondary',
+                  '&:hover': {
+                    borderColor: 'primary.main',
+                    color: 'primary.main',
+                    bgcolor: 'primary.lighter'
+                  }
+                }}
               >
-                {exporting ? (language === "vi" ? 'Đang xuất...' : 'Exporting...') : (language === "vi" ? 'Xuất CSV' : 'Export CSV')}
+                CSV
               </Button>
               <Button
-                  variant="outlined"
-                  startIcon={<FileDownloadIcon/>}
-                  onClick={() => handleExportEvents('json')}
-                  disabled={exporting}
-                  sx={{
-                    borderRadius: 2,
-                    textTransform: "none",
-                    fontWeight: 600,
-                  }}
+                variant="outlined"
+                size="small"
+                startIcon={<FileDownloadIcon fontSize="small" />}
+                onClick={() => handleExportEvents('json')}
+                disabled={exporting}
+                sx={{
+                  borderRadius: 2,
+                  textTransform: "none",
+                  fontWeight: 600,
+                  borderColor: 'divider',
+                  color: 'text.secondary',
+                  '&:hover': {
+                    borderColor: 'primary.main',
+                    color: 'primary.main',
+                    bgcolor: 'primary.lighter'
+                  }
+                }}
               >
-                {exporting ? (language === "vi" ? 'Đang xuất...' : 'Exporting...') : (language === "vi" ? 'Xuất JSON' : 'Export JSON')}
+                JSON
               </Button>
               <Button
-                  variant="outlined"
-                  startIcon={<RefreshIcon/>}
-                  onClick={fetchEvents}
-                  sx={{
-                    borderRadius: 2,
-                    textTransform: "none",
-                    fontWeight: 600,
-                  }}
+                variant="outlined"
+                size="small"
+                startIcon={<RefreshIcon fontSize="small" />}
+                onClick={fetchEvents}
+                sx={{
+                  borderRadius: 2,
+                  textTransform: "none",
+                  fontWeight: 600,
+                  borderColor: 'divider',
+                  color: 'text.secondary',
+                  '&:hover': {
+                    borderColor: 'primary.main',
+                    color: 'primary.main',
+                    bgcolor: 'primary.lighter'
+                  }
+                }}
               >
                 {language === "vi" ? "Làm mới" : "Refresh"}
               </Button>
             </Box>
           </Box>
+        </Paper>
 
-          {error && (
-              <Alert severity="error" sx={{mb: 3, borderRadius: 2}}>
-                {error}
-              </Alert>
-          )}
-
-          <Paper
-              elevation={0}
-              sx={{
-                mb: 4,
-                borderRadius: 3,
-                border: "1px solid",
-                borderColor: "divider",
-                boxShadow: "0 4px 16px rgba(0,0,0,0.05)",
-              }}
-          >
-            <Tabs
-                value={statusFilter}
-                onChange={handleTabChange}
-                variant="scrollable"
-                scrollButtons="auto"
-                sx={{
-                  borderBottom: 1,
-                  borderColor: 'divider',
-                  px: 2,
-                }}
-            >
-              {statusTabs.map((tab) => (
-                  <Tab
-                      key={tab.value}
-                      label={tab.label}
-                      value={tab.value}
-                      sx={{
-                        textTransform: "none",
-                        fontWeight: 600,
-                      }}
-                  />
-              ))}
-            </Tabs>
-          </Paper>
-
-          {events.length === 0 ? (
-              <Alert severity="info" sx={{borderRadius: 2}}>
-                {language === "vi" ? "Không có sự kiện nào ở trạng thái này." : "No events in this status."}
-              </Alert>
-          ) : (
-              <Grid container spacing={3} sx={{alignItems: 'stretch'}}>
-                {events.map(event => (
-                    <Grid item xs={12} sm={6} md={4} key={event.id} sx={{display: 'flex'}}>
-                      <EventCard
-                          event={event}
-                          showStatus={true}
-                          showOrganizerName={true}
-                          onApprove={event.status === 'pending' ? handleApproveEvent : null}
-                          onReject={event.status === 'pending' ? handleRejectEvent : null}
-                          onDelete={handleDeleteEvent}
-                      />
-                    </Grid>
-                ))}
+        {loading ? (
+          <Box display="flex" justifyContent="center" alignItems="center" minHeight="50vh">
+            <CircularProgress />
+          </Box>
+        ) : events.length === 0 ? (
+          <Alert severity="info" sx={{ borderRadius: 2 }}>
+            {language === "vi" ? "Không có sự kiện nào ở trạng thái này." : "No events in this status."}
+          </Alert>
+        ) : (
+          <Grid container spacing={3} sx={{ alignItems: 'stretch' }}>
+            {events.map(event => (
+              <Grid item xs={12} sm={6} md={4} key={event.id} sx={{ display: 'flex' }}>
+                <EventCard
+                  event={event}
+                  showStatus={true}
+                  showOrganizerName={true}
+                  onApprove={event.status === 'pending' ? handleApproveEvent : null}
+                  onReject={event.status === 'pending' ? handleRejectEvent : null}
+                  onDelete={handleDeleteEvent}
+                />
               </Grid>
-          )}
-        </Container>
-      </Box>
+            ))}
+          </Grid>
+        )}
+      </Container>
+    </Box>
   );
 }

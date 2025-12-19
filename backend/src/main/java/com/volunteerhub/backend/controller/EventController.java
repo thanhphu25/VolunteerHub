@@ -7,6 +7,7 @@ import com.volunteerhub.backend.service.IEventService;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,28 +34,42 @@ public class EventController {
     }
 
     /**
-     * Parse a date string that may be either a full datetime (ISO-8601) or date-only.
-     * For date-only strings, converts to start of day for startDate or end of day for endDate.
+     * Parse a date string that may be either a full datetime (ISO-8601) or
+     * date-only.
+     * For date-only strings, converts to start of day for startDate or end of day
+     * for endDate.
      * * @param dateStr The date string to parse
-     * @param isEndDate If true, date-only strings are converted to end of day; if false, start of day
+     * 
+     * @param isEndDate If true, date-only strings are converted to end of day; if
+     *                  false, start of day
      * @return Parsed LocalDateTime
-     * @throws DateTimeParseException if the string cannot be parsed as either format
+     * @throws DateTimeParseException if the string cannot be parsed as either
+     *                                format
      */
     private LocalDateTime parseFlexibleDateTime(String dateStr, boolean isEndDate) {
+        if (dateStr == null || dateStr.isBlank()) {
+            return null;
+        }
         try {
-            // First try parsing as full LocalDateTime (ISO-8601 with time)
-            return LocalDateTime.parse(dateStr);
-        } catch (DateTimeParseException e) {
+            // Try parsing as ZonedDateTime (ISO-8601 with timezone, e.g.,
+            // 2023-10-27T10:00:00.000Z)
+            return java.time.ZonedDateTime.parse(dateStr).toLocalDateTime();
+        } catch (DateTimeParseException e0) {
             try {
-                // If that fails, try parsing as LocalDate (date-only)
-                LocalDate date = LocalDate.parse(dateStr);
-                // Convert to LocalDateTime: start of day for startDate, end of day for endDate
-                return isEndDate ? date.atTime(LocalTime.MAX) : date.atStartOfDay();
-            } catch (DateTimeParseException e2) {
-                // If both fail, throw with a helpful message
-                throw new DateTimeParseException(
-                        "Date string must be in ISO-8601 format (e.g., '2025-11-18T10:30:00' or '2025-11-18')",
-                        dateStr, 0, e2);
+                // Try parsing as full LocalDateTime (ISO-8601 without timezone)
+                return LocalDateTime.parse(dateStr);
+            } catch (DateTimeParseException e1) {
+                try {
+                    // If that fails, try parsing as LocalDate (date-only)
+                    LocalDate date = LocalDate.parse(dateStr);
+                    // Convert to LocalDateTime: start of day for startDate, end of day for endDate
+                    return isEndDate ? date.atTime(LocalTime.MAX) : date.atStartOfDay();
+                } catch (DateTimeParseException e2) {
+                    // If all fail, throw with a helpful message
+                    throw new DateTimeParseException(
+                            "Date string must be in ISO-8601 format (e.g., '2025-11-18T10:30:00.000Z', '2025-11-18T10:30:00' or '2025-11-18')",
+                            dateStr, 0, e2);
+                }
             }
         }
     }
@@ -83,12 +98,33 @@ public class EventController {
             @RequestParam Optional<String> endDate,
             @RequestParam Optional<String> timeStatus,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String sort) {
         try {
             // Check if any advanced filters are provided
             boolean hasAdvancedFilters = category.isPresent() || location.isPresent() ||
                     search.isPresent() || organizerName.isPresent() ||
-                    startDate.isPresent() || endDate.isPresent();
+                    startDate.isPresent() || endDate.isPresent() ||
+                    (sort != null && "popularity".equalsIgnoreCase(sort));
+
+            Sort sortObj = Sort.unsorted();
+            if (sort != null && !sort.isEmpty()) {
+                if ("popularity".equalsIgnoreCase(sort)) {
+                    sortObj = Sort.by("popularity");
+                } else {
+                    String[] parts = sort.split(",");
+                    String prop = parts[0];
+                    if (!prop.isEmpty()) {
+                        String dir = parts.length > 1 ? parts[1] : "asc";
+                        sortObj = Sort.by(org.springframework.data.domain.Sort.Direction.fromString(dir), prop);
+                    }
+                }
+            } else {
+                // Default if no sort provided? Frontend usually sends createdAt,desc.
+                // If not, we fall back to defaults or unsorted.
+            }
+
+            PageRequest pageRequest = PageRequest.of(page, size, sortObj);
 
             if (hasAdvancedFilters) {
                 // Use advanced filtering
@@ -107,16 +143,16 @@ public class EventController {
                         Optional.ofNullable(startDateTime), Optional.ofNullable(endDateTime),
                         organizerName,
                         timeStatus,
-                        PageRequest.of(page, size)
-                );
+                        pageRequest);
                 return ResponseEntity.ok(p);
             } else {
                 // Use simple filtering (backward compatibility)
-                Page<EventResponse> p = svc.listEvents(status, timeStatus, PageRequest.of(page, size));
+                Page<EventResponse> p = svc.listEvents(status, timeStatus, pageRequest);
                 return ResponseEntity.ok(p);
             }
         } catch (Exception ex) {
-            return ResponseEntity.badRequest().body(java.util.Map.of("error", "Invalid filter parameters: " + ex.getMessage()));
+            return ResponseEntity.badRequest()
+                    .body(java.util.Map.of("error", "Invalid filter parameters: " + ex.getMessage()));
         }
     }
 
@@ -126,7 +162,8 @@ public class EventController {
             List<EventResponse> trendingEvents = svc.getTrendingEvents(limit);
             return ResponseEntity.ok(trendingEvents);
         } catch (Exception ex) {
-            return ResponseEntity.status(500).body(java.util.Map.of("error", "Unable to fetch trending events: " + ex.getMessage()));
+            return ResponseEntity.status(500)
+                    .body(java.util.Map.of("error", "Unable to fetch trending events: " + ex.getMessage()));
         }
     }
 
@@ -142,7 +179,8 @@ public class EventController {
 
     @PreAuthorize("hasAnyRole('ORGANIZER','ADMIN')")
     @PutMapping("/{id}")
-    public ResponseEntity<?> updateEvent(@PathVariable Long id, @Valid @RequestBody EventCreateRequest req, Authentication auth) {
+    public ResponseEntity<?> updateEvent(@PathVariable Long id, @Valid @RequestBody EventCreateRequest req,
+            Authentication auth) {
         try {
             EventResponse resp = svc.updateEvent(id, req, auth);
             return ResponseEntity.ok(resp);
@@ -171,8 +209,8 @@ public class EventController {
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/{id}/reject")
     public ResponseEntity<?> rejectEvent(@PathVariable Long id,
-                                         @Valid @RequestBody EventRejectRequest request,
-                                         Authentication auth) {
+            @Valid @RequestBody EventRejectRequest request,
+            Authentication auth) {
         try {
             EventResponse resp = svc.rejectEvent(id, request.getReason(), auth);
             return ResponseEntity.ok(resp);
@@ -216,6 +254,12 @@ public class EventController {
     @PreAuthorize("hasAnyRole('ORGANIZER','ADMIN')")
     @GetMapping("/my-events")
     public ResponseEntity<?> getMyEvents(
+            @RequestParam Optional<String> status,
+            @RequestParam Optional<String> category,
+            @RequestParam Optional<String> location,
+            @RequestParam Optional<String> search,
+            @RequestParam Optional<String> startDate,
+            @RequestParam Optional<String> endDate,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             Authentication auth) {
@@ -227,14 +271,34 @@ public class EventController {
             if (!(auth.getPrincipal() instanceof com.volunteerhub.backend.security.CustomUserDetails)) {
                 return ResponseEntity.status(401).body(java.util.Map.of("error", "Invalid authentication"));
             }
-            com.volunteerhub.backend.security.CustomUserDetails userDetails =
-                    (com.volunteerhub.backend.security.CustomUserDetails) auth.getPrincipal();
+            com.volunteerhub.backend.security.CustomUserDetails userDetails = (com.volunteerhub.backend.security.CustomUserDetails) auth
+                    .getPrincipal();
             organizerId = userDetails.getUserEntity().getId();
-            Page<EventResponse> p = svc.listOrganizerEvents(organizerId, PageRequest.of(page, size));
+
+            LocalDateTime startDateTime = null;
+            LocalDateTime endDateTime = null;
+
+            if (startDate.isPresent()) {
+                startDateTime = parseFlexibleDateTime(startDate.get(), false);
+            }
+            if (endDate.isPresent()) {
+                endDateTime = parseFlexibleDateTime(endDate.get(), true);
+            }
+
+            Page<EventResponse> p = svc.listOrganizerEvents(
+                    organizerId,
+                    status,
+                    category,
+                    location,
+                    search,
+                    Optional.ofNullable(startDateTime),
+                    Optional.ofNullable(endDateTime),
+                    PageRequest.of(page, size));
             return ResponseEntity.ok(p);
         } catch (Exception ex) {
             logger.error("Error fetching organizer events for organizerId: {}", organizerId, ex);
-            return ResponseEntity.status(500).body(java.util.Map.of("error", "Unable to fetch events: " + ex.getMessage()));
+            return ResponseEntity.status(500)
+                    .body(java.util.Map.of("error", "Unable to fetch events: " + ex.getMessage()));
         }
     }
 }
