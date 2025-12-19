@@ -1,10 +1,11 @@
 // src/context/AuthContext.jsx
 import React, { createContext, useContext, useEffect, useState } from "react";
 import axiosClient from "../api/axiosClient";
+import authApi from "../api/authApi"; // <--- THÊM IMPORT NÀY
 
 const AuthContext = createContext(null);
 
-// ✅ Helper: Decode JWT safely
+// ✅ Helper: Decode JWT safely (Giữ nguyên)
 function decodeJWT(token) {
     try {
         const base64Url = token.split(".")[1];
@@ -33,9 +34,8 @@ export function AuthProvider({ children }) {
                 ? {
                     id: decoded.userId || decoded.sub,
                     email: decoded.email || decoded.sub,
-                    role:
-                        decoded.role ||
-                        decoded.authorities?.[0]?.replace("ROLE_", "").toLowerCase(),
+                    // Fix: Chuyển role về chữ thường để khớp với logic check
+                    role: (decoded.role || decoded.authorities?.[0]?.replace("ROLE_", ""))?.toLowerCase(),
                 }
                 : null;
         }
@@ -45,28 +45,32 @@ export function AuthProvider({ children }) {
     // ✅ Update axiosClient header whenever token changes
     useEffect(() => {
         if (token) {
-            axiosClient.defaults.headers.common[
-                "Authorization"
-                ] = `Bearer ${token}`;
+            axiosClient.defaults.headers.common["Authorization"] = `Bearer ${token}`;
         } else {
             delete axiosClient.defaults.headers.common["Authorization"];
         }
     }, [token]);
 
-    // ✅ Login function (sets token, user, and persist)
-    const login = (newToken) => {
+    // ✅ SỬA LẠI HÀM LOGIN: Nhận email/password, gọi API, rồi mới setToken
+    const login = async (email, password) => {
+        // 1. Gọi API lấy token từ Backend
+        const res = await authApi.login({ email, password });
+        const newToken = res.data.accessToken; // Lấy accessToken từ response backend
+
+        // 2. Lưu token và giải mã user như logic cũ
         setToken(newToken);
         localStorage.setItem("accessToken", newToken);
+        
         const decoded = decodeJWT(newToken);
         if (decoded) {
             setUser({
                 id: decoded.userId || decoded.sub,
                 email: decoded.email || decoded.sub,
-                role:
-                    decoded.role ||
-                    decoded.authorities?.[0]?.replace("ROLE_", "").toLowerCase(),
+                // Fix: Đảm bảo role luôn là chữ thường (backend trả về ORGANIZER -> organizer)
+                role: (decoded.role || decoded.authorities?.[0]?.replace("ROLE_", ""))?.toLowerCase(),
             });
         }
+        return res;
     };
 
     // ✅ Logout clears everything
@@ -75,19 +79,13 @@ export function AuthProvider({ children }) {
         setUser(null);
         localStorage.removeItem("accessToken");
         delete axiosClient.defaults.headers.common["Authorization"];
+        // Thêm chuyển hướng để reset sạch sẽ
+        window.location.href = '/login';
     };
 
-    // ✅ Helpers
+    // ✅ Helpers (Giữ nguyên logic kiểm tra)
     const isAdmin = () => user?.role === "admin";
-    const isOrganizer = () =>
-        user?.role === "organizer";
-
-    // Optional: add token validity check logic here
-    useEffect(() => {
-        if (token) {
-            // you could check exp here, or ping a verify endpoint
-        }
-    }, [token]);
+    const isOrganizer = () => user?.role === "organizer";
 
     return (
         <AuthContext.Provider

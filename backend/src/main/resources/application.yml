@@ -1,8 +1,8 @@
 spring:
   datasource:
     url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3306/volunteerhub?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Ho_Chi_Minh}
-    username: ${SPRING_DATASOURCE_USERNAME}
-    password: ${SPRING_DATASOURCE_PASSWORD}
+    username: ${SPRING_DATASOURCE_USERNAME:vh_user}
+    password: ${SPRING_DATASOURCE_PASSWORD:vh_pass}
     driver-class-name: com.mysql.cj.jdbc.Driver
 
   jpa:
@@ -24,8 +24,8 @@ spring:
 
 webpush:
   vapid:
-    public-key: ${VAPID_PUBLIC_KEY}
-    private-key: ${VAPID_PRIVATE_KEY}
+    public-key: BHtXUMbNNQa7Z2PKQBFaXh1ddarrHfxQzFidtfauNiPkZxcqZOjBkwH18t2vAzcCNK-tOcytQc3pfEOak5r2Az0
+    private-key: kFdYtDBws7CuV0HWulSbLrKaS5kGW63LpWfcIzTjbxc
     subject: ${VAPID_SUBJECT:mailto:admin@vh.test}
 
 jwt:

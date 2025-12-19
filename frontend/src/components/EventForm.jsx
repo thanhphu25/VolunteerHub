@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -8,148 +8,102 @@ import {
   Button,
   Grid,
   Box,
-  Alert
 } from "@mui/material";
+import { useForm } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
+import * as yup from "yup";
+
+// 1. Định nghĩa Schema kiểm tra dữ liệu với Yup
+const eventSchema = yup.object().shape({
+  name: yup.string().required("Tên sự kiện là bắt buộc"),
+  description: yup.string().required("Mô tả là bắt buộc"),
+  category: yup.string().required("Danh mục là bắt buộc"),
+  location: yup.string().required("Địa điểm là bắt buộc"),
+  address: yup.string(),
+  startDate: yup.date()
+    .typeError("Vui lòng chọn ngày giờ hợp lệ")
+    .required("Ngày bắt đầu là bắt buộc"),
+  endDate: yup.date()
+    .typeError("Vui lòng chọn ngày giờ hợp lệ")
+    .required("Ngày kết thúc là bắt buộc")
+    .min(yup.ref('startDate'), "Ngày kết thúc phải sau ngày bắt đầu"),
+  maxVolunteers: yup.number()
+    .transform((value) => (isNaN(value) ? undefined : value))
+    .nullable()
+    .moreThan(0, "Số lượng phải lớn hơn 0"),
+  imageUrl: yup.string().url("Vui lòng nhập URL hình ảnh hợp lệ"),
+  requirements: yup.string(),
+  benefits: yup.string(),
+  contactInfo: yup.string()
+});
 
 export default function EventForm({ open, onClose, onSubmit, initialData, isEdit }) {
-  const [formData, setFormData] = useState({
-    name: "",
-    description: "",
-    category: "",
-    location: "",
-    address: "",
-    startDate: "",
-    endDate: "",
-    maxVolunteers: "",
-    imageUrl: "",
-    requirements: "",
-    benefits: "",
-    contactInfo: ""
+  
+  // 2. Khởi tạo React Hook Form với Yup Resolver
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors, isSubmitting }
+  } = useForm({
+    resolver: yupResolver(eventSchema),
+    defaultValues: {
+        maxVolunteers: ""
+    }
   });
-  const [errors, setErrors] = useState({});
 
+  // 3. Xử lý đổ dữ liệu cũ khi Chỉnh sửa (Edit)
   useEffect(() => {
-    if (initialData) {
-      // Format dates for datetime-local input
+    if (initialData && open) {
       const formatDateTime = (dateString) => {
         if (!dateString) return "";
         const date = new Date(dateString);
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const day = String(date.getDate()).padStart(2, '0');
-        const hours = String(date.getHours()).padStart(2, '0');
-        const minutes = String(date.getMinutes()).padStart(2, '0');
-        return `${year}-${month}-${day}T${hours}:${minutes}`;
+        return date.toISOString().slice(0, 16); // Chuyển về format: YYYY-MM-DDTHH:mm
       };
 
-      setFormData({
-        name: initialData.name || "",
-        description: initialData.description || "",
-        category: initialData.category || "",
-        location: initialData.location || "",
-        address: initialData.address || "",
+      reset({
+        ...initialData,
         startDate: formatDateTime(initialData.startDate),
         endDate: formatDateTime(initialData.endDate),
-        maxVolunteers: initialData.maxVolunteers || "",
-        imageUrl: initialData.imageUrl || "",
-        requirements: initialData.requirements || "",
-        benefits: initialData.benefits || "",
-        contactInfo: initialData.contactInfo || ""
+        maxVolunteers: initialData.maxVolunteers || ""
       });
-    } else {
-      // Reset form for new event
-      setFormData({
-        name: "",
-        description: "",
-        category: "",
-        location: "",
-        address: "",
-        startDate: "",
-        endDate: "",
-        maxVolunteers: "",
-        imageUrl: "",
-        requirements: "",
-        benefits: "",
-        contactInfo: ""
+    } else if (open) {
+      reset({
+        name: "", description: "", category: "", location: "", address: "",
+        startDate: "", endDate: "", maxVolunteers: "", imageUrl: "",
+        requirements: "", benefits: "", contactInfo: ""
       });
     }
-    setErrors({});
-  }, [initialData, open]);
+  }, [initialData, open, reset]);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-    // Clear error for this field
-    if (errors[name]) {
-      setErrors(prev => {
-        const newErrors = { ...prev };
-        delete newErrors[name];
-        return newErrors;
-      });
-    }
-  };
-
-  const validate = () => {
-    const newErrors = {};
-
-    if (!formData.name.trim()) {
-      newErrors.name = "Tên sự kiện là bắt buộc";
-    }
-    if (!formData.description.trim()) {
-      newErrors.description = "Mô tả là bắt buộc";
-    }
-    if (!formData.category.trim()) {
-      newErrors.category = "Danh mục là bắt buộc";
-    }
-    if (!formData.location.trim()) {
-      newErrors.location = "Địa điểm là bắt buộc";
-    }
-    if (!formData.startDate) {
-      newErrors.startDate = "Ngày bắt đầu là bắt buộc";
-    }
-    if (!formData.endDate) {
-      newErrors.endDate = "Ngày kết thúc là bắt buộc";
-    }
-    if (formData.startDate && formData.endDate && new Date(formData.startDate) >= new Date(formData.endDate)) {
-      newErrors.endDate = "Ngày kết thúc phải sau ngày bắt đầu";
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (validate()) {
-      // Convert datetime-local format to ISO string for API
-      const submitData = {
-        ...formData,
-        startDate: formData.startDate ? new Date(formData.startDate).toISOString() : null,
-        endDate: formData.endDate ? new Date(formData.endDate).toISOString() : null,
-        maxVolunteers: formData.maxVolunteers ? parseInt(formData.maxVolunteers) : null
-      };
-      onSubmit(submitData);
-    }
+  // 4. Hàm xử lý khi nhấn Submit
+  const onFormSubmit = (data) => {
+    // Chuẩn hóa dữ liệu trước khi gửi cho API
+    const submitData = {
+      ...data,
+      startDate: new Date(data.startDate).toISOString(),
+      endDate: new Date(data.endDate).toISOString(),
+      maxVolunteers: data.maxVolunteers ? parseInt(data.maxVolunteers) : null
+    };
+    onSubmit(submitData);
   };
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-      <DialogTitle>{isEdit ? "Chỉnh sửa sự kiện" : "Tạo sự kiện mới"}</DialogTitle>
-      <form onSubmit={handleSubmit}>
-        <DialogContent>
-          <Grid container spacing={2}>
+      <DialogTitle sx={{ fontWeight: 'bold' }}>
+        {isEdit ? "Chỉnh sửa sự kiện" : "Tạo sự kiện mới"}
+      </DialogTitle>
+      
+      <form onSubmit={handleSubmit(onFormSubmit)}>
+        <DialogContent dividers>
+          <Grid container spacing={3}>
             <Grid item xs={12}>
               <TextField
                 fullWidth
                 label="Tên sự kiện"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
+                {...register("name")}
                 error={!!errors.name}
-                helperText={errors.name}
+                helperText={errors.name?.message}
                 required
               />
             </Grid>
@@ -158,14 +112,12 @@ export default function EventForm({ open, onClose, onSubmit, initialData, isEdit
               <TextField
                 fullWidth
                 label="Mô tả"
-                name="description"
-                value={formData.description}
-                onChange={handleChange}
-                error={!!errors.description}
-                helperText={errors.description}
-                required
                 multiline
                 rows={4}
+                {...register("description")}
+                error={!!errors.description}
+                helperText={errors.description?.message}
+                required
               />
             </Grid>
 
@@ -173,25 +125,21 @@ export default function EventForm({ open, onClose, onSubmit, initialData, isEdit
               <TextField
                 fullWidth
                 label="Danh mục"
-                name="category"
-                value={formData.category}
-                onChange={handleChange}
+                placeholder="VD: Môi trường, Giáo dục"
+                {...register("category")}
                 error={!!errors.category}
-                helperText={errors.category}
+                helperText={errors.category?.message}
                 required
-                placeholder="VD: Môi trường, Giáo dục, Y tế"
               />
             </Grid>
 
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
-                label="Địa điểm"
-                name="location"
-                value={formData.location}
-                onChange={handleChange}
+                label="Địa điểm (Tỉnh/Thành phố)"
+                {...register("location")}
                 error={!!errors.location}
-                helperText={errors.location}
+                helperText={errors.location?.message}
                 required
               />
             </Grid>
@@ -200,9 +148,7 @@ export default function EventForm({ open, onClose, onSubmit, initialData, isEdit
               <TextField
                 fullWidth
                 label="Địa chỉ chi tiết"
-                name="address"
-                value={formData.address}
-                onChange={handleChange}
+                {...register("address")}
               />
             </Grid>
 
@@ -210,14 +156,12 @@ export default function EventForm({ open, onClose, onSubmit, initialData, isEdit
               <TextField
                 fullWidth
                 label="Ngày bắt đầu"
-                name="startDate"
                 type="datetime-local"
-                value={formData.startDate}
-                onChange={handleChange}
-                error={!!errors.startDate}
-                helperText={errors.startDate}
-                required
                 InputLabelProps={{ shrink: true }}
+                {...register("startDate")}
+                error={!!errors.startDate}
+                helperText={errors.startDate?.message}
+                required
               />
             </Grid>
 
@@ -225,26 +169,23 @@ export default function EventForm({ open, onClose, onSubmit, initialData, isEdit
               <TextField
                 fullWidth
                 label="Ngày kết thúc"
-                name="endDate"
                 type="datetime-local"
-                value={formData.endDate}
-                onChange={handleChange}
-                error={!!errors.endDate}
-                helperText={errors.endDate}
-                required
                 InputLabelProps={{ shrink: true }}
+                {...register("endDate")}
+                error={!!errors.endDate}
+                helperText={errors.endDate?.message}
+                required
               />
             </Grid>
 
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
-                label="Số lượng tình nguyện viên tối đa"
-                name="maxVolunteers"
+                label="Số lượng TNV tối đa"
                 type="number"
-                value={formData.maxVolunteers}
-                onChange={handleChange}
-                inputProps={{ min: 1 }}
+                {...register("maxVolunteers")}
+                error={!!errors.maxVolunteers}
+                helperText={errors.maxVolunteers?.message}
               />
             </Grid>
 
@@ -252,36 +193,32 @@ export default function EventForm({ open, onClose, onSubmit, initialData, isEdit
               <TextField
                 fullWidth
                 label="URL hình ảnh"
-                name="imageUrl"
-                value={formData.imageUrl}
-                onChange={handleChange}
                 placeholder="https://..."
+                {...register("imageUrl")}
+                error={!!errors.imageUrl}
+                helperText={errors.imageUrl?.message}
               />
             </Grid>
 
-            <Grid item xs={12}>
+            <Grid item xs={12} md={6}>
               <TextField
                 fullWidth
                 label="Yêu cầu"
-                name="requirements"
-                value={formData.requirements}
-                onChange={handleChange}
                 multiline
                 rows={3}
-                placeholder="VD: Có khả năng làm việc nhóm, khỏe mạnh"
+                {...register("requirements")}
+                placeholder="Các kỹ năng hoặc điều kiện cần có"
               />
             </Grid>
 
-            <Grid item xs={12}>
+            <Grid item xs={12} md={6}>
               <TextField
                 fullWidth
                 label="Lợi ích"
-                name="benefits"
-                value={formData.benefits}
-                onChange={handleChange}
                 multiline
                 rows={3}
-                placeholder="VD: Chứng nhận tình nguyện, cơm trưa miễn phí"
+                {...register("benefits")}
+                placeholder="Những gì TNV sẽ nhận được"
               />
             </Grid>
 
@@ -289,17 +226,22 @@ export default function EventForm({ open, onClose, onSubmit, initialData, isEdit
               <TextField
                 fullWidth
                 label="Thông tin liên hệ"
-                name="contactInfo"
-                value={formData.contactInfo}
-                onChange={handleChange}
-                placeholder="VD: Email hoặc số điện thoại"
+                {...register("contactInfo")}
+                placeholder="Email hoặc Số điện thoại người phụ trách"
               />
             </Grid>
           </Grid>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={onClose}>Hủy</Button>
-          <Button type="submit" variant="contained" color="primary">
+
+        <DialogActions sx={{ p: 2.5 }}>
+          <Button onClick={onClose} color="inherit">Hủy</Button>
+          <Button 
+            type="submit" 
+            variant="contained" 
+            color="primary" 
+            disabled={isSubmitting}
+            sx={{ px: 4, borderRadius: 2 }}
+          >
             {isEdit ? "Cập nhật" : "Tạo sự kiện"}
           </Button>
         </DialogActions>
@@ -307,4 +249,3 @@ export default function EventForm({ open, onClose, onSubmit, initialData, isEdit
     </Dialog>
   );
 }
-

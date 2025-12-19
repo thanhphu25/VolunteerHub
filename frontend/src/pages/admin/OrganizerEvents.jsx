@@ -1,25 +1,41 @@
-import React, {useEffect, useState} from "react";
+import React, { useEffect, useState } from "react";
 import {
   Alert,
   Box,
   Button,
   CircularProgress,
   Container,
-  Grid,
-  Tab,
-  Tabs,
-  Typography,
   Paper,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Typography,
+  Chip,
+  Stack,
+  Tooltip,
+  IconButton,
+  Tabs,
+  Tab
 } from "@mui/material";
-import {Add as AddIcon} from "@mui/icons-material";
-import EventCard from "../../components/EventCard";
+import { 
+    Add as AddIcon, 
+    Edit as EditIcon, 
+    Delete as DeleteIcon, 
+    Visibility as ViewIcon, 
+    PeopleAlt as PeopleIcon,
+    Cancel as CancelIcon
+} from "@mui/icons-material";
 import EventForm from "../../components/EventForm";
 import eventApi from "../../api/eventApi";
-import {toast} from "react-toastify";
-import {useLanguage} from "../../context/LanguageContext";
+import { toast } from "react-toastify";
+import { useLanguage } from "../../context/LanguageContext";
+import { Link as RouterLink } from "react-router-dom";
 
 export default function OrganizerEvents() {
-  const {t, language} = useLanguage();
+  const { t, language } = useLanguage();
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -35,11 +51,11 @@ export default function OrganizerEvents() {
     try {
       setLoading(true);
       setError(null);
-      const response = await eventApi.getMyEvents({page: 0, size: 100});
+      const response = await eventApi.getMyEvents({ page: 0, size: 100 });
       setEvents(response.data.content || response.data || []);
     } catch (err) {
       console.error("Error fetching events:", err);
-      setError(language === "vi" ? "Không thể tải danh sách sự kiện. Vui lòng thử lại sau." : "Unable to load events. Please try again later.");
+      setError(language === "vi" ? "Không thể tải danh sách sự kiện." : "Unable to load events.");
     } finally {
       setLoading(false);
     }
@@ -64,197 +80,203 @@ export default function OrganizerEvents() {
     try {
       if (currentEvent) {
         await eventApi.update(currentEvent.id, formData);
-        toast.success(language === "vi" ? "Cập nhật sự kiện thành công!" : "Event updated successfully!");
+        toast.success(language === "vi" ? "Cập nhật thành công!" : "Event updated!");
       } else {
         await eventApi.create(formData);
-        toast.success(language === "vi" ? "Tạo sự kiện thành công! Đang chờ duyệt." : "Event created successfully! Pending approval.");
+        toast.success(language === "vi" ? "Tạo sự kiện thành công!" : "Event created!");
       }
       handleCloseModal();
       await fetchMyEvents();
     } catch (err) {
-      console.error("Error submitting form:", err);
-      toast.error(
-          err.response?.data?.message || err.response?.data?.error
-          || (language === "vi" ? "Có lỗi xảy ra. Vui lòng thử lại." : "An error occurred. Please try again."));
+      toast.error(language === "vi" ? "Có lỗi xảy ra." : "An error occurred.");
     }
   };
 
   const handleCancelEvent = async (eventId) => {
-    if (!eventApi.cancel) {
-      toast.error(language === "vi" ? "Chức năng hủy sự kiện chưa được định nghĩa trong API." : "Cancel event function not defined in API.");
-      return;
-    }
-    if (!window.confirm(
-        language === "vi"
-            ? "Bạn có chắc chắn muốn hủy sự kiện này? (Hành động này không thể hoàn tác)"
-            : "Are you sure you want to cancel this event? (This action cannot be undone)")) {
-      return;
-    }
+    if (!window.confirm(language === "vi" ? "Bạn chắc chắn muốn hủy sự kiện này?" : "Are you sure to cancel?")) return;
     try {
       await eventApi.cancel(eventId);
-      toast.success(language === "vi" ? "Hủy sự kiện thành công!" : "Event cancelled successfully!");
+      toast.success(language === "vi" ? "Đã hủy sự kiện." : "Event cancelled.");
       await fetchMyEvents();
     } catch (err) {
-      console.error("Error cancelling event:", err);
-      toast.error(err.response?.data?.message || err.response?.data?.error
-          || (language === "vi" ? "Không thể hủy sự kiện." : "Unable to cancel event."));
+      toast.error("Error cancelling event");
     }
   };
 
   const handleDeleteEvent = async (eventId) => {
-    if (!eventApi.delete) {
-      toast.error(language === "vi" ? "Chức năng xóa sự kiện chưa được định nghĩa trong API." : "Delete event function not defined in API.");
-      return;
-    }
-    if (!window.confirm(
-        language === "vi"
-            ? "Bạn có chắc chắn muốn xóa sự kiện này? (Hành động này không thể hoàn tác)"
-            : "Are you sure you want to delete this event? (This action cannot be undone)")) {
-      return;
-    }
+    if (!window.confirm(language === "vi" ? "Hành động này không thể hoàn tác. Tiếp tục?" : "Irreversible action. Continue?")) return;
     try {
       await eventApi.delete(eventId);
-      toast.success(language === "vi" ? "Xóa sự kiện thành công!" : "Event deleted successfully!");
+      toast.success(language === "vi" ? "Đã xóa sự kiện." : "Event deleted.");
       await fetchMyEvents();
     } catch (err) {
-      console.error("Error deleting event:", err);
-      toast.error(err.response?.data?.message || err.response?.data?.error
-          || (language === "vi" ? "Không thể xóa sự kiện." : "Unable to delete event."));
+      toast.error("Error deleting event");
     }
   };
 
-  const handleTabChange = (event, newValue) => {
-    setStatusFilter(newValue);
+  const filteredEvents = statusFilter === "all" ? events : events.filter(e => e.status === statusFilter);
+
+  const statusMap = {
+      pending: { label: 'Chờ duyệt', color: 'warning' },
+      approved: { label: 'Đã duyệt', color: 'success' },
+      rejected: { label: 'Bị từ chối', color: 'error' },
+      cancelled: { label: 'Đã hủy', color: 'default' },
+      completed: { label: 'Hoàn thành', color: 'info' }
   };
 
-  const filteredEvents = statusFilter === "all"
-      ? events
-      : events.filter(e => e.status === statusFilter);
+  const formatDate = (d) => d ? new Date(d).toLocaleDateString('vi-VN') : '';
 
-  const statusTabs = [
-    {value: "all", label: language === "vi" ? "Tất cả" : "All"},
-    {value: "pending", label: language === "vi" ? "Chờ duyệt" : "Pending"},
-    {value: "approved", label: language === "vi" ? "Đã duyệt" : "Approved"},
-    {value: "rejected", label: language === "vi" ? "Đã từ chối" : "Rejected"},
-    {value: "cancelled", label: language === "vi" ? "Đã hủy" : "Cancelled"},
-    {value: "completed", label: language === "vi" ? "Hoàn thành" : "Completed"},
-  ];
-
-  if (loading) {
-    return (
-        <Box sx={{bgcolor: "background.default", minHeight: "calc(100vh - 64px)"}}>
-          <Container>
-            <Box display="flex" justifyContent="center" alignItems="center" minHeight="50vh">
-              <CircularProgress/>
-            </Box>
-          </Container>
-        </Box>
-    );
-  }
+  if (loading) return <Box display="flex" justifyContent="center" py={10}><CircularProgress /></Box>;
 
   return (
-      <Box sx={{bgcolor: "background.default", minHeight: "calc(100vh - 64px)", py: 4}}>
-        <Container maxWidth="lg">
-          <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
-            <Typography variant="h3" fontWeight="bold" sx={{color: "primary.main"}}>
-              {language === "vi" ? "Quản lý sự kiện của tôi" : "My Events"}
-            </Typography>
+    <Box sx={{ bgcolor: "background.default", minHeight: "calc(100vh - 64px)", py: 4 }}>
+      <Container maxWidth="xl">
+        {/* HEADER */}
+        <Stack direction="row" justifyContent="space-between" alignItems="center" mb={4}>
+            <Box>
+                <Typography variant="h4" fontWeight="bold" sx={{ color: "primary.main" }}>
+                    {language === "vi" ? "Quản lý sự kiện" : "Event Management"}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                    {language === "vi" ? "Danh sách các sự kiện bạn đã tổ chức" : "List of events you have organized"}
+                </Typography>
+            </Box>
             <Button
                 variant="contained"
-                color="primary"
-                startIcon={<AddIcon/>}
+                startIcon={<AddIcon />}
                 onClick={handleCreateEvent}
-                sx={{
-                  borderRadius: 2,
-                  textTransform: "none",
-                  fontWeight: 600,
-                  px: 4,
-                  py: 1.5,
-                  boxShadow: "0 4px 12px rgba(2, 136, 209, 0.3)",
-                  "&:hover": {
-                    boxShadow: "0 6px 16px rgba(2, 136, 209, 0.4)",
-                    transform: "translateY(-1px)",
-                  },
-                  transition: "all 0.3s ease",
-                }}
+                sx={{ borderRadius: 2, px: 3, fontWeight: 600 }}
             >
-              {language === "vi" ? "Tạo sự kiện mới" : "Create New Event"}
+                {language === "vi" ? "Tạo sự kiện" : "Create Event"}
             </Button>
-          </Box>
+        </Stack>
 
-          {error && (
-              <Alert severity="error" sx={{mb: 3, borderRadius: 2}}>
-                {error}
-              </Alert>
-          )}
+        {error && <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>}
 
-          <Paper
-              elevation={0}
-              sx={{
-                mb: 4,
-                borderRadius: 3,
-                border: "1px solid",
-                borderColor: "divider",
-                boxShadow: "0 4px 16px rgba(0,0,0,0.05)",
-              }}
-          >
-            <Tabs
-                value={statusFilter}
-                onChange={handleTabChange}
-                variant="scrollable"
-                scrollButtons="auto"
-                sx={{
-                  borderBottom: 1,
-                  borderColor: 'divider',
-                  px: 2,
-                }}
-            >
-              {statusTabs.map((tab) => (
-                  <Tab
-                      key={tab.value}
-                      label={tab.label}
-                      value={tab.value}
-                      sx={{
-                        textTransform: "none",
-                        fontWeight: 600,
-                      }}
-                  />
-              ))}
-            </Tabs>
-          </Paper>
+        {/* TABLE WRAPPER */}
+        <Paper elevation={0} sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 3, overflow: 'hidden' }}>
+            {/* TABS FILTER */}
+            <Box sx={{ borderBottom: 1, borderColor: 'divider', px: 2, bgcolor: 'grey.50' }}>
+                <Tabs value={statusFilter} onChange={(e, v) => setStatusFilter(v)} variant="scrollable">
+                    <Tab label={language === "vi" ? "Tất cả" : "All"} value="all" sx={{ fontWeight: 600 }} />
+                    <Tab label={language === "vi" ? "Chờ duyệt" : "Pending"} value="pending" sx={{ fontWeight: 600 }} />
+                    <Tab label={language === "vi" ? "Đã duyệt" : "Approved"} value="approved" sx={{ fontWeight: 600 }} />
+                    <Tab label={language === "vi" ? "Đã kết thúc" : "Completed"} value="completed" sx={{ fontWeight: 600 }} />
+                </Tabs>
+            </Box>
 
-          {filteredEvents.length === 0 ? (
-              <Alert severity="info" sx={{borderRadius: 2}}>
-                {statusFilter === "all"
-                    ? (language === "vi" ? "Bạn chưa tạo sự kiện nào." : "You haven't created any events.")
-                    : (language === "vi" ? `Không có sự kiện nào ở trạng thái "${statusFilter}".` : `No events with status "${statusFilter}".`)
-                }
-              </Alert>
-          ) : (
-              <Grid container spacing={3} sx={{alignItems: 'stretch'}}>
-                {filteredEvents.map((event) => (
-                    <Grid item xs={12} sm={6} md={4} key={event.id} sx={{display: 'flex'}}>
-                      <EventCard
-                          event={event}
-                          showStatus={true}
-                          showViewRegistrationsButton={true}
-                          onEdit={(event.status === 'pending' || event.status === 'approved') ? handleOpenEditModal : undefined}
-                          onCancel={event.status === 'approved' ? handleCancelEvent : undefined}
-                          onDelete={event.status !== 'completed' ? handleDeleteEvent : undefined}
-                      />
-                    </Grid>
-                ))}
-              </Grid>
-          )}
+            <TableContainer sx={{ maxHeight: '70vh' }}>
+                <Table stickyHeader>
+                    <TableHead>
+                        <TableRow>
+                            <TableCell sx={{ fontWeight: 'bold' }}>Sự kiện</TableCell>
+                            <TableCell sx={{ fontWeight: 'bold' }}>Thời gian</TableCell>
+                            <TableCell sx={{ fontWeight: 'bold' }}>Trạng thái</TableCell>
+                            <TableCell sx={{ fontWeight: 'bold' }} align="center">Đăng ký</TableCell>
+                            <TableCell sx={{ fontWeight: 'bold' }} align="right">Hành động</TableCell>
+                        </TableRow>
+                    </TableHead>
+                    <TableBody>
+                        {filteredEvents.length === 0 ? (
+                             <TableRow>
+                                <TableCell colSpan={5} align="center" sx={{ py: 8, color: 'text.secondary' }}>
+                                    {language === "vi" ? "Không có dữ liệu sự kiện." : "No events found."}
+                                </TableCell>
+                             </TableRow>
+                        ) : (
+                            filteredEvents.map((row) => (
+                                <TableRow key={row.id} hover>
+                                    <TableCell sx={{ maxWidth: 300 }}>
+                                        <Stack direction="row" spacing={2} alignItems="center">
+                                            <Box 
+                                                component="img" 
+                                                src={row.imageUrl || "https://via.placeholder.com/50"} 
+                                                sx={{ width: 50, height: 50, borderRadius: 2, objectFit: 'cover', bgcolor: 'grey.200' }} 
+                                            />
+                                            <Box>
+                                                <Typography variant="subtitle2" fontWeight="bold" noWrap title={row.name}>
+                                                    {row.name}
+                                                </Typography>
+                                                <Typography variant="caption" color="text.secondary">{row.category}</Typography>
+                                            </Box>
+                                        </Stack>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Typography variant="body2">{formatDate(row.startDate)}</Typography>
+                                        <Typography variant="caption" color="text.secondary">đến {formatDate(row.endDate)}</Typography>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Chip 
+                                            label={statusMap[row.status]?.label || row.status}
+                                            color={statusMap[row.status]?.color || 'default'}
+                                            size="small"
+                                            sx={{ fontWeight: 600 }}
+                                        />
+                                    </TableCell>
+                                    <TableCell align="center">
+                                        <Tooltip title="Quản lý đăng ký">
+                                            <Button 
+                                                size="small" 
+                                                variant="outlined" 
+                                                color="info"
+                                                startIcon={<PeopleIcon />}
+                                                component={RouterLink}
+                                                to={`/organizer/events/${row.id}/registrations`}
+                                                sx={{ borderRadius: 5, textTransform: 'none' }}
+                                            >
+                                                {row.currentVolunteers || 0} / {row.maxVolunteers}
+                                            </Button>
+                                        </Tooltip>
+                                    </TableCell>
+                                    <TableCell align="right">
+                                        <Stack direction="row" justifyContent="flex-end" spacing={0.5}>
+                                            <Tooltip title="Xem chi tiết">
+                                                <IconButton size="small" component={RouterLink} to={`/events/${row.id}`}>
+                                                    <ViewIcon fontSize="small" />
+                                                </IconButton>
+                                            </Tooltip>
+                                            
+                                            {(row.status === 'pending' || row.status === 'approved') && (
+                                                <Tooltip title="Chỉnh sửa">
+                                                    <IconButton size="small" color="primary" onClick={() => handleOpenEditModal(row)}>
+                                                        <EditIcon fontSize="small" />
+                                                    </IconButton>
+                                                </Tooltip>
+                                            )}
 
-          <EventForm
-              open={formOpen}
-              onClose={handleCloseModal}
-              onSubmit={handleFormSubmit}
-              initialData={currentEvent}
-              isEdit={!!currentEvent}
-          />
-        </Container>
-      </Box>
+                                            {row.status === 'approved' && (
+                                                <Tooltip title="Hủy sự kiện">
+                                                    <IconButton size="small" color="warning" onClick={() => handleCancelEvent(row.id)}>
+                                                        <CancelIcon fontSize="small" />
+                                                    </IconButton>
+                                                </Tooltip>
+                                            )}
+
+                                            {row.status !== 'completed' && (
+                                                <Tooltip title="Xóa">
+                                                    <IconButton size="small" color="error" onClick={() => handleDeleteEvent(row.id)}>
+                                                        <DeleteIcon fontSize="small" />
+                                                    </IconButton>
+                                                </Tooltip>
+                                            )}
+                                        </Stack>
+                                    </TableCell>
+                                </TableRow>
+                            ))
+                        )}
+                    </TableBody>
+                </Table>
+            </TableContainer>
+        </Paper>
+
+        <EventForm
+            open={formOpen}
+            onClose={handleCloseModal}
+            onSubmit={handleFormSubmit}
+            initialData={currentEvent}
+            isEdit={!!currentEvent}
+        />
+      </Container>
+    </Box>
   );
 }
