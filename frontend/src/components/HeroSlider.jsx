@@ -159,13 +159,11 @@ export default function HeroSlider() {
                                     <Button 
                                         variant="outlined" 
                                         size={isMobile ? "small" : "large"}
-                                        onClick={() => navigate("/about")} // Chuyển sang trang giới thiệu
-                                        sx={{ 
-                                            color: 'white', 
-                                            borderColor: 'white', 
-                                            fontWeight: 'bold',
-                                            px: { md: 4 },
-                                            '&:hover': { borderColor: '#00bfa5', color: '#00bfa5' }
+                                        onClick={() => {
+                                            const element = document.getElementById('why-choose-us');
+                                            if (element) {
+                                                element.scrollIntoView({ behavior: 'smooth' });
+                                            }
                                         }}
                                     >
                                         Tìm hiểu thêm

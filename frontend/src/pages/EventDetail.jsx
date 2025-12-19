@@ -68,32 +68,27 @@ export default function EventDetail() {
     });
   };
 
-  // Hàm kiểm tra trạng thái đăng ký của user hiện tại cho sự kiện này
-    const checkRegistration = async () => {
-        if (user?.role !== 'volunteer') return;
-
-        try {
-            const response = await registrationApi.getMyRegistrationForEvent(eventId);
-            const data = response.data;
-
-            // --- SỬA ĐOẠN NÀY: Lưu tất cả trạng thái, không lọc bỏ completed/rejected ---
-            if (data && data.status) {
-                setRegistration(data);
-                setLastRegistrationStatus(data.status);
-            } else {
-                setRegistration(null);
-                setLastRegistrationStatus(null);
-            }
-            // ---------------------------------------------------------------------------
-
-        } catch (err) {
-            if (err.response?.status === 404) {
-                setRegistration(null);
-                setLastRegistrationStatus(null);
-            } else {
-                console.error("Lỗi khi kiểm tra đăng ký:", err);
-            }
-        }
+  const checkRegistration = async () => {
+    if (user?.role !== 'volunteer') return;
+    try {
+      const response = await registrationApi.getMyRegistrationForEvent(eventId);
+      const data = response.data;
+      // FIX: Lưu tất cả trạng thái để hiển thị nút tương ứng
+      if (data && data.status) {
+        setRegistration(data);
+        setLastRegistrationStatus(data.status);
+      } else {
+        setRegistration(null);
+        setLastRegistrationStatus(null);
+      }
+    } catch (err) {
+      if (err.response?.status === 404) {
+        setRegistration(null);
+        setLastRegistrationStatus(null);
+      } else {
+        console.error("Lỗi khi kiểm tra đăng ký:", err);
+      }
+    }
   };
 
   useEffect(() => {
@@ -110,9 +105,7 @@ export default function EventDetail() {
           }
         }
       } catch (err) {
-        setError(
-          "Không thể tải thông tin sự kiện. Sự kiện không tồn tại hoặc đã bị xóa."
-        );
+        setError("Không thể tải thông tin sự kiện. Sự kiện không tồn tại hoặc đã bị xóa.");
         toast.error("Không thể tải thông tin sự kiện.");
       } finally {
         setLoading(false);
@@ -137,10 +130,7 @@ export default function EventDetail() {
 
   const handleCancelRegistration = async () => {
     if (!registration) return;
-    if (
-      !window.confirm("Bạn có chắc chắn muốn hủy đăng ký tham gia sự kiện này?")
-    )
-      return;
+    if (!window.confirm("Bạn có chắc chắn muốn hủy đăng ký tham gia sự kiện này?")) return;
     setIsCancelling(true);
     try {
       await registrationApi.cancel(eventId, registration.id);
@@ -159,9 +149,7 @@ export default function EventDetail() {
       setFollowLoading(true);
       const res = await profileApi.getFollowedOrganizers();
       const organizers = res.data ?? [];
-      setFollowingOrganizer(
-        organizers.some((item) => item.organizerId === organizerId)
-      );
+      setFollowingOrganizer(organizers.some((item) => item.organizerId === organizerId));
     } catch (err) {
       console.error("Failed to load follow status", err);
     } finally {
@@ -189,182 +177,100 @@ export default function EventDetail() {
     }
   };
 
-  if (loading)
-    return (
-      <Container
-        sx={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          minHeight: "50vh",
-        }}
-      >
-        <CircularProgress />
-      </Container>
-    );
+  if (loading) return (
+    <Container sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "50vh" }}>
+      <CircularProgress />
+    </Container>
+  );
 
-  if (error)
-    return (
-      <Container sx={{ py: 4 }}>
-        <Alert severity="error">{error}</Alert>
-        <Button component={RouterLink} to="/events" sx={{ mt: 2 }}>
-          Quay lại danh sách
-        </Button>
-      </Container>
-    );
+  if (error) return (
+    <Container sx={{ py: 4 }}>
+      <Alert severity="error">{error}</Alert>
+      <Button component={RouterLink} to="/events" sx={{ mt: 2 }}>Quay lại danh sách</Button>
+    </Container>
+  );
 
   const isVolunteer = user?.role === "volunteer";
-  const canRegister =
-    event?.status === "approved" &&
-    (!event?.maxVolunteers ||
-      (event?.currentVolunteers || 0) < event?.maxVolunteers);
+  const canRegister = event?.status === "approved" && (!event?.maxVolunteers || (event?.currentVolunteers || 0) < event?.maxVolunteers);
   const eventEnded = event?.endDate && new Date(event?.endDate) < new Date();
   const isAdmin = user?.role === "admin";
 
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
       <Paper elevation={3} sx={{ p: { xs: 2, md: 4 }, borderRadius: 3 }}>
-        {/* 1. HÌNH ẢNH SỰ KIỆN (ĐÃ TỐI ƯU CHIỀU CAO) */}
+        
+        {/* 1. HÌNH ẢNH */}
         {event.imageUrl && (
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "center", // Căn giữa ảnh
-              mb: 4,
-            }}
-          >
+          <Box sx={{ display: "flex", justifyContent: "center", mb: 4 }}>
             <CardMedia
               component="img"
               image={event.imageUrl}
               alt={event.name}
               sx={{
-                // 1. Thu nhỏ chiều rộng tối đa (ví dụ 600px)
                 maxWidth: { xs: "100%", md: "600px" },
-
-                // 2. Thu nhỏ chiều cao tối đa
                 maxHeight: "400px",
-
-                // 3. QUAN TRỌNG NHẤT: Giữ nguyên nội dung poster
                 objectFit: "contain",
-
                 borderRadius: 2,
                 boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
-                bgcolor: "#f5f5f5", // Nền xám nhẹ để lấp khoảng trống nếu ảnh nhỏ
+                bgcolor: "#f5f5f5",
               }}
             />
           </Box>
         )}
 
-        {/* 2. TIÊU ĐỀ VÀ TRẠNG THÁI */}
+        {/* 2. TIÊU ĐỀ */}
         <Box sx={{ mb: 3 }}>
           <Stack direction="row" spacing={1} sx={{ mb: 1 }}>
-            <Chip
-              label={statusLabels[event.status]}
-              color={statusColors[event.status]}
-              size="small"
-              sx={{ fontWeight: "bold" }}
-            />
+            <Chip label={statusLabels[event.status]} color={statusColors[event.status]} size="small" sx={{ fontWeight: "bold" }} />
             <Chip label={event.category} size="small" icon={<CategoryIcon />} />
           </Stack>
-          <Typography
-            variant="h3"
-            component="h1"
-            fontWeight="800"
-            gutterBottom
-            color="primary.dark"
-          >
+          <Typography variant="h3" component="h1" fontWeight="800" gutterBottom color="primary.dark">
             {event.name}
           </Typography>
         </Box>
 
-        {/* 3. KHỐI THÔNG TIN CHI TIẾT (ĐÃ SẮP XẾP LẠI GỌN GÀNG) */}
-        <Grid
-          container
-          spacing={3}
-          sx={{ mb: 4, p: 2, bgcolor: "#f8f9fa", borderRadius: 2 }}
-        >
+        {/* 3. THÔNG TIN GRID */}
+        <Grid container spacing={3} sx={{ mb: 4, p: 2, bgcolor: "#f8f9fa", borderRadius: 2 }}>
           <Grid item xs={12} md={6} lg={4}>
             <Stack direction="row" spacing={2} alignItems="center">
               <EventIcon color="primary" />
               <Box>
-                <Typography variant="caption" color="text.secondary">
-                  Thời gian
-                </Typography>
-                <Typography variant="body1" fontWeight="500">
-                  {formatDate(event.startDate)} - {formatDate(event.endDate)}
-                </Typography>
+                <Typography variant="caption" color="text.secondary">Thời gian</Typography>
+                <Typography variant="body1" fontWeight="500">{formatDate(event.startDate)} - {formatDate(event.endDate)}</Typography>
               </Box>
             </Stack>
           </Grid>
-
           <Grid item xs={12} md={6} lg={4}>
             <Stack direction="row" spacing={2} alignItems="center">
               <LocationOnIcon color="error" />
               <Box>
-                <Typography variant="caption" color="text.secondary">
-                  Địa điểm
-                </Typography>
-                <Typography variant="body1" fontWeight="500">
-                  {event.location} {event.address ? `(${event.address})` : ""}
-                </Typography>
+                <Typography variant="caption" color="text.secondary">Địa điểm</Typography>
+                <Typography variant="body1" fontWeight="500">{event.location} {event.address ? `(${event.address})` : ""}</Typography>
               </Box>
             </Stack>
           </Grid>
-
           <Grid item xs={12} md={6} lg={4}>
             <Stack direction="row" spacing={2} alignItems="center">
               <PeopleIcon color="info" />
               <Box>
-                <Typography variant="caption" color="text.secondary">
-                  Số lượng
-                </Typography>
-                <Typography
-                  variant="body1"
-                  fontWeight="500"
-                  color={
-                    (event.currentVolunteers || 0) >=
-                    (event.maxVolunteers || 999)
-                      ? "error.main"
-                      : "inherit"
-                  }
-                >
-                  {event.maxVolunteers
-                    ? `${event.currentVolunteers || 0} / ${
-                        event.maxVolunteers
-                      } tình nguyện viên`
-                    : `${event.currentVolunteers || 0} đã đăng ký`}
+                <Typography variant="caption" color="text.secondary">Số lượng</Typography>
+                <Typography variant="body1" fontWeight="500" color={(event.currentVolunteers || 0) >= (event.maxVolunteers || 999) ? "error.main" : "inherit"}>
+                  {event.maxVolunteers ? `${event.currentVolunteers || 0} / ${event.maxVolunteers} tình nguyện viên` : `${event.currentVolunteers || 0} đã đăng ký`}
                 </Typography>
               </Box>
             </Stack>
           </Grid>
-
           <Grid item xs={12} md={12} lg={4}>
-            <Stack
-              direction="row"
-              spacing={2}
-              alignItems="center"
-              justifyContent="space-between"
-              sx={{ width: "100%" }}
-            >
+            <Stack direction="row" spacing={2} alignItems="center" justifyContent="space-between" sx={{ width: "100%" }}>
               <Stack direction="row" spacing={2} alignItems="center">
                 <PersonIcon color="action" />
                 <Box>
-                  <Typography variant="caption" color="text.secondary">
-                    Tổ chức bởi
-                  </Typography>
-                  <Typography variant="body1" fontWeight="bold">
-                    {event.organizerName || "N/A"}
-                  </Typography>
+                  <Typography variant="caption" color="text.secondary">Tổ chức bởi</Typography>
+                  <Typography variant="body1" fontWeight="bold">{event.organizerName || "N/A"}</Typography>
                 </Box>
               </Stack>
               {isVolunteer && event.organizerId && (
-                <Button
-                  variant={followingOrganizer ? "outlined" : "contained"}
-                  size="small"
-                  onClick={handleToggleFollow}
-                  disabled={followLoading}
-                  sx={{ borderRadius: 5 }}
-                >
+                <Button variant={followingOrganizer ? "outlined" : "contained"} size="small" onClick={handleToggleFollow} disabled={followLoading} sx={{ borderRadius: 5 }}>
                   {followingOrganizer ? "Đã theo dõi" : "Theo dõi"}
                 </Button>
               )}
@@ -377,299 +283,136 @@ export default function EventDetail() {
         {/* 4. MÔ TẢ & YÊU CẦU */}
         <Grid container spacing={5}>
           <Grid item xs={12} md={8}>
-            <Typography
-              variant="h5"
-              fontWeight="bold"
-              gutterBottom
-              sx={{ borderLeft: "4px solid #00bfa5", pl: 2, mb: 2 }}
-            >
-              Mô tả sự kiện
-            </Typography>
-            <Typography
-              variant="body1"
-              paragraph
-              sx={{ whiteSpace: "pre-line", lineHeight: 1.8 }}
-            >
-              {event.description || "Chưa có mô tả chi tiết."}
-            </Typography>
-
+            <Typography variant="h5" fontWeight="bold" gutterBottom sx={{ borderLeft: "4px solid #00bfa5", pl: 2, mb: 2 }}>Mô tả sự kiện</Typography>
+            <Typography variant="body1" paragraph sx={{ whiteSpace: "pre-line", lineHeight: 1.8 }}>{event.description || "Chưa có mô tả chi tiết."}</Typography>
             {event.requirements && (
               <>
-                <Typography
-                  variant="h6"
-                  fontWeight="bold"
-                  gutterBottom
-                  sx={{ mt: 4 }}
-                >
-                  <InfoIcon
-                    sx={{
-                      verticalAlign: "middle",
-                      mr: 1,
-                      color: "primary.main",
-                    }}
-                  />{" "}
-                  Yêu cầu tham gia
-                </Typography>
-                <Typography
-                  variant="body2"
-                  sx={{
-                    whiteSpace: "pre-line",
-                    bgcolor: "#fff9c4",
-                    p: 2,
-                    borderRadius: 1,
-                  }}
-                >
-                  {event.requirements}
-                </Typography>
+                <Typography variant="h6" fontWeight="bold" gutterBottom sx={{ mt: 4 }}><InfoIcon sx={{ verticalAlign: "middle", mr: 1, color: "primary.main" }} /> Yêu cầu tham gia</Typography>
+                <Typography variant="body2" sx={{ whiteSpace: "pre-line", bgcolor: "#fff9c4", p: 2, borderRadius: 1 }}>{event.requirements}</Typography>
               </>
             )}
           </Grid>
-
           <Grid item xs={12} md={4}>
             {event.benefits && (
-              <Paper variant="outlined" sx={{ p: 2, bgcolor: "#f0f4f8" }}>
-                <Typography variant="h6" fontWeight="bold" gutterBottom>
-                  <StarIcon
-                    sx={{ verticalAlign: "middle", mr: 1, color: "#fbc02d" }}
-                  />{" "}
-                  Quyền lợi
-                </Typography>
-                <Typography variant="body2" sx={{ whiteSpace: "pre-line" }}>
-                  {event.benefits}
-                </Typography>
+              <Paper variant="outlined" sx={{ p: 2, bgcolor: "#f0f4f8", mb: 3 }}>
+                <Typography variant="h6" fontWeight="bold" gutterBottom><StarIcon sx={{ verticalAlign: "middle", mr: 1, color: "#fbc02d" }} /> Quyền lợi</Typography>
+                <Typography variant="body2" sx={{ whiteSpace: "pre-line" }}>{event.benefits}</Typography>
               </Paper>
             )}
-
             {event.contactInfo && (
-              <Box sx={{ mt: 3 }}>
-                <Typography variant="h6" fontWeight="bold" gutterBottom>
-                  <ContactPhoneIcon sx={{ verticalAlign: "middle", mr: 1 }} />{" "}
-                  Liên hệ
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  {event.contactInfo}
-                </Typography>
-              </>
-          )}
-
-          {/* 3. Cập nhật logic hiển thị nút đăng ký */}
-            {/* LOGIC HIỂN THỊ NÚT ĐĂNG KÝ VÀ TRẠNG THÁI */}
-            {isVolunteer && (
-                <Box sx={{mt: 4, textAlign: 'center'}}>
-                    {registration ? (
-                        // === TRƯỜNG HỢP 1: ĐÃ CÓ DỮ LIỆU ĐĂNG KÝ ===
-                        <Box display="flex" flexDirection="column" gap={2} alignItems="center">
-
-                            {/* 1. Trạng thái: Đã duyệt */}
-                            {registration.status === 'approved' && (
-                                <Button variant="contained" color="success" size="large" disabled startIcon={<CheckCircleIcon/>}>
-                                    Đã tham gia (Chờ sự kiện)
-                                </Button>
-                            )}
-
-                            {/* 2. Trạng thái: Chờ duyệt */}
-                            {registration.status === 'pending' && (
-                                <Button variant="contained" color="warning" size="large" disabled>
-                                    Đang chờ duyệt
-                                </Button>
-                            )}
-
-                            {/* 3. Trạng thái: Hoàn thành (CÓ MẶT) */}
-                            {registration.status === 'completed' && (
-                                <Button variant="contained" color="primary" size="large" disabled startIcon={<CheckCircleIcon/>}>
-                                    Đã hoàn thành sự kiện
-                                </Button>
-                            )}
-
-                            {/* 4. Trạng thái: Từ chối / Vắng mặt */}
-                            {registration.status === 'rejected' && (
-                                <Button variant="contained" color="error" size="large" disabled>
-                                    Không hoàn thành / Bị từ chối
-                                </Button>
-                            )}
-
-                            {/* Nút Hủy: Chỉ hiện khi Chờ duyệt hoặc Đã duyệt */}
-                            {(registration.status === 'pending' || registration.status === 'approved') && !eventEnded && (
-                                <Button
-                                    variant="outlined"
-                                    color="error"
-                                    size="medium"
-                                    onClick={handleCancelRegistration}
-                                    disabled={isCancelling}
-                                >
-                                    {isCancelling ? 'Đang hủy...' : 'Hủy đăng ký'}
-                                </Button>
-                            )}
-
-                            {/* --- KHUNG HIỂN THỊ NHẬN XÉT TỪ BTC (MỚI) --- */}
-                            {(registration.status === 'completed' || registration.status === 'rejected') &&
-                                (registration.completionNote || registration.note) && (
-                                    <Box sx={{ mt: 2, width: '100%', maxWidth: 600 }}>
-                                        <Alert
-                                            severity={registration.status === 'completed' ? "success" : "error"}
-                                            variant="outlined"
-                                            sx={{ borderRadius: 2, textAlign: 'left' }}
-                                        >
-                                            <Typography variant="subtitle2" fontWeight="bold" gutterBottom>
-                                                Phản hồi từ Ban Tổ Chức:
-                                            </Typography>
-                                            <Typography variant="body2">
-                                                {registration.completionNote || registration.note}
-                                            </Typography>
-                                        </Alert>
-                                    </Box>
-                                )}
-                        </Box>
-                    ) : (
-                        // === TRƯỜNG HỢP 2: CHƯA ĐĂNG KÝ (HOẶC ĐÃ HỦY) ===
-                        !eventEnded ? (
-                            canRegister ? (
-                                <>
-                                    {lastRegistrationStatus === 'rejected' && (
-                                        <Alert severity="warning" sx={{mb: 2, display: 'inline-flex'}}>
-                                            Bạn từng bị từ chối ở sự kiện này. Bạn có thể thử đăng ký lại.
-                                        </Alert>
-                                    )}
-                                    <br />
-                                    <Button
-                                        variant="contained"
-                                        color="primary"
-                                        size="large"
-                                        onClick={handleRegister}
-                                        disabled={isRegistering}
-                                    >
-                                        {isRegistering ? 'Đang xử lý...' : 'Đăng ký tham gia'}
-                                    </Button>
-                                </>
-                            ) : (
-                                <Button variant="contained" color="inherit" size="large" disabled>
-                                    {event.status !== 'approved' ? 'Sự kiện chưa được duyệt' : 'Đã đủ số lượng'}
-                                </Button>
-                            )
-                        ) : (
-                            <Alert severity="info" sx={{mt: 2, display: 'inline-flex'}}>Sự kiện này đã kết thúc.</Alert>
-                        )
-                    )}
-                </Box>
+              <Box>
+                <Typography variant="h6" fontWeight="bold" gutterBottom><ContactPhoneIcon sx={{ verticalAlign: "middle", mr: 1 }} /> Liên hệ</Typography>
+                <Typography variant="body2" color="text.secondary">{event.contactInfo}</Typography>
+              </Box>
             )}
-          {eventEnded && ( // Hiển thị thông báo nếu sự kiện đã kết thúc
-              <Alert severity="info" sx={{mt: 4}}>Sự kiện này đã kết
-                thúc.</Alert>
-          )}
+          </Grid>
+        </Grid>
 
-          {isAdmin && (
-              <Box sx={{mt: 4, display: 'flex', gap: 2, flexWrap: 'wrap'}}>
-                {event.status === 'pending' && (
-                    <>
-                      <Button
-                          variant="contained"
-                          color="success"
-                          onClick={async () => {
-                            setApproving(true);
-                            try {
-                              const res = await eventApi.approve(eventId);
-                              setEvent(res.data);
-                              toast.success('Đã duyệt sự kiện');
-                            } catch (err) {
-                              console.error('Approve event failed', err);
-                              toast.error(err.response?.data?.error || 'Không thể duyệt sự kiện');
-                            } finally {
-                              setApproving(false);
-                            }
-                          }}
-                          disabled={approving || rejecting}
-                      >
-                        {approving ? 'Đang duyệt...' : 'Duyệt'}
-                      </Button>
+        {/* 5. LOGIC NÚT ĐĂNG KÝ */}
+        {isVolunteer && (
+          <Box sx={{ mt: 6, textAlign: 'center' }}>
+            {registration ? (
+              <Box display="flex" flexDirection="column" gap={2} alignItems="center">
+                {registration.status === 'approved' && (
+                  <Button variant="contained" color="success" size="large" disabled startIcon={<CheckCircleIcon />}>Đã tham gia (Chờ sự kiện)</Button>
+                )}
+                {registration.status === 'pending' && (
+                  <Button variant="contained" color="warning" size="large" disabled>Đang chờ duyệt</Button>
+                )}
+                {registration.status === 'completed' && (
+                  <Button variant="contained" color="primary" size="large" disabled startIcon={<CheckCircleIcon />}>Đã hoàn thành sự kiện</Button>
+                )}
+                {registration.status === 'rejected' && (
+                  <Button variant="contained" color="error" size="large" disabled>Không hoàn thành / Bị từ chối</Button>
+                )}
 
-                      <Button
-                          variant="outlined"
-                          color="error"
-                          onClick={() => {
-                            setRejectReason("");
-                            setRejectDialogOpen(true);
-                          }}
-                          disabled={approving || rejecting}
-                      >
-                        Từ chối
-                      </Button>
-                    </>
+                {(registration.status === 'pending' || registration.status === 'approved') && !eventEnded && (
+                  <Button variant="outlined" color="error" size="medium" onClick={handleCancelRegistration} disabled={isCancelling}>
+                    {isCancelling ? 'Đang hủy...' : 'Hủy đăng ký'}
+                  </Button>
+                )}
+
+                {/* PHẢN HỒI TỪ BTC */}
+                {(registration.status === 'completed' || registration.status === 'rejected') && (registration.completionNote || registration.organizerNote) && (
+                  <Box sx={{ mt: 2, width: '100%', maxWidth: 600 }}>
+                    <Alert severity={registration.status === 'completed' ? "success" : "error"} variant="outlined" sx={{ borderRadius: 2, textAlign: 'left' }}>
+                      <Typography variant="subtitle2" fontWeight="bold">Phản hồi từ Ban Tổ Chức:</Typography>
+                      <Typography variant="body2">{registration.completionNote || registration.organizerNote}</Typography>
+                    </Alert>
+                  </Box>
                 )}
               </Box>
-          )}
-
-
-          {event.status === 'approved' && (
-              <EventDiscussion eventId={eventId} event={event} registration={registration}/>
-          )}
-
-
-          {/* Nút quay lại */}
-          <Box sx={{mt: 4}}>
-            <Button component={RouterLink} to="/events">
-              ← Quay lại danh sách sự kiện
-            </Button>
+            ) : (
+              !eventEnded ? (
+                canRegister ? (
+                  <>
+                    {lastRegistrationStatus === 'rejected' && (
+                      <Alert severity="warning" sx={{ mb: 2, display: 'inline-flex' }}>Bạn từng bị từ chối ở sự kiện này. Bạn có thể thử đăng ký lại.</Alert>
+                    )}
+                    <br />
+                    <Button variant="contained" color="primary" size="large" onClick={handleRegister} disabled={isRegistering}>
+                      {isRegistering ? 'Đang xử lý...' : 'Đăng ký tham gia'}
+                    </Button>
+                  </>
+                ) : (
+                  <Button variant="contained" color="inherit" size="large" disabled>
+                    {event.status !== 'approved' ? 'Sự kiện chưa được duyệt' : 'Đã đủ số lượng'}
+                  </Button>
+                )
+              ) : (
+                <Alert severity="info" sx={{ mt: 2, display: 'inline-flex' }}>Sự kiện này đã kết thúc.</Alert>
+              )
+            )}
           </Box>
-        </Paper>
+        )}
+
+        {isAdmin && event.status === 'pending' && (
+          <Stack direction="row" spacing={2} sx={{ mt: 4, justifyContent: 'center' }}>
+            <Button variant="contained" color="success" onClick={async () => {
+              setApproving(true);
+              try {
+                const res = await eventApi.approve(eventId);
+                setEvent(res.data);
+                toast.success('Đã duyệt sự kiện');
+              } catch (err) {
+                toast.error('Không thể duyệt sự kiện');
+              } finally { setApproving(false); }
+            }} disabled={approving || rejecting}>Duyệt</Button>
+            <Button variant="outlined" color="error" onClick={() => setRejectDialogOpen(true)} disabled={approving || rejecting}>Từ chối</Button>
+          </Stack>
+        )}
+
+        {event.status === 'approved' && (
+          <EventDiscussion eventId={eventId} event={event} registration={registration} />
+        )}
+
+        <Box sx={{ mt: 4 }}>
+          <Button component={RouterLink} to="/events">← Quay lại danh sách sự kiện</Button>
+        </Box>
+      </Paper>
 
       {/* DIALOG TỪ CHỐI */}
-      <Dialog
-        open={rejectDialogOpen}
-        onClose={() => setRejectDialogOpen(false)}
-        fullWidth
-        maxWidth="sm"
-      >
+      <Dialog open={rejectDialogOpen} onClose={() => setRejectDialogOpen(false)} fullWidth maxWidth="sm">
         <DialogTitle>Từ chối sự kiện</DialogTitle>
         <DialogContent dividers>
-          <TextField
-            label="Lý do từ chối"
-            value={rejectReason}
-            onChange={(e) => setRejectReason(e.target.value)}
-            multiline
-            minRows={3}
-            fullWidth
-            sx={{ mt: 1 }}
-          />
+          <TextField label="Lý do từ chối" value={rejectReason} onChange={(e) => setRejectReason(e.target.value)} multiline minRows={3} fullWidth sx={{ mt: 1 }} />
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setRejectDialogOpen(false)}>Hủy</Button>
-          <Button
-            variant="contained"
-            color="error"
-            disabled={!rejectReason.trim() || rejecting}
-            onClick={async () => {
-              setRejecting(true);
-              try {
-                const res = await eventApi.reject(eventId, {
-                  reason: rejectReason.trim(),
-                });
-                setEvent(res.data);
-                toast.info("Đã từ chối sự kiện");
-                setRejectDialogOpen(false);
-              } finally {
-                setRejecting(false);
-              }
-            }}
-          >
-            Xác nhận từ chối
-          </Button>
+          <Button variant="contained" color="error" disabled={!rejectReason.trim() || rejecting} onClick={async () => {
+            setRejecting(true);
+            try {
+              const res = await eventApi.reject(eventId, { reason: rejectReason.trim() });
+              setEvent(res.data);
+              toast.info("Đã từ chối sự kiện");
+              setRejectDialogOpen(false);
+            } finally { setRejecting(false); }
+          }}>Xác nhận từ chối</Button>
         </DialogActions>
       </Dialog>
     </Container>
   );
 }
 
-const statusColors = {
-  pending: "warning",
-  approved: "success",
-  rejected: "error",
-  cancelled: "default",
-  completed: "info",
-};
-const statusLabels = {
-  pending: "Chờ duyệt",
-  approved: "Sẵn sàng",
-  rejected: "Bị từ chối",
-  cancelled: "Đã hủy",
-  completed: "Đã kết thúc",
-};
+const statusColors = { pending: "warning", approved: "success", rejected: "error", cancelled: "default", completed: "info" };
+const statusLabels = { pending: "Chờ duyệt", approved: "Sẵn sàng", rejected: "Bị từ chối", cancelled: "Đã hủy", completed: "Đã kết thúc" };
