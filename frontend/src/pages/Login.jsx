@@ -45,6 +45,23 @@ export default function Login() {
     }
   };
 
+  // --- STYLE CHUNG CHO INPUT (Để tái sử dụng) ---
+  const textFieldStyle = {
+    "& .MuiOutlinedInput-root": {
+        borderRadius: 2,
+    },
+    "& .MuiOutlinedInput-input": {
+        padding: "14px 14px 14px 7px", 
+    },
+    // Fix lỗi nền vàng/xanh khi Autofill
+    "& .MuiOutlinedInput-input:-webkit-autofill": {
+        padding: "14px 14px 14px 0px !important",
+        WebkitBoxShadow: "0 0 0 1000px #ffffff inset !important",
+        WebkitTextFillColor: "#000000 !important",
+        transition: "background-color 5000s ease-in-out 0s",
+    }
+  };
+
   return (
     <Box sx={{ display: 'flex', minHeight: '100vh', width: '100vw', overflow: 'hidden' }}>
       <CssBaseline />
@@ -112,22 +129,38 @@ export default function Login() {
             <form onSubmit={handleSubmit(onLoginSubmit)}>
                 <Stack spacing={3}>
                     <TextField
-                        fullWidth label="Email" placeholder="example@mail.com" {...register("email")}
-                        error={!!errors.email} helperText={errors.email?.message}
+                        fullWidth 
+                        label="Email" 
+                        placeholder="example@mail.com" 
+                        {...register("email")}
+                        error={!!errors.email} 
+                        helperText={errors.email?.message}
+                        // Áp dụng style đã sửa
+                        sx={textFieldStyle}
                         InputProps={{
                             startAdornment: (<InputAdornment position="start"><EmailOutlined color="action" /></InputAdornment>),
-                            sx: { borderRadius: 2 }
                         }}
                     />
                     
                     <Box>
                         <TextField
-                            fullWidth label="Mật khẩu" type={showPassword ? "text" : "password"} {...register("password")}
-                            error={!!errors.password} helperText={errors.password?.message}
+                            fullWidth 
+                            label="Mật khẩu" 
+                            type={showPassword ? "text" : "password"} 
+                            {...register("password")}
+                            error={!!errors.password} 
+                            helperText={errors.password?.message}
+                            // Áp dụng style đã sửa
+                            sx={textFieldStyle}
                             InputProps={{
                                 startAdornment: (<InputAdornment position="start"><LockOutlined color="action" /></InputAdornment>),
-                                endAdornment: (<InputAdornment position="end"><IconButton onClick={() => setShowPassword(!showPassword)} edge="end">{showPassword ? <VisibilityOff /> : <Visibility />}</IconButton></InputAdornment>),
-                                sx: { borderRadius: 2 }
+                                endAdornment: (
+                                    <InputAdornment position="end">
+                                        <IconButton onClick={() => setShowPassword(!showPassword)} edge="end">
+                                            {showPassword ? <VisibilityOff /> : <Visibility />}
+                                        </IconButton>
+                                    </InputAdornment>
+                                ),
                             }}
                         />
                         <Box display="flex" justifyContent="space-between" alignItems="center" mt={1}>
@@ -136,7 +169,20 @@ export default function Login() {
                         </Box>
                     </Box>
 
-                    <Button type="submit" fullWidth variant="contained" size="large" disabled={isSubmitting} sx={{ py: 1.5, borderRadius: 2, fontWeight: 'bold', fontSize: '1rem' }}>
+                    <Button 
+                        type="submit" 
+                        fullWidth 
+                        variant="contained" 
+                        size="large" 
+                        disabled={isSubmitting} 
+                        sx={{ 
+                            py: 1.5, 
+                            borderRadius: 2, 
+                            fontWeight: 'bold', 
+                            fontSize: '1rem',
+                            boxShadow: 2 
+                        }}
+                    >
                         {isSubmitting ? "Đang xử lý..." : "Đăng Nhập"}
                     </Button>
                 </Stack>

@@ -31,17 +31,16 @@ import authApi from "../api/authApi";
 import notificationApi from "../api/notificationApi";
 import profileApi from "../api/profileApi";
 import { toast } from "react-toastify";
-import LanguageIcon from "@mui/icons-material/Language";
+// Đã xóa import LanguageIcon
 
 function NavBar() {
   const { user, logout, loading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const { mode, toggleColorMode } = useThemeMode();
-  const { language, setLanguage, t } = useLanguage();
+  const { language, t } = useLanguage(); // Giữ lại t để hiển thị chữ, bỏ setLanguage
   const [anchorElNav, setAnchorElNav] = React.useState(null);
   const [anchorElUser, setAnchorElUser] = React.useState(null);
-  const [anchorElLang, setAnchorElLang] = React.useState(null);
   const [unreadCount, setUnreadCount] = React.useState(0);
   const [userProfile, setUserProfile] = React.useState(null);
 
@@ -59,15 +58,8 @@ function NavBar() {
 
   const handleOpenNavMenu = (event) => setAnchorElNav(event.currentTarget);
   const handleOpenUserMenu = (event) => setAnchorElUser(event.currentTarget);
-  const handleOpenLangMenu = (event) => setAnchorElLang(event.currentTarget);
   const handleCloseNavMenu = () => setAnchorElNav(null);
   const handleCloseUserMenu = () => setAnchorElUser(null);
-  const handleCloseLangMenu = () => setAnchorElLang(null);
-
-  const handleLanguageChange = (lang) => {
-    setLanguage(lang);
-    handleCloseLangMenu();
-  };
 
   const handleLogout = async () => {
     handleCloseUserMenu();
@@ -255,7 +247,7 @@ function NavBar() {
             🌿 VH
           </Typography>
 
-          {/* 4. DESKTOP MENU ITEMS (Pill shaped buttons) */}
+          {/* 4. DESKTOP MENU ITEMS */}
           <Box
             sx={{ flexGrow: 1, display: { xs: "none", md: "flex" }, gap: 1 }}
           >
@@ -282,42 +274,11 @@ function NavBar() {
             })}
           </Box>
 
-          {/* 5. RIGHT ACTIONS (Language, Theme, Notif, User) */}
+          {/* 5. RIGHT ACTIONS */}
           <Box
             sx={{ flexGrow: 0, display: "flex", alignItems: "center", gap: 1 }}
           >
-            {/* Language Switcher */}
-            <Tooltip title={language === "vi" ? "Switch to English" : "Chuyển sang Tiếng Việt"}>
-              <IconButton
-                onClick={handleOpenLangMenu}
-                className="text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 transition-colors"
-              >
-                <LanguageIcon />
-              </IconButton>
-            </Tooltip>
-            <Menu
-              anchorEl={anchorElLang}
-              open={Boolean(anchorElLang)}
-              onClose={handleCloseLangMenu}
-              PaperProps={{
-                className: "rounded-xl shadow-lg border border-slate-100 dark:border-slate-700 dark:bg-slate-800",
-              }}
-            >
-              <MenuItem
-                onClick={() => handleLanguageChange("vi")}
-                selected={language === "vi"}
-                className="dark:text-slate-200"
-              >
-                <Typography>🇻🇳 Tiếng Việt</Typography>
-              </MenuItem>
-              <MenuItem
-                onClick={() => handleLanguageChange("en")}
-                selected={language === "en"}
-                className="dark:text-slate-200"
-              >
-                <Typography>🇺🇸 English</Typography>
-              </MenuItem>
-            </Menu>
+            {/* Đã xóa nút chuyển ngôn ngữ ở đây */}
 
             {/* Theme Toggle */}
             <Tooltip title={mode === "dark" ? (language === "vi" ? "Chế độ sáng" : "Light mode") : (language === "vi" ? "Chế độ tối" : "Dark mode")}>
@@ -386,15 +347,20 @@ function NavBar() {
                   }}
                 >
                   <Box className="px-4 py-3">
+                    {/* Đã sửa màu chữ tại đây từ yêu cầu trước */}
                     <Typography
                       variant="subtitle2"
-                      className="font-bold text-slate-800 dark:text-white truncate"
+                      color="text.primary"
+                      fontWeight="bold"
+                      noWrap
                     >
                       {userProfile?.fullName || (language === "vi" ? "Người dùng" : "User")}
                     </Typography>
                     <Typography
                       variant="caption"
-                      className="text-slate-500 dark:text-slate-400 truncate block"
+                      color="text.secondary"
+                      noWrap
+                      display="block"
                     >
                       {user.email}
                     </Typography>

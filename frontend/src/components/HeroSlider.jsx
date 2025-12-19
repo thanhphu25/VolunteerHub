@@ -2,29 +2,42 @@ import React from 'react';
 import Slider from "react-slick";
 import { Box, Typography, Button, Container, Stack, useTheme, useMediaQuery } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-// Import CSS bắt buộc của thư viện slider
+
+// Import CSS bắt buộc của thư viện react-slick
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 
-// Dữ liệu mẫu cho các slide (Bạn có thể thay link ảnh khác nếu muốn)
+// 1. DỮ LIỆU 5 SLIDE ẢNH CHUẨN TÌNH NGUYỆN
 const slides = [
     {
         id: 1,
-        image: 'https://images.unsplash.com/photo-1593113598332-cd288d649433?q=80&w=2070&auto=format&fit=crop',
+        image: 'https://images.unsplash.com/photo-1559027615-cd4628902d4a?auto=format&fit=crop&w=2000&q=80',
         title: 'Kết nối trái tim – Lan tỏa yêu thương',
         subtitle: 'Tham gia cộng đồng tình nguyện lớn nhất Việt Nam ngay hôm nay.'
     },
     {
         id: 2,
-        image: 'https://images.unsplash.com/photo-1559027615-cd4628902d4a?q=80&w=2074&auto=format&fit=crop',
+        image: 'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&w=2000&q=80',
         title: 'Hành động nhỏ, Ý nghĩa lớn',
         subtitle: 'Chung tay bảo vệ môi trường và xây dựng không gian xanh sạch đẹp.'
     },
     {
         id: 3,
-        image: 'https://images.unsplash.com/photo-1469571486292-0ba58a3f068b?q=80&w=2070&auto=format&fit=crop',
+        image: 'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?auto=format&fit=crop&w=2000&q=80',
         title: 'Sẻ chia là hạnh phúc',
         subtitle: 'Hỗ trợ trẻ em nghèo và những hoàn cảnh khó khăn trên khắp cả nước.'
+    },
+    {
+        id: 4,
+        image: 'https://images.unsplash.com/photo-1581579438747-1dc8d17bbce4?auto=format&fit=crop&w=2000&q=80',
+        title: 'Ấm áp tình già',
+        subtitle: 'Mang niềm vui và sự an ủi đến những cụ già neo đơn.'
+    },
+    {
+        id: 5,
+        image: 'https://images.unsplash.com/photo-1593113630400-ea4288922497?auto=format&fit=crop&w=2000&q=80',
+        title: 'Bữa cơm nhân ái',
+        subtitle: 'Cùng nhau chia sẻ gánh nặng lương thực cho các gia đình khó khăn.'
     }
 ];
 
@@ -33,129 +46,134 @@ export default function HeroSlider() {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
-    // Cấu hình Slider
+    // 2. CẤU HÌNH SLIDER
     const settings = {
-        dots: true,             // Hiện chấm tròn dưới đáy
-        infinite: true,         // Chạy vòng lặp
-        speed: 1500,            // Tốc độ chuyển cảnh (ms)
+        dots: true,                // Hiện 5 dấu chấm chuyển slide
+        infinite: true,            // Lặp vô tận
+        speed: 1000,               // Tốc độ chuyển cảnh
         slidesToShow: 1,
         slidesToScroll: 1,
-        autoplay: true,         // Tự động chạy
-        autoplaySpeed: 5000,    // Thời gian dừng ở mỗi ảnh (5s)
-        fade: true,             // Hiệu ứng mờ dần (sang trọng hơn trượt ngang)
-        arrows: !isMobile,      // Ẩn mũi tên trên điện thoại cho đỡ vướng
-        pauseOnHover: false,    // Không dừng khi di chuột vào
+        autoplay: true,            // Tự động chạy
+        autoplaySpeed: 5000,       // 5 giây đổi ảnh 1 lần
+        pauseOnHover: false,       // KHÔNG dừng khi di chuột vào
+        pauseOnFocus: false,       // KHÔNG dừng khi người dùng click vào nút/chấm
+        fade: true,                // Hiệu ứng mờ dần (Fade)
+        arrows: !isMobile,         // Hiện mũi tên trên PC
+        appendDots: dots => (
+            <Box sx={{ position: "absolute", bottom: "25px", width: "100%" }}>
+                <ul style={{ margin: "0px", padding: "0px" }}> {dots} </ul>
+            </Box>
+        ),
     };
 
     return (
-        // Box bao ngoài để tránh thanh cuộn ngang
-        <Box sx={{ width: '100%', overflow: 'hidden', bgcolor: 'black' }}>
+        <Box 
+            sx={{ 
+                width: '100%', 
+                overflow: 'hidden', 
+                bgcolor: 'black',
+                // Tùy chỉnh màu sắc và kích thước cho 5 dấu chấm (Dots)
+                "& .slick-dots li button:before": {
+                    fontSize: "12px",
+                    color: "white",
+                    opacity: 0.4,
+                },
+                "& .slick-dots li.slick-active button:before": {
+                    color: "#00bfa5", // Màu xanh nhấn khi slide đang được chọn
+                    opacity: 1,
+                    fontSize: "14px",
+                }
+            }}
+        >
             <Slider {...settings}>
                 {slides.map((slide) => (
-                    <Box key={slide.id} sx={{ position: 'relative', outline: 'none' }}>
+                    <Box key={slide.id} sx={{ outline: 'none', position: 'relative' }}>
                         
-                        {/* 1. ẢNH NỀN */}
+                        {/* 3. PHẦN KHUNG CHỨA ẢNH - Tỉ lệ 21:9 */}
                         <Box
                             sx={{
-                                height: { xs: '500px', md: '750px' }, // Mobile cao 500px, PC cao 750px
+                                width: '100%',
+                                aspectRatio: { xs: '16/9', md: '21/9' }, // Tỉ lệ vàng để không làm mất nội dung
+                                minHeight: { xs: '350px', md: 'auto' }, 
                                 backgroundImage: `url(${slide.image})`,
                                 backgroundSize: 'cover',
-                                backgroundPosition: 'center',
-                            }}
-                        />
-
-                        {/* 2. LỚP PHỦ TỐI (Overlay) - Giúp chữ trắng luôn đọc được */}
-                        <Box
-                            sx={{
-                                position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-                                background: 'linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(0,0,0,0.7))',
-                            }}
-                        />
-
-                        {/* 3. NỘI DUNG CHỮ & NÚT */}
-                        <Container
-                            maxWidth="lg"
-                            sx={{
-                                position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-                                display: 'flex', 
-                                flexDirection: 'column', 
-                                justifyContent: 'center', 
-                                alignItems: 'center',
-                                textAlign: 'center', 
-                                zIndex: 2, 
-                                px: 2,
-                                color: 'white'
+                                backgroundPosition: 'center 15%', // Giữ lấy phần trên của ảnh (mặt người)
+                                position: 'relative',
                             }}
                         >
-                            <Typography 
-                                variant="h2" 
-                                component="h1" 
-                                fontWeight="800"
-                                gutterBottom
-                                sx={{ 
-                                    fontSize: { xs: '2rem', md: '4rem' },
-                                    textShadow: '2px 2px 10px rgba(0,0,0,0.5)',
-                                    animation: 'fadeInUp 1s ease-out' // Hiệu ứng chữ hiện lên
+                            {/* Lớp phủ tối Gradient */}
+                            <Box
+                                sx={{
+                                    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+                                    background: 'linear-gradient(to bottom, rgba(0,0,0,0.1), rgba(0,0,0,0.7))',
+                                }}
+                            />
+
+                            {/* 4. NỘI DUNG CHỮ & NÚT BẤM CHUYỂN TRANG */}
+                            <Container
+                                sx={{
+                                    height: '100%',
+                                    display: 'flex', flexDirection: 'column', 
+                                    justifyContent: 'center', alignItems: 'center',
+                                    textAlign: 'center', position: 'relative', zIndex: 2, color: 'white'
                                 }}
                             >
-                                {slide.title}
-                            </Typography>
-
-                            <Typography 
-                                variant="h5" 
-                                paragraph
-                                sx={{ 
-                                    maxWidth: '800px', 
-                                    mb: 4, 
-                                    opacity: 0.9,
-                                    fontSize: { xs: '1rem', md: '1.5rem' },
-                                    textShadow: '1px 1px 5px rgba(0,0,0,0.5)',
-                                }}
-                            >
-                                {slide.subtitle}
-                            </Typography>
-
-                            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-                                <Button 
-                                    variant="contained" 
-                                    size="large"
-                                    onClick={() => navigate("/events")}
+                                <Typography 
+                                    variant="h2" 
                                     sx={{ 
-                                        px: 4, py: 1.5, 
-                                        fontSize: '1.1rem', 
-                                        fontWeight: 'bold', 
-                                        borderRadius: 2,
-                                        bgcolor: 'primary.main', 
-                                        boxShadow: 3,
-                                        '&:hover': { bgcolor: 'primary.dark', transform: 'translateY(-2px)' },
-                                        transition: 'all 0.3s'
+                                        fontWeight: 800, 
+                                        fontSize: { xs: '1.8rem', md: '3.5rem' }, 
+                                        mb: 1,
+                                        textShadow: '2px 2px 10px rgba(0,0,0,0.5)'
                                     }}
                                 >
-                                    Khám phá sự kiện
-                                </Button>
-                                <Button 
-                                    variant="outlined" 
-                                    size="large"
-                                    onClick={() => navigate("/about")} // Ví dụ link đến trang giới thiệu
+                                    {slide.title}
+                                </Typography>
+
+                                <Typography 
+                                    variant="h5" 
                                     sx={{ 
-                                        px: 4, py: 1.5, 
-                                        fontSize: '1.1rem', 
-                                        fontWeight: 'bold', 
-                                        borderRadius: 2,
-                                        color: 'white', 
-                                        borderColor: 'white', 
-                                        borderWidth: 2,
-                                        '&:hover': { 
+                                        mb: 4, opacity: 0.9, maxWidth: '850px', 
+                                        fontSize: { xs: '0.9rem', md: '1.3rem' },
+                                        display: { xs: 'none', sm: 'block' } 
+                                    }}
+                                >
+                                    {slide.subtitle}
+                                </Typography>
+
+                                <Stack direction="row" spacing={2}>
+                                    <Button 
+                                        variant="contained" 
+                                        size={isMobile ? "small" : "large"}
+                                        onClick={() => navigate("/events")} // Chuyển sang trang sự kiện
+                                        sx={{ 
+                                            bgcolor: '#00bfa5', 
+                                            '&:hover': { bgcolor: '#008e7a' }, 
+                                            fontWeight: 'bold',
+                                            px: { md: 4 }
+                                        }}
+                                    >
+                                        Khám phá sự kiện
+                                    </Button>
+
+                                    <Button 
+                                        variant="outlined" 
+                                        size={isMobile ? "small" : "large"}
+                                        onClick={() => navigate("/about")} // Chuyển sang trang giới thiệu
+                                        sx={{ 
+                                            color: 'white', 
                                             borderColor: 'white', 
-                                            bgcolor: 'rgba(255,255,255,0.1)',
-                                            borderWidth: 2
-                                        }
-                                    }}
-                                >
-                                    Tìm hiểu thêm
-                                </Button>
-                            </Stack>
-                        </Container>
+                                            fontWeight: 'bold',
+                                            px: { md: 4 },
+                                            '&:hover': { borderColor: '#00bfa5', color: '#00bfa5' }
+                                        }}
+                                    >
+                                        Tìm hiểu thêm
+                                    </Button>
+                                </Stack>
+                            </Container>
+                        </Box>
+
                     </Box>
                 ))}
             </Slider>

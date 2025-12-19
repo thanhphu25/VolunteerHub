@@ -37,7 +37,6 @@ export default function Register() {
     formState: { errors, isSubmitting }
   } = useForm({
     resolver: yupResolver(registerSchema),
-    // SỬA LỖI UNCONTROLLED: Khai báo giá trị mặc định cho TẤT CẢ các trường
     defaultValues: { 
         fullName: "",
         email: "",
@@ -50,14 +49,10 @@ export default function Register() {
 
   const onRegisterSubmit = async (data) => {
     try {
-      // 1. Loại bỏ confirmPassword khỏi dữ liệu
       const { confirmPassword, role, ...rest } = data;
       
-      // 2. CHUẨN HÓA DỮ LIỆU ĐÚNG VỚI BACKEND JAVA
       const submitData = {
         ...rest,
-        // Backend: private String role; -> Gửi chuỗi đơn
-        // Backend Regex: "volunteer|organizer" -> Phải chuyển sang chữ thường (.toLowerCase())
         role: role ? role.toLowerCase() : "volunteer" 
       };
 
@@ -68,17 +63,37 @@ export default function Register() {
       navigate("/login");
     } catch (err) {
       console.error("Chi tiết lỗi backend:", err.response?.data);
-      
       const errorData = err.response?.data;
-      // Xử lý hiển thị lỗi Validation từ Java (ví dụ: password quá ngắn)
+      
       if (errorData?.errors) {
           const firstErrorKey = Object.keys(errorData.errors)[0];
           const errorMessage = errorData.errors[firstErrorKey];
           toast.error(`${firstErrorKey}: ${errorMessage}`);
       } else {
-          // Xử lý lỗi logic (ví dụ: Email đã tồn tại)
           toast.error(errorData?.message || "Đăng ký thất bại");
       }
+    }
+  };
+
+  // --- STYLE CHUNG CHO INPUT (Padding & Fix Autofill) ---
+  const textFieldStyle = {
+    "& .MuiOutlinedInput-root": {
+      borderRadius: 2,
+    },
+    // Padding cho ô nhập thường
+    "& .MuiOutlinedInput-input": {
+        padding: "14px 14px 14px 7px", 
+    },
+    // Padding riêng cho ô Select (Dropdown)
+    "& .MuiSelect-select": {
+        padding: "14px 14px 14px 7px",
+    },
+    // Fix lỗi nền vàng/xanh khi Autofill
+    "& .MuiOutlinedInput-input:-webkit-autofill": {
+        padding: "14px 14px 14px 7px !important",
+        WebkitBoxShadow: "0 0 0 1000px #ffffff inset !important",
+        WebkitTextFillColor: "#000000 !important",
+        transition: "background-color 5000s ease-in-out 0s",
     }
   };
 
@@ -114,24 +129,31 @@ export default function Register() {
                     <TextField
                         fullWidth label="Họ và tên" {...register("fullName")}
                         error={!!errors.fullName} helperText={errors.fullName?.message}
-                        InputProps={{ startAdornment: (<InputAdornment position="start"><PersonOutline color="action" /></InputAdornment>), sx: { borderRadius: 2 } }}
+                        // Áp dụng style
+                        sx={textFieldStyle}
+                        InputProps={{ startAdornment: (<InputAdornment position="start"><PersonOutline color="action" /></InputAdornment>) }}
                     />
                     <TextField
                         fullWidth label="Email" {...register("email")}
                         error={!!errors.email} helperText={errors.email?.message}
-                        InputProps={{ startAdornment: (<InputAdornment position="start"><EmailOutlined color="action" /></InputAdornment>), sx: { borderRadius: 2 } }}
+                        // Áp dụng style
+                        sx={textFieldStyle}
+                        InputProps={{ startAdornment: (<InputAdornment position="start"><EmailOutlined color="action" /></InputAdornment>) }}
                     />
                     <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
                         <TextField
                             fullWidth label="Số điện thoại" {...register("phone")}
                             error={!!errors.phone} helperText={errors.phone?.message}
-                            InputProps={{ startAdornment: (<InputAdornment position="start"><PhoneOutlined color="action" /></InputAdornment>), sx: { borderRadius: 2 } }}
+                            // Áp dụng style
+                            sx={textFieldStyle}
+                            InputProps={{ startAdornment: (<InputAdornment position="start"><PhoneOutlined color="action" /></InputAdornment>) }}
                         />
                         <TextField
                             fullWidth select label="Vai trò" {...register("role")}
                             error={!!errors.role} helperText={errors.role?.message}
-                            InputProps={{ sx: { borderRadius: 2 } }}
-                            defaultValue="VOLUNTEER" // Thêm cái này để chắc chắn UI hiển thị đúng
+                            // Áp dụng style
+                            sx={textFieldStyle}
+                            defaultValue="VOLUNTEER"
                         >
                             <MenuItem value="VOLUNTEER">Tình nguyện viên</MenuItem>
                             <MenuItem value="ORGANIZER">Nhà tổ chức</MenuItem>
@@ -140,16 +162,23 @@ export default function Register() {
                     <TextField
                         fullWidth label="Mật khẩu" type={showPassword ? "text" : "password"} {...register("password")}
                         error={!!errors.password} helperText={errors.password?.message}
+                        // Áp dụng style (kết hợp với style ẩn icon mặc định của browser)
+                        sx={{
+                            ...textFieldStyle,
+                            "& input::-ms-reveal, & input::-ms-clear": { display: "none" },
+                            "& input::-webkit-textfield-decoration-container": { display: "none" },
+                        }}
                         InputProps={{
                             startAdornment: (<InputAdornment position="start"><LockOutlined color="action" /></InputAdornment>),
                             endAdornment: (<InputAdornment position="end"><IconButton onClick={() => setShowPassword(!showPassword)} edge="end">{showPassword ? <VisibilityOff /> : <Visibility />}</IconButton></InputAdornment>),
-                            sx: { borderRadius: 2 }
                         }}
                     />
                     <TextField
                         fullWidth label="Xác nhận mật khẩu" type="password" {...register("confirmPassword")}
                         error={!!errors.confirmPassword} helperText={errors.confirmPassword?.message}
-                        InputProps={{ startAdornment: (<InputAdornment position="start"><LockOutlined color="action" /></InputAdornment>), sx: { borderRadius: 2 } }}
+                        // Áp dụng style
+                        sx={textFieldStyle}
+                        InputProps={{ startAdornment: (<InputAdornment position="start"><LockOutlined color="action" /></InputAdornment>) }}
                     />
 
                     <Button type="submit" fullWidth variant="contained" size="large" disabled={isSubmitting} sx={{ py: 1.5, mt: 1, borderRadius: 2, fontWeight: 'bold', fontSize: '1rem' }}>
