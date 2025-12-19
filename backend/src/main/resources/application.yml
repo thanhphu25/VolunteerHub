@@ -19,17 +19,17 @@ spring:
 
   file:
     upload-dir: uploads
-    max-size-bytes: 5242880      # 5 MB
+    max-size-bytes: 5242880
     allowed-types: image/png,image/jpeg,image/webp,image/gif
 
 webpush:
   vapid:
-    public-key: BG0M7NIgM1tXh8m6iEbr6pYdYLlGsrMUYcGp2HwB8GpRq0RjZpxum1nzsPFQOIOMbUFsVE-wkW1bBc78U_9lh8M
-    private-key: tZv0VqD-lwzXk2nMKw_9x8J_AFwx8cteZC2PHb6xS4Y
-    subject: mailto:admin@volunteerhub.test
+    public-key: BHtXUMbNNQa7Z2PKQBFaXh1ddarrHfxQzFidtfauNiPkZxcqZOjBkwH18t2vAzcCNK-tOcytQc3pfEOak5r2Az0
+    private-key: kFdYtDBws7CuV0HWulSbLrKaS5kGW63LpWfcIzTjbxc
+    subject: ${VAPID_SUBJECT:mailto:admin@vh.test}
 
 jwt:
-  secret: ${JWT_SECRET:change_this_to_a_very_long_random_secret_key_for_dev_only}
+  secret: ${JWT_SECRET}
   expirationMs: ${JWT_EXP_MS:3600000}
 
 server:

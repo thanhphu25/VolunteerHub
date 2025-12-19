@@ -8,10 +8,12 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
+@Repository
 public interface EventRepository extends JpaRepository<EventEntity, Long> {
     Page<EventEntity> findByStatus(EventStatus status, Pageable pageable);
     Page<EventEntity> findByStatusAndIsDeletedFalse(EventStatus status, Pageable pageable);
@@ -24,45 +26,45 @@ public interface EventRepository extends JpaRepository<EventEntity, Long> {
     long countByOrganizerAndIsDeletedFalse(UserEntity organizer);
     long countByOrganizerAndStatusAndIsDeletedFalse(UserEntity organizer, EventStatus status);
     long countByIsDeletedTrue();
-    
+
     // Enhanced filtering methods
     Page<EventEntity> findByCategoryContainingIgnoreCaseAndIsDeletedFalse(String category, Pageable pageable);
     Page<EventEntity> findByLocationContainingIgnoreCaseAndIsDeletedFalse(String location, Pageable pageable);
     Page<EventEntity> findByStartDateBetweenAndIsDeletedFalse(LocalDateTime startDate, LocalDateTime endDate, Pageable pageable);
     Page<EventEntity> findByEndDateBetweenAndIsDeletedFalse(LocalDateTime startDate, LocalDateTime endDate, Pageable pageable);
-    
+
     // Combined filtering with status
     Page<EventEntity> findByStatusAndCategoryContainingIgnoreCaseAndIsDeletedFalse(EventStatus status, String category, Pageable pageable);
     Page<EventEntity> findByStatusAndLocationContainingIgnoreCaseAndIsDeletedFalse(EventStatus status, String location, Pageable pageable);
     Page<EventEntity> findByStatusAndStartDateBetweenAndIsDeletedFalse(EventStatus status, LocalDateTime startDate, LocalDateTime endDate, Pageable pageable);
     Page<EventEntity> findByStatusAndEndDateBetweenAndIsDeletedFalse(EventStatus status, LocalDateTime startDate, LocalDateTime endDate, Pageable pageable);
-    
+
     // Complex filtering with custom query
     @Query("SELECT e FROM EventEntity e WHERE e.isDeleted = false " +
-           "AND (:status IS NULL OR e.status = :status) " +
-           "AND (:category IS NULL OR LOWER(e.category) LIKE LOWER(CONCAT('%', :category, '%'))) " +
-           "AND (:location IS NULL OR LOWER(e.location) LIKE LOWER(CONCAT('%', :location, '%'))) " +
-           "AND (:organizerName IS NULL OR LOWER(e.organizer.fullName) LIKE LOWER(CONCAT('%', :organizerName, '%'))) " +
-           "AND (:search IS NULL OR (LOWER(e.name) LIKE LOWER(CONCAT('%', :search, '%')) " +
-           "OR LOWER(e.description) LIKE LOWER(CONCAT('%', :search, '%')))) " +
-           "AND (:startDate IS NULL OR e.startDate >= :startDate) " +
-           "AND (:endDate IS NULL OR e.endDate <= :endDate) " +
-           "AND (:timeStatus IS NULL OR (" +
-           " (LOWER(:timeStatus) = 'ended' AND e.endDate < :now) OR " +
-           " (LOWER(:timeStatus) = 'ongoing' AND e.startDate <= :now AND e.endDate >= :now) OR " +
-           " (LOWER(:timeStatus) = 'upcoming' AND e.startDate > :now)" +
-           "))")
+            "AND (:status IS NULL OR e.status = :status) " +
+            "AND (:category IS NULL OR LOWER(e.category) LIKE LOWER(CONCAT('%', :category, '%'))) " +
+            "AND (:location IS NULL OR LOWER(e.location) LIKE LOWER(CONCAT('%', :location, '%'))) " +
+            "AND (:organizerName IS NULL OR LOWER(e.organizer.fullName) LIKE LOWER(CONCAT('%', :organizerName, '%'))) " +
+            "AND (:search IS NULL OR (LOWER(e.name) LIKE LOWER(CONCAT('%', :search, '%')) " +
+            "OR LOWER(e.description) LIKE LOWER(CONCAT('%', :search, '%')))) " +
+            "AND (:startDate IS NULL OR e.startDate >= :startDate) " +
+            "AND (:endDate IS NULL OR e.endDate <= :endDate) " +
+            "AND (:timeStatus IS NULL OR (" +
+            " (LOWER(:timeStatus) = 'ended' AND e.endDate < :now) OR " +
+            " (LOWER(:timeStatus) = 'ongoing' AND e.startDate <= :now AND e.endDate >= :now) OR " +
+            " (LOWER(:timeStatus) = 'upcoming' AND e.startDate > :now)" +
+            "))")
     Page<EventEntity> findEventsWithFilters(
-        @Param("status") EventStatus status,
-        @Param("category") String category,
-        @Param("location") String location,
-        @Param("organizerName") String organizerName,
-        @Param("search") String search,
-        @Param("startDate") LocalDateTime startDate,
-        @Param("endDate") LocalDateTime endDate,
-        @Param("timeStatus") String timeStatus,
-        @Param("now") LocalDateTime now,
-        Pageable pageable
+            @Param("status") EventStatus status,
+            @Param("category") String category,
+            @Param("location") String location,
+            @Param("organizerName") String organizerName,
+            @Param("search") String search,
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate,
+            @Param("timeStatus") String timeStatus,
+            @Param("now") LocalDateTime now,
+            Pageable pageable
     );
 
     @Query(value = "SELECT e.id             AS event_id,\n" +
@@ -102,4 +104,19 @@ public interface EventRepository extends JpaRepository<EventEntity, Long> {
 
     @Query("SELECT COUNT(e) FROM EventEntity e WHERE (e.isDeleted = false OR e.isDeleted IS NULL) AND e.startDate <= :moment AND e.endDate >= :moment")
     long countActiveOngoing(@Param("moment") LocalDateTime moment);
+
+    // --- NEW: Trending Events Query ---
+    // Logic: Điểm = (Đăng ký * 3) + (Tổng Comment * 2) + (Tổng Like * 1)
+    // Chỉ lấy sự kiện đã duyệt (approved) và chưa bị xóa
+    @Query("SELECT e FROM EventEntity e " +
+            "LEFT JOIN PostEntity p ON p.event = e " +
+            "WHERE e.status = com.volunteerhub.backend.entity.EventStatus.approved " +
+            "AND (e.isDeleted = false OR e.isDeleted IS NULL) " +
+            "GROUP BY e " +
+            "ORDER BY ( " +
+            "   (e.currentVolunteers * 3) + " +
+            "   COALESCE(SUM(p.likesCount), 0) + " +
+            "   (COALESCE(SUM(p.commentsCount), 0) * 2) " +
+            ") DESC")
+    List<EventEntity> findTrendingEvents(Pageable pageable);
 }

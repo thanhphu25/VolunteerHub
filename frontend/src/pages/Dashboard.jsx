@@ -37,6 +37,7 @@ import {
   subscribeToPushNotifications,
   unsubscribeFromPushNotifications,
 } from "../utils/pushNotifications";
+import EventCard from '../components/EventCard';
 
 export default function Dashboard() {
   const {user} = useAuth();
@@ -47,6 +48,7 @@ export default function Dashboard() {
 
   const [dashboardData, setDashboardData] = useState({
     newlyApprovedEvents: [],
+    trendingEvents: [],
     myActiveRegistrations: [],
     myPendingEvents: [],
     adminPendingEvents: [],
@@ -64,6 +66,7 @@ export default function Dashboard() {
       let data = {
         newlyApprovedEvents: [],
         myActiveRegistrations: [],
+        trendingEvents: [],
         myPendingEvents: [],
         adminPendingEvents: [],
         totalUsers: 0,
@@ -75,6 +78,13 @@ export default function Dashboard() {
         sort: 'createdAt,desc',
       });
       data.newlyApprovedEvents = newlyApprovedRes.data.content || [];
+
+        try {
+            const trendingRes = await eventApi.getTrending(6); // Lấy top 6
+            data.trendingEvents = trendingRes.data || []; // Backend trả về List nên lấy .data trực tiếp
+        } catch (e) {
+            console.error("Lỗi tải trending events", e);
+        }
 
       if (user.role === 'volunteer') {
         const myRegsRes = await registrationApi.getMyRegistrations();
@@ -197,6 +207,50 @@ export default function Dashboard() {
                 {error}
               </Alert>
           )}
+
+
+            <Box sx={{ mb: 6 }}>
+                <Box display="flex" alignItems="center" gap={1} mb={3}>
+                    <TrendingUpIcon color="error" sx={{ fontSize: 32 }} />
+                    <Typography variant="h4" fontWeight="bold" sx={{ color: "text.primary" }}>
+                        {language === "vi" ? "Sự Kiện Nổi Bật" : "Trending Events"}
+                    </Typography>
+                </Box>
+
+                <Grid container spacing={3}>
+                    {dashboardData.trendingEvents.length > 0 ? (
+                        dashboardData.trendingEvents.map((event, index) => (
+                            <Grid item xs={12} md={6} lg={4} key={event.id}>
+                                <Box sx={{ position: 'relative' }}>
+                                    {/* Huy hiệu Top 1, 2, 3 */}
+                                    {index < 3 && (
+                                        <Chip
+                                            label={`#${index + 1} Trending`}
+                                            color={index === 0 ? "error" : index === 1 ? "warning" : "primary"}
+                                            sx={{
+                                                position: 'absolute',
+                                                top: -10,
+                                                right: -5,
+                                                zIndex: 10,
+                                                fontWeight: 'bold',
+                                                boxShadow: 3
+                                            }}
+                                        />
+                                    )}
+                                    {/* Sử dụng EventCard có sẵn */}
+                                    <EventCard event={event} />
+                                </Box>
+                            </Grid>
+                        ))
+                    ) : (
+                        <Grid item xs={12}>
+                            <Typography variant="body1" color="text.secondary" align="center">
+                                {language === "vi" ? "Chưa có sự kiện nổi bật nào." : "No trending events yet."}
+                            </Typography>
+                        </Grid>
+                    )}
+                </Grid>
+            </Box>
 
           <Grid container spacing={3}>
             {/* Main Column */}

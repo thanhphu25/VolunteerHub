@@ -1,286 +1,208 @@
-import React, {useState} from "react";
-import {
-  Avatar,
-  Box,
-  Button,
-  CircularProgress,
-  Container,
-  IconButton,
-  InputAdornment,
-  MenuItem,
-  Paper,
-  TextField,
-  Typography
+import React, { useState } from "react";
+import { 
+  Box, Typography, TextField, Button, Link, Stack, MenuItem,
+  InputAdornment, IconButton, Avatar, Fade,
+  CssBaseline, useMediaQuery, useTheme
 } from "@mui/material";
-import {Visibility, VisibilityOff} from "@mui/icons-material";
-import PersonAddAltIcon from "@mui/icons-material/PersonAddAlt";
-import {useForm} from "react-hook-form";
-import {yupResolver} from "@hookform/resolvers/yup";
+import { Link as RouterLink, useNavigate } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
-import {toast} from "react-toastify";
 import authApi from "../api/authApi";
-import {useNavigate} from "react-router-dom";
-import {useLanguage} from "../context/LanguageContext";
+import { toast } from "react-toastify";
+import { 
+    Visibility, VisibilityOff, PersonOutline, EmailOutlined, 
+    PhoneOutlined, LockOutlined, VolunteerActivism
+} from "@mui/icons-material";
+import heroImg from "../assets/hero.jpg";
+
+const registerSchema = yup.object().shape({
+  fullName: yup.string().required("Họ tên là bắt buộc"),
+  email: yup.string().email("Email không hợp lệ").required("Email là bắt buộc"),
+  phone: yup.string().matches(/^[0-9]{10}$/, "Số điện thoại phải có 10 chữ số"),
+  password: yup.string().min(6, "Mật khẩu tối thiểu 6 ký tự").required("Mật khẩu là bắt buộc"),
+  confirmPassword: yup.string().oneOf([yup.ref('password'), null], "Mật khẩu không khớp").required("Xác nhận mật khẩu là bắt buộc"),
+  role: yup.string().required("Vui lòng chọn vai trò"),
+});
 
 export default function Register() {
-  const nav = useNavigate();
-  const {t, language} = useLanguage();
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
-
-  const schema = yup.object({
-    fullName: yup.string().required(language === "vi" ? "Vui lòng nhập tên của bạn" : "Please enter your name"),
-    email: yup
-      .string()
-      .email(language === "vi" ? "Email không hợp lệ" : "Invalid email")
-      .required(language === "vi" ? "Email là bắt buộc" : "Email is required"),
-    phone: yup
-      .string()
-      .matches(/^[0-9]{9,11}$/, language === "vi" ? "Số điện thoại không hợp lệ" : "Invalid phone number")
-      .required(language === "vi" ? "Vui lòng nhập số điện thoại" : "Please enter phone number"),
-    password: yup
-      .string()
-      .min(8, language === "vi" ? "Mật khẩu tối thiểu 8 ký tự" : "Password must be at least 8 characters")
-      .required(language === "vi" ? "Vui lòng nhập mật khẩu" : "Please enter password"),
-    confirmPassword: yup
-      .string()
-      .oneOf([yup.ref("password")], language === "vi" ? "Mật khẩu xác nhận không khớp" : "Passwords do not match")
-      .required(language === "vi" ? "Vui lòng nhập lại mật khẩu" : "Please confirm password"),
-    role: yup.string().oneOf(["volunteer", "organizer", "admin"]),
-  });
-
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  
   const {
     register,
     handleSubmit,
-    formState: {errors},
-  } = useForm({resolver: yupResolver(schema)});
+    formState: { errors, isSubmitting }
+  } = useForm({
+    resolver: yupResolver(registerSchema),
+    // SỬA LỖI UNCONTROLLED: Khai báo giá trị mặc định cho TẤT CẢ các trường
+    defaultValues: { 
+        fullName: "",
+        email: "",
+        phone: "",
+        role: "VOLUNTEER",
+        password: "",
+        confirmPassword: ""
+    }
+  });
 
-  const toggleShowPassword = () => setShowPassword(s => !s);
-  const toggleShowConfirmPassword = () => setShowConfirmPassword(s => !s);
-
-  const onSubmit = async (data) => {
-    setLoading(true);
+  const onRegisterSubmit = async (data) => {
     try {
-      await authApi.register({
-        email: data.email,
-        fullName: data.fullName,
-        phone: data.phone,
-        password: data.password,
-        role: data.role || "volunteer",
-      });
+      // 1. Loại bỏ confirmPassword khỏi dữ liệu
+      const { confirmPassword, role, ...rest } = data;
+      
+      // 2. CHUẨN HÓA DỮ LIỆU ĐÚNG VỚI BACKEND JAVA
+      const submitData = {
+        ...rest,
+        // Backend: private String role; -> Gửi chuỗi đơn
+        // Backend Regex: "volunteer|organizer" -> Phải chuyển sang chữ thường (.toLowerCase())
+        role: role ? role.toLowerCase() : "volunteer" 
+      };
 
-      toast.success(language === "vi" ? "Đăng ký thành công! Hãy đăng nhập để tiếp tục." : "Registration successful! Please login to continue.");
+      console.log("Dữ liệu chuẩn hóa gửi đi:", submitData); 
 
-      nav("/login")
+      await authApi.register(submitData);
+      toast.success("Đăng ký thành công!");
+      navigate("/login");
     } catch (err) {
-      const status = err.response?.status;
-      const data = err.response?.data;
-
-      if (status === 400 || status === 409) {
-        const errorMsg = data?.error || data?.message;
-
-        if (errorMsg) {
-          toast.warning(errorMsg);
-        } else {
-          toast.warning(language === "vi" ? "Email hoặc số điện thoại đã được đăng ký!" : "Email or phone number already registered!");
-        }
+      console.error("Chi tiết lỗi backend:", err.response?.data);
+      
+      const errorData = err.response?.data;
+      // Xử lý hiển thị lỗi Validation từ Java (ví dụ: password quá ngắn)
+      if (errorData?.errors) {
+          const firstErrorKey = Object.keys(errorData.errors)[0];
+          const errorMessage = errorData.errors[firstErrorKey];
+          toast.error(`${firstErrorKey}: ${errorMessage}`);
       } else {
-        toast.error(language === "vi" ? "Lỗi không xác định. Vui lòng thử lại sau!" : "Unknown error. Please try again later!");
+          // Xử lý lỗi logic (ví dụ: Email đã tồn tại)
+          toast.error(errorData?.message || "Đăng ký thất bại");
       }
-    } finally {
-      setLoading(false);
     }
   };
 
   return (
-      <Box
-          sx={{
-            minHeight: "calc(100vh - 64px)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            background: "linear-gradient(135deg, #f8fafc 0%, #e3f2fd 100%)",
-            py: 4,
-          }}
+    <Box sx={{ display: 'flex', minHeight: '100vh', width: '100vw', overflow: 'hidden' }}>
+      <CssBaseline />
+      
+      {/* 1. FORM SECTION (Bên Trái) */}
+      <Box 
+        sx={{
+            width: { xs: '100%', md: '550px' },
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            alignItems: 'center',
+            bgcolor: 'background.paper',
+            p: 4,
+            zIndex: 2,
+            boxShadow: { md: '4px 0 20px rgba(0,0,0,0.1)' }
+        }}
       >
-        <Container component="main" maxWidth="sm">
-          <Paper
-              elevation={0}
-              sx={{
-                mt: 4,
-                p: 5,
-                borderRadius: 4,
-                border: "1px solid",
-                borderColor: "divider",
-                boxShadow: "0 8px 32px rgba(2, 136, 209, 0.1)",
-              }}
-          >
-            <Box display="flex" flexDirection="column" alignItems="center">
-              <Avatar sx={{m: 1, bgcolor: "primary.main", width: 64, height: 64}}>
-                <PersonAddAltIcon sx={{fontSize: 32}}/>
-              </Avatar>
-              <Typography component="h1" variant="h4" fontWeight="bold" sx={{mt: 2, mb: 1}}>
-                {t("auth.register.title")}
-              </Typography>
+        <Box sx={{ width: '100%', maxWidth: 450 }}>
+             <Box display="flex" flexDirection="column" alignItems="center" mb={3}>
+                 <Avatar sx={{ m: 1, bgcolor: 'primary.main', width: 56, height: 56 }}>
+                    <VolunteerActivism fontSize="large" />
+                 </Avatar>
+                 <Typography variant="h4" fontWeight="800" color="text.primary">Tạo tài khoản</Typography>
+                 <Typography variant="body1" color="text.secondary">Bắt đầu hành trình thiện nguyện ngay.</Typography>
+             </Box>
+            
+             <form onSubmit={handleSubmit(onRegisterSubmit)}>
+                <Stack spacing={2}>
+                    <TextField
+                        fullWidth label="Họ và tên" {...register("fullName")}
+                        error={!!errors.fullName} helperText={errors.fullName?.message}
+                        InputProps={{ startAdornment: (<InputAdornment position="start"><PersonOutline color="action" /></InputAdornment>), sx: { borderRadius: 2 } }}
+                    />
+                    <TextField
+                        fullWidth label="Email" {...register("email")}
+                        error={!!errors.email} helperText={errors.email?.message}
+                        InputProps={{ startAdornment: (<InputAdornment position="start"><EmailOutlined color="action" /></InputAdornment>), sx: { borderRadius: 2 } }}
+                    />
+                    <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+                        <TextField
+                            fullWidth label="Số điện thoại" {...register("phone")}
+                            error={!!errors.phone} helperText={errors.phone?.message}
+                            InputProps={{ startAdornment: (<InputAdornment position="start"><PhoneOutlined color="action" /></InputAdornment>), sx: { borderRadius: 2 } }}
+                        />
+                        <TextField
+                            fullWidth select label="Vai trò" {...register("role")}
+                            error={!!errors.role} helperText={errors.role?.message}
+                            InputProps={{ sx: { borderRadius: 2 } }}
+                            defaultValue="VOLUNTEER" // Thêm cái này để chắc chắn UI hiển thị đúng
+                        >
+                            <MenuItem value="VOLUNTEER">Tình nguyện viên</MenuItem>
+                            <MenuItem value="ORGANIZER">Nhà tổ chức</MenuItem>
+                        </TextField>
+                    </Stack>
+                    <TextField
+                        fullWidth label="Mật khẩu" type={showPassword ? "text" : "password"} {...register("password")}
+                        error={!!errors.password} helperText={errors.password?.message}
+                        InputProps={{
+                            startAdornment: (<InputAdornment position="start"><LockOutlined color="action" /></InputAdornment>),
+                            endAdornment: (<InputAdornment position="end"><IconButton onClick={() => setShowPassword(!showPassword)} edge="end">{showPassword ? <VisibilityOff /> : <Visibility />}</IconButton></InputAdornment>),
+                            sx: { borderRadius: 2 }
+                        }}
+                    />
+                    <TextField
+                        fullWidth label="Xác nhận mật khẩu" type="password" {...register("confirmPassword")}
+                        error={!!errors.confirmPassword} helperText={errors.confirmPassword?.message}
+                        InputProps={{ startAdornment: (<InputAdornment position="start"><LockOutlined color="action" /></InputAdornment>), sx: { borderRadius: 2 } }}
+                    />
 
-              <Box
-                  component="form"
-                  onSubmit={handleSubmit(onSubmit)}
-                  sx={{mt: 2, width: "100%"}}
-              >
-                <TextField
-                    fullWidth
-                    label={t("auth.register.fullName")}
-                    {...register("fullName")}
-                    error={!!errors.fullName}
-                    helperText={errors.fullName?.message}
-                    margin="normal"
-                    sx={{
-                      "& .MuiOutlinedInput-root": {
-                        borderRadius: 2,
-                      },
-                    }}
-                />
-
-                <TextField
-                    fullWidth
-                    label={t("auth.register.email")}
-                    {...register("email")}
-                    error={!!errors.email}
-                    helperText={errors.email?.message}
-                    margin="normal"
-                    sx={{
-                      "& .MuiOutlinedInput-root": {
-                        borderRadius: 2,
-                      },
-                    }}
-                />
-
-                <TextField
-                    fullWidth
-                    label={t("auth.register.phone")}
-                    {...register("phone")}
-                    error={!!errors.phone}
-                    helperText={errors.phone?.message}
-                    margin="normal"
-                    sx={{
-                      "& .MuiOutlinedInput-root": {
-                        borderRadius: 2,
-                      },
-                    }}
-                />
-
-                <TextField
-                    fullWidth
-                    type={showPassword ? "text" : "password"}
-                    label={t("auth.register.password")}
-                    {...register("password")}
-                    error={!!errors.password}
-                    helperText={errors.password?.message}
-                    margin="normal"
-                    sx={{
-                      "& input::-ms-reveal, & input::-ms-clear": {display: "none"},
-                      "& input::-webkit-textfield-decoration-container": {display: "none"},
-                      "& .MuiOutlinedInput-root": {
-                        borderRadius: 2,
-                      },
-                    }}
-                    InputProps={{
-                      endAdornment: (
-                          <InputAdornment position="end">
-                            <IconButton
-                                onClick={toggleShowPassword}
-                                edge="end"
-                                aria-label={showPassword ? t("auth.register.hidePassword") : t("auth.register.showPassword")}
-                                size="small"
-                            >
-                              {showPassword ? <VisibilityOff/> : <Visibility/>}
-                            </IconButton>
-                          </InputAdornment>
-                      ),
-                    }}
-                />
-
-                <TextField
-                    fullWidth
-                    type={showConfirmPassword ? "text" : "password"}
-                    label={t("auth.register.confirmPassword")}
-                    {...register("confirmPassword")}
-                    error={!!errors.confirmPassword}
-                    helperText={errors.confirmPassword?.message}
-                    margin="normal"
-                    sx={{
-                      "& input::-ms-reveal, & input::-ms-clear": {display: "none"},
-                      "& input::-webkit-textfield-decoration-container": {display: "none"},
-                      "& .MuiOutlinedInput-root": {
-                        borderRadius: 2,
-                      },
-                    }}
-                    InputProps={{
-                      endAdornment: (
-                          <InputAdornment position="end">
-                            <IconButton
-                                onClick={toggleShowConfirmPassword}
-                                edge="end"
-                                aria-label={
-                                  showConfirmPassword ? t("auth.register.hidePassword") : t("auth.register.showPassword")
-                                }
-                                size="small"
-                            >
-                              {showConfirmPassword ? <VisibilityOff/> : <Visibility/>}
-                            </IconButton>
-                          </InputAdornment>
-                      ),
-                    }}
-                />
-
-                <TextField
-                    select
-                    fullWidth
-                    label={t("auth.register.role")}
-                    defaultValue="volunteer"
-                    {...register("role")}
-                    margin="normal"
-                    sx={{
-                      "& .MuiOutlinedInput-root": {
-                        borderRadius: 2,
-                      },
-                    }}
-                >
-                  <MenuItem value="volunteer">{t("auth.register.volunteer")}</MenuItem>
-                  <MenuItem value="organizer">{t("auth.register.organizer")}</MenuItem>
-                  <MenuItem value="admin">{t("auth.register.admin")}</MenuItem>
-                </TextField>
-
-                <Button
-                    type="submit"
-                    fullWidth
-                    variant="contained"
-                    size="large"
-                    sx={{
-                      mt: 4,
-                      mb: 2,
-                      py: 1.5,
-                      borderRadius: 2,
-                      fontSize: "1rem",
-                      fontWeight: 600,
-                      textTransform: "none",
-                      boxShadow: "0 4px 12px rgba(2, 136, 209, 0.3)",
-                      "&:hover": {
-                        boxShadow: "0 6px 16px rgba(2, 136, 209, 0.4)",
-                        transform: "translateY(-1px)",
-                      },
-                      transition: "all 0.3s ease",
-                    }}
-                    disabled={loading}
-                >
-                  {loading ? <CircularProgress size={24} color="inherit"/> : t("auth.register.submit")}
-                </Button>
-              </Box>
-            </Box>
-          </Paper>
-        </Container>
+                    <Button type="submit" fullWidth variant="contained" size="large" disabled={isSubmitting} sx={{ py: 1.5, mt: 1, borderRadius: 2, fontWeight: 'bold', fontSize: '1rem' }}>
+                        {isSubmitting ? "Đang xử lý..." : "Đăng Ký Tài Khoản"}
+                    </Button>
+                </Stack>
+             </form>
+             
+             <Box mt={3} textAlign="center">
+                <Typography variant="body2">
+                    Đã có tài khoản? <Link component={RouterLink} to="/login" fontWeight="bold" underline="hover">Đăng nhập</Link>
+                </Typography>
+             </Box>
+        </Box>
       </Box>
+
+      {/* 2. HERO IMAGE SECTION (Bên Phải) */}
+      {!isMobile && (
+        <Box 
+          sx={{
+            flex: 1,
+            position: 'relative',
+            bgcolor: 'teal', 
+          }}
+        >
+             <Box
+                component="img"
+                src={heroImg}
+                sx={{
+                    width: '100%', height: '100%', objectFit: 'cover',
+                    position: 'absolute', top: 0, left: 0
+                }}
+                onError={(e) => { e.target.style.display = 'none'; }}
+            />
+            <Box
+                sx={{
+                    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+                    background: 'linear-gradient(to top left, rgba(43, 122, 120, 0.9), rgba(58, 175, 169, 0.4))',
+                    display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center',
+                    p: 6, color: 'white'
+                }}
+            >
+                <Fade in={true} timeout={1500}>
+                    <Box textAlign="center">
+                        <Typography variant="h3" fontWeight="800" gutterBottom>Gia nhập cộng đồng.</Typography>
+                        <Typography variant="h6" fontWeight="normal" sx={{ maxWidth: 500 }}>
+                            "Mỗi người tình nguyện viên là một ngọn nến, cùng nhau chúng ta sẽ thắp sáng cả thế giới."
+                        </Typography>
+                    </Box>
+                </Fade>
+            </Box>
+        </Box>
+      )}
+    </Box>
   );
 }
