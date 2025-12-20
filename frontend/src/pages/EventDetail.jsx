@@ -203,7 +203,12 @@ export default function EventDetail() {
                     <Box sx={{ display: "flex", justifyContent: "center", mb: 4 }}>
                         <CardMedia
                             component="img"
-                            image={event.imageUrl}
+                            // --- SỬA DÒNG NÀY ---
+                            // Kiểm tra: Nếu là link online (http...) thì giữ nguyên
+                            // Nếu là link local (/uploads...) thì thêm localhost:8080 vào trước
+                            image={event.imageUrl.startsWith('http') ? event.imageUrl : `http://localhost:8080${event.imageUrl}`}
+                            // --------------------
+
                             alt={event.name}
                             sx={{
                                 maxWidth: { xs: "100%", md: "600px" },
@@ -212,6 +217,11 @@ export default function EventDetail() {
                                 borderRadius: 2,
                                 boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
                                 bgcolor: "#f5f5f5",
+                            }}
+                            // Thêm xử lý lỗi nếu ảnh không tải được
+                            onError={(e) => {
+                                e.target.onerror = null;
+                                e.target.src = "https://placehold.co/600x400?text=No+Image";
                             }}
                         />
                     </Box>

@@ -72,14 +72,24 @@ public class PostServiceImpl implements IPostService {
     }
 
     private boolean isParticipantOrStaff(UserEntity user, EventEntity event) {
-        // admin or organizer of event allowed
+        // 1. Admin luôn được quyền
         if (user.getRole() != null && "admin".equalsIgnoreCase(user.getRole().name())) return true;
+
+        // 2. Người tổ chức sự kiện đó luôn được quyền
         if (event.getOrganizer() != null && event.getOrganizer().getId().equals(user.getId())) return true;
-        // check approved registration
+
+        // 3. Kiểm tra người tham gia (Volunteer)
         var regOpt = registrationRepo.findByEventAndVolunteer(event, user);
         if (regOpt.isPresent()) {
             var r = regOpt.get();
-            return r.getStatus() == RegistrationEntity.RegistrationStatus.approved;
+            var status = r.getStatus();
+
+            // --- SỬA Ở ĐÂY ---
+            // Cho phép: Đã duyệt (approved) HOẶC Đã hoàn thành (completed)
+            // Nếu bạn muốn cho cả người bị từ chối (rejected) comment thì thêm vào đây luôn
+            return status == RegistrationEntity.RegistrationStatus.approved
+                    || status == RegistrationEntity.RegistrationStatus.completed
+                    || status == RegistrationEntity.RegistrationStatus.rejected; // (Tùy chọn dòng này)
         }
         return false;
     }

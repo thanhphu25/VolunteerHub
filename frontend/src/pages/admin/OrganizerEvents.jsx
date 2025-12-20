@@ -166,6 +166,12 @@ export default function OrganizerEvents() {
 
     const formatDate = (d) => d ? new Date(d).toLocaleDateString('vi-VN') : '';
 
+    const getImageUrl = (url) => {
+        if (!url) return "https://placehold.co/50?text=No+Img"; // Ảnh mặc định nếu không có
+        if (url.startsWith("http")) return url; // Nếu là link online
+        return `http://localhost:8080${url}`;  // Nếu là link local
+    };
+
     return (
         <Box sx={{ bgcolor: "background.default", minHeight: "calc(100vh - 64px)", py: 4 }}>
             <Container maxWidth="xl">
@@ -243,7 +249,7 @@ export default function OrganizerEvents() {
                                                         <Stack direction="row" spacing={2} alignItems="center">
                                                             <Box
                                                                 component="img"
-                                                                src={row.imageUrl || "https://via.placeholder.com/50"}
+                                                                src={getImageUrl(row.imageUrl)}
                                                                 sx={{ width: 50, height: 50, borderRadius: 2, objectFit: 'cover', bgcolor: 'grey.200', flexShrink: 0 }}
                                                             />
                                                             <Box sx={{ minWidth: 0 }}>
