@@ -7,11 +7,12 @@ import {
   Container,
   Tab,
   Tabs,
-  Typography,
-  Grid,
   Paper,
 } from "@mui/material";
-import { Refresh as RefreshIcon, FileDownload as FileDownloadIcon } from "@mui/icons-material";
+import {
+  Refresh as RefreshIcon,
+  FileDownload as FileDownloadIcon,
+} from "@mui/icons-material";
 import EventCard from "../../components/EventCard";
 import eventApi from "../../api/eventApi";
 import { toast } from "react-toastify";
@@ -21,8 +22,8 @@ import EventFilter from "../../components/EventFilter";
 
 const downloadFile = (blob, filename) => {
   const url = window.URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.style.display = 'none';
+  const a = document.createElement("a");
+  a.style.display = "none";
   a.href = url;
   a.download = filename;
   document.body.appendChild(a);
@@ -32,7 +33,7 @@ const downloadFile = (blob, filename) => {
 };
 
 export default function AdminEventManagement() {
-  const { t, language } = useLanguage();
+  const { language } = useLanguage();
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -43,7 +44,7 @@ export default function AdminEventManagement() {
     location: "all",
     startDate: null,
     endDate: null,
-    sort: "createdAt,desc"
+    sort: "createdAt,desc",
   });
   const [exporting, setExporting] = useState(false);
 
@@ -57,15 +58,25 @@ export default function AdminEventManagement() {
       setError(null);
 
       const params = { ...filters };
-      if (params.status === 'all') delete params.status;
-      if (params.category === 'all') delete params.category;
-      if (params.location === 'all') delete params.location;
+      if (params.status === "all") delete params.status;
+      if (params.category === "all") delete params.category;
+      if (params.location === "all") delete params.location;
 
       const response = await eventApi.getAll(params);
-      setEvents(response.data.content || []);
+
+      // ✅ Loại bỏ sự kiện có trạng thái "cancelled"
+      const validEvents = (response.data.content || []).filter(
+        (e) => e.status !== "cancelled"
+      );
+
+      setEvents(validEvents);
     } catch (err) {
       console.error("Error fetching events:", err);
-      setError(language === "vi" ? "Không thể tải danh sách sự kiện. Vui lòng thử lại sau." : "Unable to load events. Please try again later.");
+      setError(
+        language === "vi"
+          ? "Không thể tải danh sách sự kiện. Vui lòng thử lại sau."
+          : "Unable to load events. Please try again later."
+      );
     } finally {
       setLoading(false);
     }
@@ -76,85 +87,138 @@ export default function AdminEventManagement() {
   };
 
   const handleApproveEvent = async (eventId) => {
-    if (!window.confirm(language === "vi" ? "Bạn có chắc chắn muốn duyệt sự kiện này?" : "Are you sure you want to approve this event?")) {
+    if (
+      !window.confirm(
+        language === "vi"
+          ? "Bạn có chắc chắn muốn duyệt sự kiện này?"
+          : "Are you sure you want to approve this event?"
+      )
+    )
       return;
-    }
     try {
       await eventApi.approve(eventId);
-      toast.success(language === "vi" ? "Duyệt sự kiện thành công!" : "Event approved successfully!");
+      toast.success(
+        language === "vi"
+          ? "Duyệt sự kiện thành công!"
+          : "Event approved successfully!"
+      );
       fetchEvents();
     } catch (err) {
       console.error("Error approving event:", err);
-      toast.error(err.response?.data?.error || (language === "vi" ? "Không thể duyệt sự kiện." : "Unable to approve event."));
+      toast.error(
+        err.response?.data?.error ||
+          (language === "vi"
+            ? "Không thể duyệt sự kiện."
+            : "Unable to approve event.")
+      );
     }
   };
 
   const handleRejectEvent = async (eventId) => {
-    if (!window.confirm(language === "vi" ? "Bạn có chắc chắn muốn từ chối sự kiện này?" : "Are you sure you want to reject this event?")) {
+    if (
+      !window.confirm(
+        language === "vi"
+          ? "Bạn có chắc chắn muốn từ chối sự kiện này?"
+          : "Are you sure you want to reject this event?"
+      )
+    )
       return;
-    }
     try {
       await eventApi.reject(eventId);
-      toast.success(language === "vi" ? "Từ chối sự kiện thành công!" : "Event rejected successfully!");
+      toast.success(
+        language === "vi"
+          ? "Từ chối sự kiện thành công!"
+          : "Event rejected successfully!"
+      );
       fetchEvents();
     } catch (err) {
       console.error("Error rejecting event:", err);
-      toast.error(err.response?.data?.error || (language === "vi" ? "Không thể từ chối sự kiện." : "Unable to reject event."));
+      toast.error(
+        err.response?.data?.error ||
+          (language === "vi"
+            ? "Không thể từ chối sự kiện."
+            : "Unable to reject event.")
+      );
     }
   };
 
   const handleDeleteEvent = async (eventId) => {
-    if (!window.confirm(
-      language === "vi"
-        ? "Bạn có chắc chắn muốn xóa sự kiện này? Hành động này không thể hoàn tác."
-        : "Are you sure you want to delete this event? This action cannot be undone.")) {
+    if (
+      !window.confirm(
+        language === "vi"
+          ? "Bạn có chắc chắn muốn xóa sự kiện này? Hành động này không thể hoàn tác."
+          : "Are you sure you want to delete this event? This action cannot be undone."
+      )
+    )
       return;
-    }
     try {
       await eventApi.delete(eventId);
-      toast.success(language === "vi" ? "Xóa sự kiện thành công!" : "Event deleted successfully!");
+      toast.success(
+        language === "vi"
+          ? "Xóa sự kiện thành công!"
+          : "Event deleted successfully!"
+      );
       fetchEvents();
     } catch (err) {
       console.error("Error deleting event:", err);
-      toast.error(err.response?.data?.error || (language === "vi" ? "Không thể xóa sự kiện." : "Unable to delete event."));
+      toast.error(
+        err.response?.data?.error ||
+          (language === "vi"
+            ? "Không thể xóa sự kiện."
+            : "Unable to delete event.")
+      );
     }
   };
 
   const handleTabChange = (event, newValue) => {
-    setFilters(prev => ({ ...prev, status: newValue }));
+    setFilters((prev) => ({ ...prev, status: newValue }));
   };
 
   const handleExportEvents = async (format) => {
-    if (exporting) {
-      return;
-    }
+    if (exporting) return;
+
     setExporting(true);
-    toast.info(language === "vi" ? `Đang chuẩn bị file ${format.toUpperCase()}...` : `Preparing ${format.toUpperCase()} file...`);
+    toast.info(
+      language === "vi"
+        ? `Đang chuẩn bị file ${format.toUpperCase()}...`
+        : `Preparing ${format.toUpperCase()} file...`
+    );
 
     try {
       const response = await adminApi.exportEvents(format);
       const filename = `events.${format}`;
-
       downloadFile(response.data, filename);
-      toast.success(language === "vi" ? `Đã xuất danh sách sự kiện (${format.toUpperCase()})!` : `Events exported successfully (${format.toUpperCase()})!`);
+      toast.success(
+        language === "vi"
+          ? `Đã xuất danh sách sự kiện (${format.toUpperCase()})!`
+          : `Events exported successfully (${format.toUpperCase()})!`
+      );
     } catch (err) {
       console.error("Lỗi khi xuất sự kiện:", err);
-      toast.error(language === "vi" ? "Xuất dữ liệu thất bại." : "Export failed.");
+      toast.error(
+        language === "vi" ? "Xuất dữ liệu thất bại." : "Export failed."
+      );
     } finally {
       setExporting(false);
     }
   };
 
+  // ✅ Bỏ tab "Đã hủy"
   const statusTabs = [
     { value: "pending", label: language === "vi" ? "Chờ duyệt" : "Pending" },
     { value: "approved", label: language === "vi" ? "Đã duyệt" : "Approved" },
     { value: "rejected", label: language === "vi" ? "Đã từ chối" : "Rejected" },
-    { value: "cancelled", label: language === "vi" ? "Đã hủy" : "Cancelled" },
     { value: "all", label: language === "vi" ? "Tất cả" : "All" },
   ];
 
   return (
-    <Box sx={{ bgcolor: "background.default", minHeight: "calc(100vh - 64px)", py: 4 }}>
+    <Box
+      sx={{
+        bgcolor: "background.default",
+        minHeight: "calc(100vh - 64px)",
+        py: 4,
+      }}
+    >
       <Container maxWidth="lg">
         {error && (
           <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>
@@ -165,7 +229,7 @@ export default function AdminEventManagement() {
         <EventFilter
           filters={filters}
           onChange={handleFilterChange}
-          showStatus={false} // Status managed by Tabs below
+          showStatus={false}
         />
 
         <Paper
@@ -176,10 +240,15 @@ export default function AdminEventManagement() {
             border: "1px solid",
             borderColor: "divider",
             boxShadow: "0 4px 16px rgba(0,0,0,0.05)",
-            overflow: 'hidden' // Ensure content doesn't overflow rounded corners
+            overflow: "hidden",
           }}
         >
-          <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ pr: 2 }}>
+          <Box
+            display="flex"
+            justifyContent="space-between"
+            alignItems="center"
+            sx={{ pr: 2 }}
+          >
             <Tabs
               value={filters.status}
               onChange={handleTabChange}
@@ -187,12 +256,12 @@ export default function AdminEventManagement() {
               scrollButtons="auto"
               sx={{
                 flexGrow: 1,
-                borderBottom: 0, // Remove bottom border since it is in a row
+                borderBottom: 0,
                 px: 2,
-                '& .MuiTabs-indicator': {
+                "& .MuiTabs-indicator": {
                   height: 3,
-                  borderRadius: '3px 3px 0 0'
-                }
+                  borderRadius: "3px 3px 0 0",
+                },
               }}
             >
               {statusTabs.map((tab) => (
@@ -203,8 +272,8 @@ export default function AdminEventManagement() {
                   sx={{
                     textTransform: "none",
                     fontWeight: 600,
-                    fontSize: '0.95rem',
-                    minHeight: 60
+                    fontSize: "0.95rem",
+                    minHeight: 60,
                   }}
                 />
               ))}
@@ -215,20 +284,8 @@ export default function AdminEventManagement() {
                 variant="outlined"
                 size="small"
                 startIcon={<FileDownloadIcon fontSize="small" />}
-                onClick={() => handleExportEvents('csv')}
+                onClick={() => handleExportEvents("csv")}
                 disabled={exporting}
-                sx={{
-                  borderRadius: 2,
-                  textTransform: "none",
-                  fontWeight: 600,
-                  borderColor: 'divider',
-                  color: 'text.secondary',
-                  '&:hover': {
-                    borderColor: 'primary.main',
-                    color: 'primary.main',
-                    bgcolor: 'primary.lighter'
-                  }
-                }}
               >
                 CSV
               </Button>
@@ -236,20 +293,8 @@ export default function AdminEventManagement() {
                 variant="outlined"
                 size="small"
                 startIcon={<FileDownloadIcon fontSize="small" />}
-                onClick={() => handleExportEvents('json')}
+                onClick={() => handleExportEvents("json")}
                 disabled={exporting}
-                sx={{
-                  borderRadius: 2,
-                  textTransform: "none",
-                  fontWeight: 600,
-                  borderColor: 'divider',
-                  color: 'text.secondary',
-                  '&:hover': {
-                    borderColor: 'primary.main',
-                    color: 'primary.main',
-                    bgcolor: 'primary.lighter'
-                  }
-                }}
               >
                 JSON
               </Button>
@@ -258,18 +303,6 @@ export default function AdminEventManagement() {
                 size="small"
                 startIcon={<RefreshIcon fontSize="small" />}
                 onClick={fetchEvents}
-                sx={{
-                  borderRadius: 2,
-                  textTransform: "none",
-                  fontWeight: 600,
-                  borderColor: 'divider',
-                  color: 'text.secondary',
-                  '&:hover': {
-                    borderColor: 'primary.main',
-                    color: 'primary.main',
-                    bgcolor: 'primary.lighter'
-                  }
-                }}
               >
                 {language === "vi" ? "Làm mới" : "Refresh"}
               </Button>
@@ -277,29 +310,59 @@ export default function AdminEventManagement() {
           </Box>
         </Paper>
 
+        {/* ✅ Lưới hiển thị sự kiện đã cân bằng */}
         {loading ? (
-          <Box display="flex" justifyContent="center" alignItems="center" minHeight="50vh">
+          <Box
+            display="flex"
+            justifyContent="center"
+            alignItems="center"
+            minHeight="50vh"
+          >
             <CircularProgress />
           </Box>
         ) : events.length === 0 ? (
           <Alert severity="info" sx={{ borderRadius: 2 }}>
-            {language === "vi" ? "Không có sự kiện nào ở trạng thái này." : "No events in this status."}
+            {language === "vi"
+              ? "Không có sự kiện nào ở trạng thái này."
+              : "No events in this status."}
           </Alert>
         ) : (
-          <Grid container spacing={3} sx={{ alignItems: 'stretch' }}>
-            {events.map(event => (
-              <Grid item xs={12} sm={6} md={4} key={event.id} sx={{ display: 'flex' }}>
-                <EventCard
-                  event={event}
-                  showStatus={true}
-                  showOrganizerName={true}
-                  onApprove={event.status === 'pending' ? handleApproveEvent : null}
-                  onReject={event.status === 'pending' ? handleRejectEvent : null}
-                  onDelete={handleDeleteEvent}
-                />
-              </Grid>
+          <Box
+            display="grid"
+            gridTemplateColumns={{
+              xs: "1fr", // 📱 Mobile: 1 cột
+              sm: "1fr 1fr", // 💻 Tablet: 2 cột
+              md: "1fr 1fr 1fr", // 🖥️ Desktop: 3 cột
+            }}
+            gap={{ xs: 2, sm: 3, md: 4 }}
+            justifyContent="center"
+            sx={{
+              width: "100%",
+              alignItems: "stretch",
+            }}
+          >
+            {events.map((event) => (
+              <EventCard
+                key={event.id}
+                event={event}
+                showStatus={true}
+                showOrganizerName={true}
+                onApprove={
+                  event.status === "pending" ? handleApproveEvent : null
+                }
+                onReject={
+                  event.status === "pending" ? handleRejectEvent : null
+                }
+                onDelete={handleDeleteEvent}
+                sx={{
+                  height: "100%",
+                  width: "100%",
+                  maxWidth: 420,
+                  justifySelf: "center",
+                }}
+              />
             ))}
-          </Grid>
+          </Box>
         )}
       </Container>
     </Box>

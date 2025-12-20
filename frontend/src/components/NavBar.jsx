@@ -31,7 +31,7 @@ import authApi from "../api/authApi";
 import notificationApi from "../api/notificationApi";
 import profileApi from "../api/profileApi";
 import { toast } from "react-toastify";
-// Đã xóa import LanguageIcon
+import logo from "../assets/logo.jpg";
 
 function NavBar() {
   const { user, logout, loading } = useAuth();
@@ -49,10 +49,26 @@ function NavBar() {
     { name: t("nav.events"), path: "/events", key: "events" },
   ];
 
-  const volunteerPages = [{ name: t("nav.myRegistrations"), path: "/my-registrations", key: "myRegistrations" }];
-  const organizerPages = [{ name: t("nav.manageEvents"), path: "/organizer/events", key: "manageEvents" }];
+  const volunteerPages = [
+    {
+      name: t("nav.myRegistrations"),
+      path: "/my-registrations",
+      key: "myRegistrations",
+    },
+  ];
+  const organizerPages = [
+    {
+      name: t("nav.manageEvents"),
+      path: "/organizer/events",
+      key: "manageEvents",
+    },
+  ];
   const adminPages = [
-    { name: t("nav.approveEvents"), path: "/admin/events", key: "approveEvents" },
+    {
+      name: t("nav.approveEvents"),
+      path: "/admin/events",
+      key: "approveEvents",
+    },
     { name: t("nav.manageUsers"), path: "/admin/users", key: "manageUsers" },
   ];
 
@@ -73,7 +89,9 @@ function NavBar() {
     } finally {
       logout();
       localStorage.removeItem("vh_refreshToken");
-      toast.info(language === "vi" ? "Bạn đã đăng xuất." : "You have logged out.");
+      toast.info(
+        language === "vi" ? "Bạn đã đăng xuất." : "You have logged out."
+      );
       navigate("/");
     }
   };
@@ -165,16 +183,30 @@ function NavBar() {
       <Container maxWidth="xl">
         <Toolbar disableGutters>
           {/* 1. DESKTOP LOGO */}
-          <Typography
-            variant="h5"
-            noWrap
+          <Box
             component={RouterLink}
             to="/"
-            className="mr-8 hidden md:flex font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-teal-600 to-cyan-600 hover:opacity-80 transition-opacity cursor-pointer pr-3"
-            sx={{ textDecoration: "none" }}
+            sx={{
+              display: { xs: "none", md: "flex" },
+              alignItems: "center",
+              textDecoration: "none",
+              mr: 4,
+            }}
           >
-            VOLUNTEER HUB
-          </Typography>
+            <Box
+              component="img"
+              src={logo}
+              alt="Volunteer Hub Logo"
+              sx={{ height: 60, mr: 1.5 }} // Điều chỉnh chiều cao logo tại đây
+            />
+            <Typography
+              variant="h5"
+              noWrap
+              className="font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-teal-600 to-cyan-600 hover:opacity-80 transition-opacity cursor-pointer"
+            >
+              VOLUNTEER HUB
+            </Typography>
+          </Box>
 
           {/* 2. MOBILE MENU ICON */}
           <Box sx={{ flexGrow: 1, display: { xs: "flex", md: "none" } }}>
@@ -237,19 +269,30 @@ function NavBar() {
           </Box>
 
           {/* 3. MOBILE LOGO */}
-          <Typography
-            variant="h5"
-            noWrap
+          <Box
             component={RouterLink}
             to="/"
-            className="flex md:hidden flex-grow font-bold text-transparent bg-clip-text bg-gradient-to-r from-teal-600 to-cyan-600"
             sx={{
-              mr: 2,
+              flexGrow: 1,
+              display: { xs: "flex", md: "none" },
+              alignItems: "center",
               textDecoration: "none",
             }}
           >
-            🌿 VH
-          </Typography>
+            <Box
+              component="img"
+              src={logo}
+              alt="VH Logo"
+              sx={{ height: 32, mr: 1 }}
+            />
+            <Typography
+              variant="h5"
+              noWrap
+              className="font-bold text-transparent bg-clip-text bg-gradient-to-r from-teal-600 to-cyan-600"
+            >
+              VH
+            </Typography>
+          </Box>
 
           {/* 4. DESKTOP MENU ITEMS */}
           <Box
@@ -265,9 +308,10 @@ function NavBar() {
                   onClick={handleCloseNavMenu}
                   className={`
                     normal-case px-4 py-2 rounded-full text-sm font-semibold transition-all duration-200
-                    ${isActive
-                      ? "bg-teal-50 text-teal-700 dark:bg-teal-900/30 dark:text-teal-300"
-                      : "text-slate-600 hover:bg-slate-100 hover:text-teal-600 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
+                    ${
+                      isActive
+                        ? "bg-teal-50 text-teal-700 dark:bg-teal-900/30 dark:text-teal-300"
+                        : "text-slate-600 hover:bg-slate-100 hover:text-teal-600 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
                     }
                   `}
                 >
@@ -284,7 +328,17 @@ function NavBar() {
             {/* Đã xóa nút chuyển ngôn ngữ ở đây */}
 
             {/* Theme Toggle */}
-            <Tooltip title={mode === "dark" ? (language === "vi" ? "Chế độ sáng" : "Light mode") : (language === "vi" ? "Chế độ tối" : "Dark mode")}>
+            <Tooltip
+              title={
+                mode === "dark"
+                  ? language === "vi"
+                    ? "Chế độ sáng"
+                    : "Light mode"
+                  : language === "vi"
+                  ? "Chế độ tối"
+                  : "Dark mode"
+              }
+            >
               <IconButton
                 onClick={toggleColorMode}
                 className="text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 transition-colors"
@@ -357,7 +411,8 @@ function NavBar() {
                       fontWeight="bold"
                       noWrap
                     >
-                      {userProfile?.fullName || (language === "vi" ? "Người dùng" : "User")}
+                      {userProfile?.fullName ||
+                        (language === "vi" ? "Người dùng" : "User")}
                     </Typography>
                     <Typography
                       variant="caption"
