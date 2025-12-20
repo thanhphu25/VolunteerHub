@@ -1,4 +1,7 @@
 import React, { useEffect, useState } from "react";
+import Slider from "react-slick";
+import "slick-carousel/slick/slick.css";
+import "slick-carousel/slick/slick-theme.css";
 import {
   Alert,
   Box,
@@ -11,6 +14,8 @@ import {
   Card,
   CardContent,
   Avatar,
+  IconButton,
+  useTheme,
 } from "@mui/material";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
 import eventApi from "../api/eventApi";
@@ -26,15 +31,20 @@ import {
   AccessTime as AccessTimeIcon,
   VolunteerActivism as VolunteerIcon,
   Campaign as CampaignIcon,
+  ArrowBackIosNew as ArrowBackIcon,
+  ArrowForwardIos as ArrowForwardIcon,
+  FormatQuote as FormatQuoteIcon,
 } from "@mui/icons-material";
 
 export default function Home() {
   const navigate = useNavigate();
   const { t } = useLanguage();
+  const theme = useTheme();
   const [popularEvents, setPopularEvents] = useState([]);
   const [recentEvents, setRecentEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [slideIndex, setSlideIndex] = useState(0);
 
   // 🔥 Lấy dữ liệu cho cả 2 phần: Nổi bật và Mới nhất
   useEffect(() => {
@@ -127,27 +137,125 @@ export default function Home() {
 
   const testimonials = [
     {
-      name: "Nguyễn Văn A",
-      role: "Tình nguyện viên",
-      organization: "Tổ chức X",
+      name: "Trần Thị Tuyết",
+      role: "K66, Trường Đại học Công nghệ",
+      organization: "ĐH QGHN",
+      image: "https://i-vn2.joboko.com/okoimg/vieclam.uet.vnu.edu.vn/xurl/images/125/student-3.png",
       quote:
-        "VolunteerHub đã giúp tôi tìm được nhiều cơ hội tình nguyện ý nghĩa. Giao diện dễ sử dụng và cộng đồng rất tích cực!",
+        "Thầy cô trường Đại học Công nghệ - Đại học Quốc gia Hà Nội có chuyên môn cao, giảng dạy thực tế, dễ hiểu. Cơ hội nghề nghiệp sau khi ra trường cũng rất lớn",
     },
     {
-      name: "Trần Thị B",
-      role: "Người tổ chức",
-      organization: "Tổ chức Y",
+      name: "Nguyễn Trọng Hiếu",
+      role: "K67, Trường Đại học Công nghệ",
+      organization: "ĐH QGHN",
+      image: "https://i-vn2.joboko.com/okoimg/vieclam.uet.vnu.edu.vn/xurl/images/125/student-1.png",
       quote:
-        "Công cụ quản lý sự kiện tuyệt vời! Tôi có thể dễ dàng tạo và quản lý các sự kiện tình nguyện của mình.",
+        "Trường Đại học Công nghệ - Đại học Quốc gia Hà Nội luôn cập nhật những phương pháp, công nghệ mới và tốt nhất để giảng dạy cho sinh viên.",
     },
     {
-      name: "Lê Văn C",
-      role: "Tình nguyện viên",
-      organization: "Tổ chức Z",
+      name: "Nguyễn Hoài Thương",
+      role: "K66, Trường Đại học Công nghệ",
+      organization: "ĐH QGHN",
+      image: "https://i-vn2.joboko.com/okoimg/vieclam.uet.vnu.edu.vn/xurl/images/125/student-2.png",
       quote:
-        "Trải nghiệm tuyệt vời! Tôi đã tham gia nhiều hoạt động và gặp gỡ được nhiều người bạn mới.",
+        "Em cảm thấy rất vui và tự hào khi được sinh viên trường Đại học Công nghệ - Đại học Quốc gia Hà Nội. Em có cơ hội giao lưu, gần gũi và học hỏi được nhiều hơn từ thầy cô và bạn bè trong trường. Các bài học đều rất thực tế và dễ hiểu. ",
+    },
+    {
+      name: "Trần Thị Tuyết",
+      role: "K66, Trường Đại học Công nghệ",
+      organization: "ĐH QGHN",
+      image: "https://i-vn2.joboko.com/okoimg/vieclam.uet.vnu.edu.vn/xurl/images/125/student-3.png",
+      quote:
+        "Thầy cô trường Đại học Công nghệ - Đại học Quốc gia Hà Nội có chuyên môn cao, giảng dạy thực tế, dễ hiểu. Cơ hội nghề nghiệp sau khi ra trường cũng rất lớn",
+    },
+    {
+      name: "Nguyễn Trọng Hiếu",
+      role: "K67, Trường Đại học Công nghệ",
+      organization: "ĐH QGHN",
+      image: "https://i-vn2.joboko.com/okoimg/vieclam.uet.vnu.edu.vn/xurl/images/125/student-1.png",
+      quote:
+        "Trường Đại học Công nghệ - Đại học Quốc gia Hà Nội luôn cập nhật những phương pháp, công nghệ mới và tốt nhất để giảng dạy cho sinh viên.",
+    },
+    {
+      name: "Nguyễn Hoài Thương",
+      role: "K66, Trường Đại học Công nghệ",
+      organization: "ĐH QGHN",
+      image: "https://i-vn2.joboko.com/okoimg/vieclam.uet.vnu.edu.vn/xurl/images/125/student-2.png",
+      quote:
+        "Em cảm thấy rất vui và tự hào khi được sinh viên trường Đại học Công nghệ - Đại học Quốc gia Hà Nội. Em có cơ hội giao lưu, gần gũi và học hỏi được nhiều hơn từ thầy cô và bạn bè trong trường. Các bài học đều rất thực tế và dễ hiểu. ",
     },
   ];
+
+  const NextArrow = (props) => {
+    const { onClick, style, className } = props;
+    return (
+      <IconButton
+        onClick={onClick}
+        disableRipple
+        sx={{
+          position: "absolute",
+          right: { xs: 0, md: "-40px" },
+          top: "50%",
+          transform: "translateY(-50%)",
+          zIndex: 10,
+          bgcolor: "white",
+          boxShadow: 3,
+          width: 48,
+          height: 48,
+          "&:hover": { bgcolor: "grey.100" },
+          display: "flex", // Force display
+        }}
+      >
+        <ArrowForwardIcon color="primary" />
+      </IconButton>
+    );
+  };
+
+  const PrevArrow = (props) => {
+    const { onClick, style, className } = props;
+    return (
+      <IconButton
+        onClick={onClick}
+        disableRipple
+        sx={{
+          position: "absolute",
+          left: { xs: 0, md: "-40px" },
+          top: "50%",
+          transform: "translateY(-50%)",
+          zIndex: 10,
+          bgcolor: "white",
+          boxShadow: 3,
+          width: 48,
+          height: 48,
+          "&:hover": { bgcolor: "grey.100" },
+          display: "flex", // Force display
+        }}
+      >
+        <ArrowBackIcon color="primary" />
+      </IconButton>
+    );
+  };
+
+  const sliderSettings = {
+    className: "center",
+    centerMode: true,
+    infinite: true,
+    centerPadding: "0px",
+    slidesToShow: 3,
+    speed: 500,
+    beforeChange: (current, next) => setSlideIndex(next),
+    nextArrow: <NextArrow />,
+    prevArrow: <PrevArrow />,
+    responsive: [
+      {
+        breakpoint: 960,
+        settings: {
+          slidesToShow: 1,
+          centerMode: true,
+        },
+      },
+    ],
+  };
 
   return (
     <Box sx={{ bgcolor: "background.default", minHeight: "100vh", pb: 8 }}>
@@ -343,51 +451,128 @@ export default function Home() {
         >
           {t("home.testimonials.subtitle")}
         </Typography>
-        <Grid container spacing={4}>
-          {testimonials.map((testimonial, i) => (
-            <Grid item xs={12} md={4} key={i}>
-              <Paper
-                elevation={0}
-                sx={{
-                  p: 4,
-                  height: "100%",
-                  borderRadius: 3,
-                  border: "1px solid",
-                  borderColor: "divider",
+        <Grid container justifyContent="center">
+          <Grid item xs={12}>
+            <Box
+              sx={{
+                ".slick-slide": {
+                  padding: "10px",
                   transition: "all 0.3s ease",
-                  "&:hover": {
-                    boxShadow: "0 8px 24px rgba(0,0,0,0.1)",
-                    transform: "translateY(-4px)",
+                },
+                ".slick-center": {
+                  transform: "scale(1.1)",
+                  zIndex: 10,
+                  position: "relative",
+                  "& .testimonial-card": {
+                    bgcolor: "primary.main",
+                    color: "white",
+                    boxShadow: 6,
                   },
-                }}
-              >
-                <Typography
-                  variant="body1"
-                  sx={{
-                    fontStyle: "italic",
-                    mb: 3,
+                  "& .quote-icon": {
+                    color: "rgba(255, 255, 255, 0.2)",
+                  },
+                  "& .text-content": {
+                    color: "white",
+                  },
+                  "& .user-info": {
                     color: "text.primary",
-                    lineHeight: 1.7,
-                  }}
-                >
-                  "{testimonial.quote}"
-                </Typography>
-                <Box display="flex" alignItems="center" gap={2}>
-                  <Avatar sx={{ bgcolor: "primary.main", width: 56, height: 56 }}>
-                    {testimonial.name.charAt(0)}
-                  </Avatar>
-                  <Box>
-                    <Typography variant="subtitle1" fontWeight="bold">
-                      {testimonial.name}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      {testimonial.role} • {testimonial.organization}
-                    </Typography>
+                  }
+                },
+                ".slick-slide:not(.slick-center)": {
+                  transform: "scale(0.9)",
+                  filter: "blur(0.5px)",
+                  opacity: 0.7,
+                  "& .testimonial-card": {
+                    bgcolor: "white",
+                  },
+                },
+              }}
+            >
+              <Slider {...sliderSettings}>
+                {testimonials.map((testimonial, i) => (
+                  <Box key={i} sx={{ outline: "none", pt: 4, pb: 4 }}>
+                    <Box
+                      className="testimonial-card"
+                      sx={{
+                        position: "relative",
+                        borderRadius: 4,
+                        p: 4,
+                        pt: 8,
+                        pb: 8,
+                        minHeight: 350,
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        textAlign: "center",
+                        transition: "all 0.3s ease",
+                        bgcolor: "white",
+                        boxShadow: 2,
+                      }}
+                    >
+                      <FormatQuoteIcon
+                        className="quote-icon"
+                        sx={{
+                          fontSize: 80,
+                          color: "grey.200",
+                          position: "absolute",
+                          top: 20,
+                          left: "50%",
+                          transform: "translateX(-50%)",
+                        }}
+                      />
+                      <Typography
+                        className="text-content"
+                        variant="body1"
+                        sx={{
+                          position: "relative",
+                          zIndex: 1,
+                          lineHeight: 1.8,
+                          fontSize: "1rem",
+                          color: "text.secondary",
+                          mb: 4,
+                        }}
+                      >
+                        {testimonial.quote}
+                      </Typography>
+                    </Box>
+
+                    {/* Avatar and Info outside the colored card for center effect, 
+                        or inside but styled differently? 
+                        User image shows it overlapping the bottom. 
+                        Let's position it absolute at bottom. */}
+                    <Box
+                      sx={{
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        mt: -5,
+                        position: "relative",
+                        zIndex: 2,
+                      }}
+                    >
+                      <Avatar
+                        src={testimonial.image}
+                        sx={{
+                          width: 80,
+                          height: 80,
+                          border: "4px solid white",
+                          boxShadow: 2,
+                          mb: 1,
+                        }}
+                      />
+                      <Typography variant="subtitle1" fontWeight="bold">
+                        {testimonial.name}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        {testimonial.role} - {testimonial.organization}
+                      </Typography>
+                    </Box>
                   </Box>
-                </Box>
-              </Paper>
-            </Grid>
-          ))}
+                ))}
+              </Slider>
+            </Box>
+          </Grid>
         </Grid>
       </Container>
     </Box>

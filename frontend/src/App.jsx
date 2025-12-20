@@ -1,6 +1,6 @@
 // App.jsx
 import React from "react";
-import { Route, Routes } from "react-router-dom";
+import { Route, Routes, useLocation } from "react-router-dom";
 import { Box } from "@mui/material"; // Import thêm Box để căn chỉnh layout
 import NavBar from "./components/NavBar";
 import Home from "./pages/Home";
@@ -20,10 +20,12 @@ import AdminUserManagement from "./pages/admin/AdminUserManagement.jsx";
 import Footer from "./components/Footer.jsx"; // Đã có import này từ code của bạn
 
 export default function App() {
+  const location = useLocation();
+
   return (
     /* 1. Sử dụng Box với flex column để quản lý toàn bộ chiều cao trang web */
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-      
+
       <NavBar />
 
       {/* 2. Box 'main' sẽ chiếm phần diện tích còn lại (flexGrow: 1) và đẩy Footer xuống cuối */}
@@ -34,7 +36,7 @@ export default function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/events" element={<Events />} />
           <Route path="/events/:eventId" element={<EventDetail />} />
-          
+
           {/* Chặn truy cập nếu chưa login */}
           <Route
             path="/profile"
@@ -106,7 +108,7 @@ export default function App() {
       </Box>
 
       {/* 3. Footer nằm ngoài phần nội dung chính, luôn ở dưới cùng */}
-      <Footer />
+      {!['/login', '/register'].includes(location.pathname) && <Footer />}
 
     </Box>
   );
