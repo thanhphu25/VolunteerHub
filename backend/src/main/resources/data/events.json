@@ -292,5 +292,19 @@
     "currentVolunteers": 8,
     "status": "approved",
     "imageUrl": "https://dongnaiart.edu.vn/wp-content/uploads/2022/01/ve-tranh-de-tai-y-tuong-tre-tho.jpg"
+  },
+  {
+    "id": 22,
+    "organizerId": 1,
+    "name": "Xây dựng đế chế",
+    "category": "Cộng đồng",
+    "location": "Trường tiểu học Hậu Lộc, Thanh Hóa",
+    "description": "Cùng nhau xây dựng đế chế của mình kakaka.",
+    "startDate": "2025-02-05T08:00:00",
+    "endDate": "2025-02-06T17:00:00",
+    "maxVolunteers": 30,
+    "currentVolunteers": 0,
+    "status": "approved",
+    "imageUrl": "https://didongviet.vn/dchannel/wp-content/uploads/2022/12/age-of-empires-2-didongviet-cover2.jpg"
   }
 ]
