@@ -219,7 +219,7 @@ public class DataInitializer implements CommandLineRunner {
             }
 
             // 6. Nạp Likes (Tên file: post_likes.json)
-            try (InputStream inputStream = getClass().getResourceAsStream("/data/post_likes.json")) {
+            try (InputStream inputStream = getClass().getResourceAsStream("/data/likes.json")) {
                 if (inputStream != null) {
                     List<LikeJsonDto> dtos = mapper.readValue(inputStream, new TypeReference<List<LikeJsonDto>>() {});
                     for (LikeJsonDto dto : dtos) {
