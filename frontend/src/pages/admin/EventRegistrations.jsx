@@ -57,7 +57,7 @@ export default function EventRegistrations() {
     const statusLabels = {
         pending: {vi: "Chờ duyệt", en: "Pending"},
         approved: {vi: "Đã duyệt", en: "Approved"},
-        rejected: {vi: "Đã từ chối", en: "Rejected"},
+        rejected: {vi: "Vắng mặt", en: "Rejected"},
         cancelled: {vi: "Đã hủy", en: "Cancelled"},
         completed: {vi: "Hoàn thành", en: "Completed"},
     };

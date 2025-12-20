@@ -116,7 +116,7 @@ export default function EventDiscussion({eventId, event, registration}) {
 
     if (role === 'admin') return true;
     if (role === 'organizer' && organizerId != null && userId != null && organizerId === userId) return true;
-    if (role === 'volunteer' && registrationStatus === 'approved') return true;
+    if (role === 'volunteer' && registrationStatus === 'approved' || registrationStatus === 'completed') return true;
     return false;
   }, [event?.organizerId, isAuthenticated, registration?.status, user]);
 

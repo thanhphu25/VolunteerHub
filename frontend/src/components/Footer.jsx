@@ -18,7 +18,7 @@ import { useThemeMode } from "../context/ThemeContext";
 import { useLanguage } from "../context/LanguageContext";
 
 // Import logo đồng bộ với NavBar
-import logo from "../assets/logo.jpg";
+import logo from "../assets/logo-removebg.png";
 
 function Footer() {
   const { mode } = useThemeMode();

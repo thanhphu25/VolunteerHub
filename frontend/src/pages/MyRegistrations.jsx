@@ -24,7 +24,7 @@ import {useAuth} from "../context/AuthContext";
 const statusLabels = {
     pending: "Chờ duyệt",
     approved: "Đã duyệt",
-    rejected: "Đã từ chối",
+    rejected: "Vắng mặt",
     cancelled: "Đã hủy",
     completed: "Hoàn thành",
 };

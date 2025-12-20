@@ -20,8 +20,8 @@ self.addEventListener('push', event => {
   const title = data.title || 'Thông báo từ VolunteerHub';
   const options = {
     body: data.message || 'Bạn có thông báo mới.',
-    icon: '/vite.svg', // Bạn có thể thay bằng logo của mình (ví dụ: /logo.png)
-    badge: '/vite.svg', // Icon nhỏ trên thanh thông báo (Android)
+    icon: '/logo-removebg.png', // Bạn có thể thay bằng logo của mình (ví dụ: /logo.png)
+    badge: '/logo-removebg.png', // Icon nhỏ trên thanh thông báo (Android)
     data: {
       // Gắn link mà backend gửi kèm (nếu có) để xử lý khi click
       url: data.url || '/'

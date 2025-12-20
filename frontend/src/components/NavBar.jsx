@@ -31,7 +31,7 @@ import authApi from "../api/authApi";
 import notificationApi from "../api/notificationApi";
 import profileApi from "../api/profileApi";
 import { toast } from "react-toastify";
-import logo from "../assets/logo.jpg";
+import logo from "../assets/logo-removebg.png";
 
 function NavBar() {
   const { user, logout, loading } = useAuth();
