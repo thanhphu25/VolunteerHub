@@ -27,13 +27,14 @@ public class DataInitializer implements CommandLineRunner {
     private final PostCommentRepository postCommentRepository;
     private final PostLikeRepository postLikeRepository;
     private final OrganizerFollowRepository organizerFollowRepository;
-    private final PasswordEncoder passwordEncoder; // Inject PasswordEncoder
+    private final PasswordEncoder passwordEncoder;
 
     private final ObjectMapper mapper;
 
+    // Map để lưu ID tạm từ JSON -> Entity thực tế trong DB
     private final Map<Long, UserEntity> userMap = new HashMap<>();
     private final Map<Long, EventEntity> eventMap = new HashMap<>();
-    private final Map<Long, PostEntity> postMap = new HashMap<>();
+    private final Map<Long, PostEntity> postMap = new HashMap<>(); // ID tạm (trong code) cho Post
 
     public DataInitializer(UserRepository userRepository,
                            EventRepository eventRepository,
@@ -61,7 +62,7 @@ public class DataInitializer implements CommandLineRunner {
     public void run(String... args) throws Exception {
         // Chỉ nạp khi bảng User trống
         if (userRepository.count() == 0) {
-            System.out.println("Bắt đầu nạp dữ liệu mẫu (Có reset mật khẩu)...");
+            System.out.println("Bắt đầu nạp dữ liệu mẫu...");
 
             // 1. Nạp Users
             try (InputStream inputStream = getClass().getResourceAsStream("/data/users.json")) {
@@ -72,15 +73,16 @@ public class DataInitializer implements CommandLineRunner {
                 List<UserEntity> users = mapper.readValue(inputStream, new TypeReference<List<UserEntity>>() {});
 
                 for (UserEntity user : users) {
-                    Long jsonId = user.getId();
-                    user.setId(null);
+                    Long jsonId = user.getId(); // Lưu ID từ JSON
+                    user.setId(null); // Reset ID để DB tự sinh
 
+                    // Set mật khẩu mặc định: password123
                     user.setPasswordHash(passwordEncoder.encode("password123"));
 
                     UserEntity savedUser = userRepository.save(user);
-                    userMap.put(jsonId, savedUser);
+                    userMap.put(jsonId, savedUser); // Map ID JSON -> ID thật
                 }
-                System.out.println("Đã nạp " + userMap.size() + " users (Mật khẩu: password123).");
+                System.out.println("Đã nạp " + userMap.size() + " users.");
             }
 
             // 2. Nạp Events
@@ -111,7 +113,7 @@ public class DataInitializer implements CommandLineRunner {
                             event.setSlug(dto.getName().toLowerCase().replaceAll("[^a-z0-9\\s]", "").replace(" ", "-"));
 
                             EventEntity savedEvent = eventRepository.save(event);
-                            eventMap.put(dto.getId(), savedEvent);
+                            eventMap.put(dto.getId(), savedEvent); // Map ID JSON -> Event thật
                         }
                     }
                     System.out.println("Đã nạp " + eventMap.size() + " events.");
@@ -133,6 +135,11 @@ public class DataInitializer implements CommandLineRunner {
                             reg.setVolunteer(volunteer);
                             reg.setEvent(event);
 
+                            // --- THÊM PHẦN NOTE ---
+                            // Đảm bảo entity RegistrationEntity của bạn đã có trường 'note'
+                            // reg.setNote(dto.getNote());
+                            // ---------------------
+
                             try {
                                 reg.setStatus(RegistrationEntity.RegistrationStatus.valueOf(dto.getStatus()));
                             } catch (Exception e) {
@@ -151,7 +158,8 @@ public class DataInitializer implements CommandLineRunner {
             try (InputStream inputStream = getClass().getResourceAsStream("/data/posts.json")) {
                 if (inputStream != null) {
                     List<PostJsonDto> dtos = mapper.readValue(inputStream, new TypeReference<List<PostJsonDto>>() {});
-                    long tempPostIdCounter = 1;
+                    // Với Posts, JSON của bạn có thể không có ID, hoặc ID không tuần tự
+                    // Ta sẽ dùng ID từ JSON nếu có, hoặc tự tạo ID tạm để map với Comment/Like
 
                     for (PostJsonDto dto : dtos) {
                         PostEntity post = new PostEntity();
@@ -164,11 +172,24 @@ public class DataInitializer implements CommandLineRunner {
                         if (event != null && user != null) {
                             post.setEvent(event);
                             post.setUser(user);
+                            post.setLikesCount(0); // Khởi tạo
+                            post.setCommentsCount(0); // Khởi tạo
+
                             PostEntity savedPost = postRepository.save(post);
-                            postMap.put(tempPostIdCounter++, savedPost);
+
+                            // Nếu JSON có field "id" (cho post), ta dùng nó để map
+                            // Nếu không có, ta giả định thứ tự trong file khớp với logic ID tăng dần (khó đảm bảo)
+                            // Tốt nhất là thêm field 'id' vào PostJsonDto nếu file JSON có ID
+                            if(dto.getId() != null) {
+                                postMap.put(dto.getId(), savedPost);
+                            } else {
+                                // Fallback: Nếu JSON không có ID, ta không thể map comment/like chính xác được
+                                // Trừ khi ta tự đặt quy ước ID = thứ tự xuất hiện
+                                // Ở đây tôi giả định bạn sẽ thêm field 'id' vào PostJsonDto
+                            }
                         }
                     }
-                    System.out.println("Đã nạp " + postMap.size() + " posts.");
+                    System.out.println("Đã nạp posts.");
                 }
             }
 
@@ -188,6 +209,7 @@ public class DataInitializer implements CommandLineRunner {
                             comment.setUser(user);
                             postCommentRepository.save(comment);
 
+                            // Cập nhật count
                             post.setCommentsCount(post.getCommentsCount() + 1);
                             postRepository.save(post);
                         }
@@ -196,8 +218,8 @@ public class DataInitializer implements CommandLineRunner {
                 }
             }
 
-            // 6. Nạp Likes
-            try (InputStream inputStream = getClass().getResourceAsStream("/data/likes.json")) {
+            // 6. Nạp Likes (Tên file: post_likes.json)
+            try (InputStream inputStream = getClass().getResourceAsStream("/data/post_likes.json")) {
                 if (inputStream != null) {
                     List<LikeJsonDto> dtos = mapper.readValue(inputStream, new TypeReference<List<LikeJsonDto>>() {});
                     for (LikeJsonDto dto : dtos) {
@@ -207,15 +229,14 @@ public class DataInitializer implements CommandLineRunner {
                         UserEntity user = userMap.get(dto.getUserId());
 
                         if (post != null && user != null) {
-                            like.setPost(post);
-                            like.setUser(user);
-
-                            try {
+                            // Kiểm tra trùng lặp
+                            if(postLikeRepository.findByPostAndUser(post, user).isEmpty()){
+                                like.setPost(post);
+                                like.setUser(user);
                                 postLikeRepository.save(like);
+
                                 post.setLikesCount(post.getLikesCount() + 1);
                                 postRepository.save(post);
-                            } catch (Exception e) {
-                                // Ignore duplicate
                             }
                         }
                     }
@@ -223,8 +244,8 @@ public class DataInitializer implements CommandLineRunner {
                 }
             }
 
-            // 7. Nạp Follows
-            try (InputStream inputStream = getClass().getResourceAsStream("/data/follows.json")) {
+            // 7. Nạp Follows (Tên file: organizer_follows.json)
+            try (InputStream inputStream = getClass().getResourceAsStream("/data/organizer_follows.json")) {
                 if (inputStream != null) {
                     List<FollowJsonDto> dtos = mapper.readValue(inputStream, new TypeReference<List<FollowJsonDto>>() {});
                     for (FollowJsonDto dto : dtos) {
@@ -234,9 +255,12 @@ public class DataInitializer implements CommandLineRunner {
                         UserEntity follower = userMap.get(dto.getFollowerId());
 
                         if (organizer != null && follower != null) {
-                            follow.setOrganizer(organizer);
-                            follow.setFollower(follower);
-                            organizerFollowRepository.save(follow);
+                            // Kiểm tra trùng lặp
+                            if (organizerFollowRepository.findByFollowerAndOrganizer(organizer, follower).isEmpty()) {
+                                follow.setOrganizer(organizer);
+                                follow.setFollower(follower);
+                                organizerFollowRepository.save(follow);
+                            }
                         }
                     }
                     System.out.println("Đã nạp follows.");
@@ -249,8 +273,13 @@ public class DataInitializer implements CommandLineRunner {
 
     // --- Inner DTOs ---
     @Data static class EventJsonDto { private Long id; private Long organizerId; private String name; private String category; private String location; private String description; private LocalDateTime startDate; private LocalDateTime endDate; private Integer maxVolunteers; private Integer currentVolunteers; private String status; private String imageUrl; }
-    @Data static class RegistrationJsonDto { private Long eventId; private Long volunteerId; private String status; }
-    @Data static class PostJsonDto { private Long eventId; private Long userId; private String content; private String imageUrl; }
+
+    // ĐÃ SỬA: Thêm field "note"
+    @Data static class RegistrationJsonDto { private Long eventId; private Long volunteerId; private String status; private String note; }
+
+    // ĐÃ SỬA: Thêm field "id" để map với Comment/Like
+    @Data static class PostJsonDto { private Long id; private Long eventId; private Long userId; private String content; private String imageUrl; }
+
     @Data static class CommentJsonDto { private Long postId; private Long userId; private String content; }
     @Data static class LikeJsonDto { private Long postId; private Long userId; }
     @Data static class FollowJsonDto { private Long organizerId; private Long followerId; }

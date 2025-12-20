@@ -182,31 +182,47 @@ function NavBar() {
     >
       <Container maxWidth="xl">
         <Toolbar disableGutters>
-          {/* 1. DESKTOP LOGO */}
-          <Box
-            component={RouterLink}
-            to="/"
-            sx={{
-              display: { xs: "none", md: "flex" },
-              alignItems: "center",
-              textDecoration: "none",
-              mr: 4,
-            }}
-          >
+            {/* 1. DESKTOP LOGO (Đã sửa thêm slogan) */}
             <Box
-              component="img"
-              src={logo}
-              alt="Volunteer Hub Logo"
-              sx={{ height: 60, mr: 1.5 }} // Điều chỉnh chiều cao logo tại đây
-            />
-            <Typography
-              variant="h5"
-              noWrap
-              className="font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-teal-600 to-cyan-600 hover:opacity-80 transition-opacity cursor-pointer"
+                component={RouterLink}
+                to="/"
+                sx={{
+                    display: { xs: "none", md: "flex" },
+                    alignItems: "center",
+                    textDecoration: "none",
+                    mr: 4,
+                }}
             >
-              VOLUNTEER HUB
-            </Typography>
-          </Box>
+                <Box
+                    component="img"
+                    src={logo}
+                    alt="Volunteer Hub Logo"
+                    sx={{ height: 50, mr: 1.5 }} // Giảm nhẹ size logo để cân đối
+                />
+                <Box display="flex" flexDirection="column" justifyContent="center">
+                    <Typography
+                        variant="h6"
+                        noWrap
+                        className="font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-teal-600 to-cyan-600 hover:opacity-80 transition-opacity cursor-pointer"
+                        sx={{ lineHeight: 1 }} // Dòng trên sát dòng dưới
+                    >
+                        VOLUNTEER HUB
+                    </Typography>
+                    <Typography
+                        variant="caption"
+                        sx={{
+                            fontSize: '0.7rem',
+                            fontWeight: 600,
+                            color: 'text.secondary', // Màu xám nhẹ
+                            letterSpacing: '0.5px',
+                            textTransform: 'uppercase',
+                            mt: 0.3 // Khoảng cách nhỏ với tên chính
+                        }}
+                    >
+                        Kết nối - Hành động - Thay đổi
+                    </Typography>
+                </Box>
+            </Box>
 
           {/* 2. MOBILE MENU ICON */}
           <Box sx={{ flexGrow: 1, display: { xs: "flex", md: "none" } }}>
