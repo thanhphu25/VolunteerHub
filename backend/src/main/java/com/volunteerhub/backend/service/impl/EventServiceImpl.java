@@ -132,6 +132,7 @@ public class EventServiceImpl implements IEventService {
         LocalDateTime now = LocalDateTime.now();
 
         boolean sortByPopularity = pageable.getSort().getOrderFor("popularity") != null;
+        boolean sortByRecentActivity = pageable.getSort().getOrderFor("recent_activity") != null;
 
         if (sortByPopularity) {
             // Remove sort from pageable to avoid conflict with hardcoded ORDER BY in query
@@ -148,6 +149,36 @@ public class EventServiceImpl implements IEventService {
                     timeStatus,
                     now,
                     unsortedPageable).map(mapper::toResponse);
+        }
+
+        if (sortByRecentActivity) {
+            Pageable unsortedPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
+            return repo.findEventsWithFiltersAndRecentActivity(
+                    status,
+                    category.orElse(null),
+                    location.orElse(null),
+                    null,
+                    organizerNameOpt.map(String::trim).filter(StringUtils::hasText).orElse(null),
+                    search.orElse(null),
+                    startDate.orElse(null),
+                    endDate.orElse(null),
+                    timeStatus,
+                    now,
+                    unsortedPageable).map(proj -> {
+                        EventResponse resp = mapper.toResponse(proj.getEvent());
+                        resp.setLastActivityAt(proj.getLastActivity());
+                        // Determine type: if lastActivity == createdAt (within a small margin) ->
+                        // CREATED,
+                        // else UPDATED
+                        LocalDateTime created = proj.getEvent().getCreatedAt();
+                        LocalDateTime activity = proj.getLastActivity();
+                        if (activity != null && created != null && activity.isEqual(created)) {
+                            resp.setLastActivityType("CREATED");
+                        } else {
+                            resp.setLastActivityType("UPDATED");
+                        }
+                        return resp;
+                    });
         }
 
         return repo.findEventsWithFilters(

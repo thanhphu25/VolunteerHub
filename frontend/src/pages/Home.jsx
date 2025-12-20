@@ -15,6 +15,8 @@ import {
 import { Link as RouterLink, useNavigate } from "react-router-dom";
 import eventApi from "../api/eventApi";
 import EventCard from "../components/EventCard";
+import PopularEventsSlider from "../components/PopularEventsSlider";
+import NewestEventsList from "../components/NewestEventsList";
 import { useLanguage } from "../context/LanguageContext";
 import HeroSlider from "../components/HeroSlider";
 import {
@@ -29,41 +31,48 @@ import {
 export default function Home() {
   const navigate = useNavigate();
   const { t } = useLanguage();
-  const [events, setEvents] = useState([]);
+  const [popularEvents, setPopularEvents] = useState([]);
+  const [recentEvents, setRecentEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // 🔥 Lấy 3 sự kiện nổi bật nhất (nhiều người tham gia nhất)
+  // 🔥 Lấy dữ liệu cho cả 2 phần: Nổi bật và Mới nhất
   useEffect(() => {
-    const fetchEvents = async () => {
+    const fetchHomeData = async () => {
       try {
         setLoading(true);
         setError(null);
 
-        const res = await eventApi.getAll({
-          page: 0,
-          size: 3,
-          status: "approved",
-          sort: "popularity",
-        });
+        // Fetch parallel
+        const [popularRes, recentRes] = await Promise.all([
+          eventApi.getAll({
+            page: 0,
+            size: 5,
+            status: "approved",
+            sort: "popularity",
+          }),
+          eventApi.getAll({
+            page: 0,
+            size: 5,
+            status: "approved",
+            sort: "recent_activity",
+          })
+        ]);
 
-        const eventsArray = res.data.content || [];
+        const popEvents = popularRes.data.content || [];
+        const recEvents = recentRes.data.content || [];
 
-        if (Array.isArray(eventsArray)) {
-          setEvents(eventsArray);
-        } else {
-          console.error("Dữ liệu sự kiện không hợp lệ:", res.data);
-          setEvents([]);
-          setError("Không thể xử lý dữ liệu sự kiện nhận được.");
-        }
+        setPopularEvents(popEvents);
+        setRecentEvents(recEvents);
+
       } catch (err) {
-        console.error("Không thể tải sự kiện:", err);
-        setError("Đã xảy ra lỗi khi tải sự kiện nổi bật.");
+        console.error("Không thể tải dữ liệu trang chủ:", err);
+        setError("Đã xảy ra lỗi khi tải dữ liệu sự kiện.");
       } finally {
         setLoading(false);
       }
     };
-    fetchEvents();
+    fetchHomeData();
   }, []);
 
   const features = [
@@ -166,61 +175,48 @@ export default function Home() {
             <Alert severity="error" sx={{ mt: 4 }}>
               {error}
             </Alert>
-          ) : events.length > 0 ? (
-            <>
-              <Box
-                display="grid"
-                gridTemplateColumns={{
-                  xs: "1fr",             // 📱 1 cột
-                  sm: "1fr 1fr",         // 💻 2 cột
-                  md: "1fr 1fr 1fr",     // 🖥️ 3 cột
-                }}
-                gap={{ xs: 2, sm: 3, md: 4 }}
-                justifyContent="center"
-                sx={{
-                  width: "100%",
-                  alignItems: "stretch",
-                  mt: 2,
-                }}
-              >
-                {events.map((event) => (
-                  <EventCard
-                    key={event.id}
-                    event={event}
-                    showOrganizerName={true}
-                    sx={{
-                      height: "100%",
-                      width: "100%",
-                      maxWidth: 420,
-                      justifySelf: "center",
-                    }}
-                  />
-                ))}
-              </Box>
-
-              <Box textAlign="center" mt={6}>
-                <Button
-                  variant="contained"
-                  size="large"
-                  component={RouterLink}
-                  to="/events"
-                  sx={{
-                    px: 5,
-                    py: 1.5,
-                    fontSize: "1.1rem",
-                    fontWeight: 600,
-                    borderRadius: 3,
-                  }}
-                >
-                  {t("home.events.viewAll")}
-                </Button>
-              </Box>
-            </>
           ) : (
-            <Typography align="center" sx={{ mt: 4 }} color="text.secondary">
-              {t("home.events.noEvents")}
-            </Typography>
+            <Grid container spacing={3} sx={{ flexWrap: { xs: 'wrap', md: 'nowrap' } }}>
+              {/* Popular Events Slider (Left 60%) */}
+              <Grid item xs={12} md={7} sx={{
+                minWidth: 0,
+                width: { md: '60%' },
+                flexBasis: { md: '60%' },
+                maxWidth: { md: '60%' },
+                overflow: 'hidden'
+              }}>
+                <PopularEventsSlider events={popularEvents} />
+              </Grid>
+
+              {/* Newest Events List (Right 40%) */}
+              <Grid item xs={12} md={5} sx={{
+                width: { md: '40%' },
+                flexBasis: { md: '40%' },
+                maxWidth: { md: '40%' },
+                minWidth: '300px' // Slightly wider min-width for better list display
+              }}>
+                <NewestEventsList events={recentEvents} />
+              </Grid>
+            </Grid>
           )}
+
+          <Box textAlign="center" mt={6}>
+            <Button
+              variant="contained"
+              size="large"
+              component={RouterLink}
+              to="/events"
+              sx={{
+                px: 5,
+                py: 1.5,
+                fontSize: "1.1rem",
+                fontWeight: 600,
+                borderRadius: 3,
+              }}
+            >
+              {t("home.events.viewAll")}
+            </Button>
+          </Box>
         </Container>
       </Box>
 

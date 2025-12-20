@@ -105,12 +105,14 @@ public class EventController {
             boolean hasAdvancedFilters = category.isPresent() || location.isPresent() ||
                     search.isPresent() || organizerName.isPresent() ||
                     startDate.isPresent() || endDate.isPresent() ||
-                    (sort != null && "popularity".equalsIgnoreCase(sort));
+                    (sort != null && ("popularity".equalsIgnoreCase(sort) || "recent_activity".equalsIgnoreCase(sort)));
 
             Sort sortObj = Sort.unsorted();
             if (sort != null && !sort.isEmpty()) {
                 if ("popularity".equalsIgnoreCase(sort)) {
                     sortObj = Sort.by("popularity");
+                } else if ("recent_activity".equalsIgnoreCase(sort)) {
+                    sortObj = Sort.by("recent_activity");
                 } else {
                     String[] parts = sort.split(",");
                     String prop = parts[0];

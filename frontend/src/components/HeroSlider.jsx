@@ -67,10 +67,10 @@ export default function HeroSlider() {
     };
 
     return (
-        <Box 
-            sx={{ 
-                width: '100%', 
-                overflow: 'hidden', 
+        <Box
+            sx={{
+                width: '100%',
+                overflow: 'hidden',
                 bgcolor: 'black',
                 // Tùy chỉnh màu sắc và kích thước cho 5 dấu chấm (Dots)
                 "& .slick-dots li button:before": {
@@ -88,13 +88,13 @@ export default function HeroSlider() {
             <Slider {...settings}>
                 {slides.map((slide) => (
                     <Box key={slide.id} sx={{ outline: 'none', position: 'relative' }}>
-                        
+
                         {/* 3. PHẦN KHUNG CHỨA ẢNH - Tỉ lệ 21:9 */}
                         <Box
                             sx={{
                                 width: '100%',
                                 aspectRatio: { xs: '16/9', md: '21/9' }, // Tỉ lệ vàng để không làm mất nội dung
-                                minHeight: { xs: '350px', md: 'auto' }, 
+                                minHeight: { xs: '350px', md: 'auto' },
                                 backgroundImage: `url(${slide.image})`,
                                 backgroundSize: 'cover',
                                 backgroundPosition: 'center 15%', // Giữ lấy phần trên của ảnh (mặt người)
@@ -113,16 +113,16 @@ export default function HeroSlider() {
                             <Container
                                 sx={{
                                     height: '100%',
-                                    display: 'flex', flexDirection: 'column', 
+                                    display: 'flex', flexDirection: 'column',
                                     justifyContent: 'center', alignItems: 'center',
                                     textAlign: 'center', position: 'relative', zIndex: 2, color: 'white'
                                 }}
                             >
-                                <Typography 
-                                    variant="h2" 
-                                    sx={{ 
-                                        fontWeight: 800, 
-                                        fontSize: { xs: '1.8rem', md: '3.5rem' }, 
+                                <Typography
+                                    variant="h2"
+                                    sx={{
+                                        fontWeight: 800,
+                                        fontSize: { xs: '1.8rem', md: '3.5rem' },
                                         mb: 1,
                                         textShadow: '2px 2px 10px rgba(0,0,0,0.5)'
                                     }}
@@ -130,25 +130,25 @@ export default function HeroSlider() {
                                     {slide.title}
                                 </Typography>
 
-                                <Typography 
-                                    variant="h5" 
-                                    sx={{ 
-                                        mb: 4, opacity: 0.9, maxWidth: '850px', 
+                                <Typography
+                                    variant="h5"
+                                    sx={{
+                                        mb: 4, opacity: 0.9, maxWidth: '850px',
                                         fontSize: { xs: '0.9rem', md: '1.3rem' },
-                                        display: { xs: 'none', sm: 'block' } 
+                                        display: { xs: 'none', sm: 'block' }
                                     }}
                                 >
                                     {slide.subtitle}
                                 </Typography>
 
                                 <Stack direction="row" spacing={2}>
-                                    <Button 
-                                        variant="contained" 
+                                    <Button
+                                        variant="contained"
                                         size={isMobile ? "small" : "large"}
                                         onClick={() => navigate("/events")} // Chuyển sang trang sự kiện
-                                        sx={{ 
-                                            bgcolor: '#00bfa5', 
-                                            '&:hover': { bgcolor: '#008e7a' }, 
+                                        sx={{
+                                            bgcolor: '#00bfa5',
+                                            '&:hover': { bgcolor: '#008e7a' },
                                             fontWeight: 'bold',
                                             px: { md: 4 }
                                         }}
@@ -156,9 +156,15 @@ export default function HeroSlider() {
                                         Khám phá sự kiện
                                     </Button>
 
-                                    <Button 
-                                        variant="outlined" 
+                                    <Button
+                                        variant="outlined"
                                         size={isMobile ? "small" : "large"}
+                                        sx={{
+                                            backgroundColor: 'rgba(255, 255, 255, 0.65)', // White with 80% opacity
+                                            '&:hover': {
+                                                backgroundColor: 'rgba(255, 255, 255, 1)', // Optional: 100% opacity on hover
+                                            },
+                                        }}
                                         onClick={() => {
                                             const element = document.getElementById('why-choose-us');
                                             if (element) {

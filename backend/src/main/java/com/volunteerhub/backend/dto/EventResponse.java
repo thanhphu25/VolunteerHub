@@ -32,4 +32,6 @@ public class EventResponse {
     private LocalDateTime updatedAt;
     private LocalDateTime approvedAt;
     private Long approvedBy;
+    private LocalDateTime lastActivityAt;
+    private String lastActivityType;
 }

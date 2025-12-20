@@ -178,4 +178,38 @@ public interface EventRepository extends JpaRepository<EventEntity, Long> {
                         @Param("timeStatus") String timeStatus,
                         @Param("now") LocalDateTime now,
                         Pageable pageable);
+
+        @Query("SELECT e as event, GREATEST(e.createdAt, COALESCE(MAX(p.createdAt), e.createdAt)) as lastActivity " +
+                        "FROM EventEntity e " +
+                        "LEFT JOIN PostEntity p ON p.event = e " +
+                        "WHERE e.isDeleted = false " +
+                        "AND (:status IS NULL OR e.status = :status) " +
+                        "AND (:category IS NULL OR LOWER(e.category) LIKE LOWER(CONCAT('%', :category, '%'))) " +
+                        "AND (:location IS NULL OR LOWER(e.location) LIKE LOWER(CONCAT('%', :location, '%'))) " +
+                        "AND (:organizerId IS NULL OR e.organizer.id = :organizerId) " +
+                        "AND (:organizerName IS NULL OR LOWER(e.organizer.fullName) LIKE LOWER(CONCAT('%', :organizerName, '%'))) "
+                        +
+                        "AND (:search IS NULL OR (LOWER(e.name) LIKE LOWER(CONCAT('%', :search, '%')) " +
+                        "OR LOWER(e.description) LIKE LOWER(CONCAT('%', :search, '%')))) " +
+                        "AND (:startDate IS NULL OR e.endDate >= :startDate) " +
+                        "AND (:endDate IS NULL OR e.startDate <= :endDate) " +
+                        "AND (:timeStatus IS NULL OR (" +
+                        " (LOWER(:timeStatus) = 'ended' AND e.endDate < :now) OR " +
+                        " (LOWER(:timeStatus) = 'ongoing' AND e.startDate <= :now AND e.endDate >= :now) OR " +
+                        " (LOWER(:timeStatus) = 'upcoming' AND e.startDate > :now)" +
+                        ")) " +
+                        "GROUP BY e " +
+                        "ORDER BY GREATEST(e.createdAt, COALESCE(MAX(p.createdAt), e.createdAt)) DESC")
+        Page<EventWithActivityProjection> findEventsWithFiltersAndRecentActivity(
+                        @Param("status") EventStatus status,
+                        @Param("category") String category,
+                        @Param("location") String location,
+                        @Param("organizerId") Long organizerId,
+                        @Param("organizerName") String organizerName,
+                        @Param("search") String search,
+                        @Param("startDate") LocalDateTime startDate,
+                        @Param("endDate") LocalDateTime endDate,
+                        @Param("timeStatus") String timeStatus,
+                        @Param("now") LocalDateTime now,
+                        Pageable pageable);
 }
