@@ -137,52 +137,46 @@ export default function Home() {
 
   const testimonials = [
     {
-      name: "Trần Thị Tuyết",
-      role: "K66, Trường Đại học Công nghệ",
-      organization: "ĐH QGHN",
-      image: "https://i-vn2.joboko.com/okoimg/vieclam.uet.vnu.edu.vn/xurl/images/125/student-3.png",
+      name: "Nguyễn Minh Phương",
+      role: "Tình nguyện viên",
+      organization: "CLB Vì Cộng Đồng",
       quote:
-        "Thầy cô trường Đại học Công nghệ - Đại học Quốc gia Hà Nội có chuyên môn cao, giảng dạy thực tế, dễ hiểu. Cơ hội nghề nghiệp sau khi ra trường cũng rất lớn",
+        "Nhờ VolunteerHub, mình đã tìm thấy dự án 'Dạy học cho trẻ em vùng cao' rất phù hợp với chuyên môn sư phạm của mình. Nền tảng giúp mình kết nối với những người bạn có cùng đam mê cống hiến.",
     },
     {
-      name: "Nguyễn Trọng Hiếu",
-      role: "K67, Trường Đại học Công nghệ",
-      organization: "ĐH QGHN",
-      image: "https://i-vn2.joboko.com/okoimg/vieclam.uet.vnu.edu.vn/xurl/images/125/student-1.png",
+      name: "Trần Đăng Khoa",
+      role: "Người tổ chức",
+      organization: "Hội Sinh Viên UET",
       quote:
-        "Trường Đại học Công nghệ - Đại học Quốc gia Hà Nội luôn cập nhật những phương pháp, công nghệ mới và tốt nhất để giảng dạy cho sinh viên.",
+        "VolunteerHub thực sự là một bước tiến lớn trong việc quản lý. Chúng mình tiết kiệm được 70% thời gian duyệt đơn và điểm danh thành viên, giúp các chiến dịch diễn ra trơn tru hơn rất nhiều.",
     },
     {
-      name: "Nguyễn Hoài Thương",
-      role: "K66, Trường Đại học Công nghệ",
-      organization: "ĐH QGHN",
-      image: "https://i-vn2.joboko.com/okoimg/vieclam.uet.vnu.edu.vn/xurl/images/125/student-2.png",
+      name: "Lê Thanh Thảo",
+      role: "Tình nguyện viên",
+      organization: "Mạng lưới Xanh",
       quote:
-        "Em cảm thấy rất vui và tự hào khi được sinh viên trường Đại học Công nghệ - Đại học Quốc gia Hà Nội. Em có cơ hội giao lưu, gần gũi và học hỏi được nhiều hơn từ thầy cô và bạn bè trong trường. Các bài học đều rất thực tế và dễ hiểu. ",
+        "Hệ thống ghi nhận hoạt động minh bạch giúp mình dễ dàng theo dõi quá trình đóng góp cá nhân. Đây không chỉ là nơi làm tình nguyện, mà còn là nơi giúp mình rèn luyện kỹ năng mềm tuyệt vời.",
     },
     {
-      name: "Trần Thị Tuyết",
-      role: "K66, Trường Đại học Công nghệ",
-      organization: "ĐH QGHN",
-      image: "https://i-vn2.joboko.com/okoimg/vieclam.uet.vnu.edu.vn/xurl/images/125/student-3.png",
+      name: "Nguyễn Minh Phương",
+      role: "Tình nguyện viên",
+      organization: "CLB Vì Cộng Đồng",
       quote:
-        "Thầy cô trường Đại học Công nghệ - Đại học Quốc gia Hà Nội có chuyên môn cao, giảng dạy thực tế, dễ hiểu. Cơ hội nghề nghiệp sau khi ra trường cũng rất lớn",
+        "Nhờ VolunteerHub, mình đã tìm thấy dự án 'Dạy học cho trẻ em vùng cao' rất phù hợp với chuyên môn sư phạm của mình. Nền tảng giúp mình kết nối với những người bạn có cùng đam mê cống hiến.",
     },
     {
-      name: "Nguyễn Trọng Hiếu",
-      role: "K67, Trường Đại học Công nghệ",
-      organization: "ĐH QGHN",
-      image: "https://i-vn2.joboko.com/okoimg/vieclam.uet.vnu.edu.vn/xurl/images/125/student-1.png",
+      name: "Trần Đăng Khoa",
+      role: "Người tổ chức",
+      organization: "Hội Sinh Viên UET",
       quote:
-        "Trường Đại học Công nghệ - Đại học Quốc gia Hà Nội luôn cập nhật những phương pháp, công nghệ mới và tốt nhất để giảng dạy cho sinh viên.",
+        "VolunteerHub thực sự là một bước tiến lớn trong việc quản lý. Chúng mình tiết kiệm được 70% thời gian duyệt đơn và điểm danh thành viên, giúp các chiến dịch diễn ra trơn tru hơn rất nhiều.",
     },
     {
-      name: "Nguyễn Hoài Thương",
-      role: "K66, Trường Đại học Công nghệ",
-      organization: "ĐH QGHN",
-      image: "https://i-vn2.joboko.com/okoimg/vieclam.uet.vnu.edu.vn/xurl/images/125/student-2.png",
+      name: "Lê Thanh Thảo",
+      role: "Tình nguyện viên",
+      organization: "Mạng lưới Xanh",
       quote:
-        "Em cảm thấy rất vui và tự hào khi được sinh viên trường Đại học Công nghệ - Đại học Quốc gia Hà Nội. Em có cơ hội giao lưu, gần gũi và học hỏi được nhiều hơn từ thầy cô và bạn bè trong trường. Các bài học đều rất thực tế và dễ hiểu. ",
+        "Hệ thống ghi nhận hoạt động minh bạch giúp mình dễ dàng theo dõi quá trình đóng góp cá nhân. Đây không chỉ là nơi làm tình nguyện, mà còn là nơi giúp mình rèn luyện kỹ năng mềm tuyệt vời.",
     },
   ];
 

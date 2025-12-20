@@ -1,7 +1,7 @@
 // App.jsx
 import React from "react";
 import { Route, Routes, useLocation } from "react-router-dom";
-import { Box } from "@mui/material"; // Import thêm Box để căn chỉnh layout
+import { Box } from "@mui/material";
 import NavBar from "./components/NavBar";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
@@ -17,18 +17,21 @@ import OrganizerEvents from "./pages/admin/OrganizerEvents";
 import AdminEventManagement from "./pages/admin/AdminEventManagement";
 import EventRegistrations from "./pages/admin/EventRegistrations.jsx";
 import AdminUserManagement from "./pages/admin/AdminUserManagement.jsx";
-import Footer from "./components/Footer.jsx"; // Đã có import này từ code của bạn
+import Footer from "./components/Footer.jsx";
 
 export default function App() {
   const location = useLocation();
 
-  return (
-    /* 1. Sử dụng Box với flex column để quản lý toàn bộ chiều cao trang web */
-    <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+  // 1. Xác định các trang không hiển thị Footer
+  const hideFooterPaths = ["/login", "/register"];
+  const shouldHideFooter = hideFooterPaths.includes(location.pathname);
 
+  return (
+    <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+      
+      {/* 2. Thanh NavBar luôn luôn hiển thị trên mọi trang */}
       <NavBar />
 
-      {/* 2. Box 'main' sẽ chiếm phần diện tích còn lại (flexGrow: 1) và đẩy Footer xuống cuối */}
       <Box component="main" sx={{ flexGrow: 1 }}>
         <Routes>
           <Route path="/" element={<Home />} />
@@ -37,7 +40,7 @@ export default function App() {
           <Route path="/events" element={<Events />} />
           <Route path="/events/:eventId" element={<EventDetail />} />
 
-          {/* Chặn truy cập nếu chưa login */}
+          {/* Các Route bảo mật và phân quyền */}
           <Route
             path="/profile"
             element={
@@ -46,7 +49,6 @@ export default function App() {
               </PrivateRoute>
             }
           />
-
           <Route
             path="/notifications"
             element={
@@ -55,8 +57,6 @@ export default function App() {
               </PrivateRoute>
             }
           />
-
-          {/* Route cho My Registrations - chỉ dành cho volunteers */}
           <Route
             path="/my-registrations"
             element={
@@ -65,8 +65,6 @@ export default function App() {
               </RoleBasedRoute>
             }
           />
-
-          {/* Routes cho Organizer */}
           <Route
             path="/organizer/events"
             element={
@@ -83,8 +81,6 @@ export default function App() {
               </RoleBasedRoute>
             }
           />
-
-          {/* Routes cho Admin */}
           <Route
             path="/admin/events"
             element={
@@ -93,7 +89,6 @@ export default function App() {
               </RoleBasedRoute>
             }
           />
-
           <Route
             path="/admin/users"
             element={
@@ -107,8 +102,8 @@ export default function App() {
         </Routes>
       </Box>
 
-      {/* 3. Footer nằm ngoài phần nội dung chính, luôn ở dưới cùng */}
-      {!['/login', '/register'].includes(location.pathname) && <Footer />}
+      {/* 3. Footer chỉ hiển thị nếu không phải trang login/register */}
+      {!shouldHideFooter && <Footer />}
 
     </Box>
   );
