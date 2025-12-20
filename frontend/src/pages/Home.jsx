@@ -36,6 +36,11 @@ import {
   FormatQuote as FormatQuoteIcon,
 } from "@mui/icons-material";
 
+const getImageUrl = (url) => {
+    if (!url) return undefined;
+    if (url.startsWith("http")) return url; // Link online giữ nguyên
+    return `http://localhost:8080${url}`;  // Link local thêm localhost
+};
 export default function Home() {
   const navigate = useNavigate();
   const { t } = useLanguage();
@@ -47,43 +52,50 @@ export default function Home() {
   const [slideIndex, setSlideIndex] = useState(0);
 
   // 🔥 Lấy dữ liệu cho cả 2 phần: Nổi bật và Mới nhất
-  useEffect(() => {
-    const fetchHomeData = async () => {
-      try {
-        setLoading(true);
-        setError(null);
+    useEffect(() => {
+        const fetchHomeData = async () => {
+            try {
+                setLoading(true);
+                setError(null);
 
-        // Fetch parallel
-        const [popularRes, recentRes] = await Promise.all([
-          eventApi.getAll({
-            page: 0,
-            size: 5,
-            status: "approved",
-            sort: "popularity",
-          }),
-          eventApi.getAll({
-            page: 0,
-            size: 5,
-            status: "approved",
-            sort: "recent_activity",
-          })
-        ]);
+                const [popularRes, recentRes] = await Promise.all([
+                    eventApi.getAll({
+                        page: 0,
+                        size: 5,
+                        status: "approved",
+                        sort: "popularity",
+                    }),
+                    eventApi.getAll({
+                        page: 0,
+                        size: 5,
+                        status: "approved",
+                        sort: "recent_activity",
+                    })
+                ]);
 
-        const popEvents = popularRes.data.content || [];
-        const recEvents = recentRes.data.content || [];
+                // --- 2. SỬA ĐOẠN XỬ LÝ DỮ LIỆU NÀY ---
+                // Hàm phụ để xử lý danh sách sự kiện
+                const processEvents = (events) => events.map(ev => ({
+                    ...ev,
+                    imageUrl: getImageUrl(ev.imageUrl) // Gọi hàm sửa URL ảnh ở đây
+                }));
 
-        setPopularEvents(popEvents);
-        setRecentEvents(recEvents);
+                const popEvents = processEvents(popularRes.data.content || []);
+                const recEvents = processEvents(recentRes.data.content || []);
+                // -------------------------------------
 
-      } catch (err) {
-        console.error("Không thể tải dữ liệu trang chủ:", err);
-        setError("Đã xảy ra lỗi khi tải dữ liệu sự kiện.");
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchHomeData();
-  }, []);
+                setPopularEvents(popEvents);
+                setRecentEvents(recEvents);
+
+            } catch (err) {
+                console.error("Không thể tải dữ liệu trang chủ:", err);
+                setError("Đã xảy ra lỗi khi tải dữ liệu sự kiện.");
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchHomeData();
+    }, []);
 
   const features = [
     {
