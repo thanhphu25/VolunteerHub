@@ -6,7 +6,8 @@
     "passwordHash": "$2a$10$wPHxwfsfTnOJAdgYcerBt.utdAvC24B/DWfuXMCKVIb1H2qE81VHq",
     "phone": "0901000001",
     "role": "organizer",
-    "status": "active"
+    "status": "active",
+    "avatar_url": "https://cdn11.dienmaycholon.vn/filewebdmclnew/public/userupload/files/Image%20FP_2024/avatar-cute-1.jpg"
   },
   {
     "id": 2,
@@ -14,7 +15,8 @@
     "email": "org2@vh.test",
     "passwordHash": "$2a$10$wPHxwfsfTnOJAdgYcerBt.utdAvC24B/DWfuXMCKVIb1H2qE81VHq",
     "role": "organizer",
-    "status": "active"
+    "status": "active",
+    "avatar_url": "https://cdn11.dienmaycholon.vn/filewebdmclnew/public/userupload/files/Image%20FP_2024/avatar-cute-2.jpg"
   },
   {
     "id": 3,
@@ -22,7 +24,8 @@
     "email": "organizer3@volunteerhub.local",
     "passwordHash": "$2a$10$wPHxwfsfTnOJAdgYcerBt.utdAvC24B/DWfuXMCKVIb1H2qE81VHq",
     "role": "organizer",
-    "status": "active"
+    "status": "active",
+    "avatar_url": "https://cdn11.dienmaycholon.vn/filewebdmclnew/public/userupload/files/Image%20FP_2024/avatar-cute-3.jpg"
   },
   {
     "id": 4,
@@ -30,7 +33,8 @@
     "email": "organizer4@volunteerhub.local",
     "passwordHash": "$2a$10$wPHxwfsfTnOJAdgYcerBt.utdAvC24B/DWfuXMCKVIb1H2qE81VHq",
     "role": "organizer",
-    "status": "active"
+    "status": "active",
+    "avatar_url": "https://cdn11.dienmaycholon.vn/filewebdmclnew/public/userupload/files/Image%20FP_2024/avatar-cute-4.jpg"
   },
   {
     "id": 5,
@@ -38,7 +42,8 @@
     "email": "organizer5@volunteerhub.local",
     "passwordHash": "$2a$10$wPHxwfsfTnOJAdgYcerBt.utdAvC24B/DWfuXMCKVIb1H2qE81VHq",
     "role": "organizer",
-    "status": "active"
+    "status": "active",
+    "avatar_url": "https://cdn11.dienmaycholon.vn/filewebdmclnew/public/userupload/files/Image%20FP_2024/avatar-cute-5.jpg"
   },
   {
     "id": 6,
@@ -46,7 +51,8 @@
     "email": "organizer6@volunteerhub.local",
     "passwordHash": "$2a$10$wPHxwfsfTnOJAdgYcerBt.utdAvC24B/DWfuXMCKVIb1H2qE81VHq",
     "role": "organizer",
-    "status": "active"
+    "status": "active",
+    "avatar_url": "https://cdn11.dienmaycholon.vn/filewebdmclnew/public/userupload/files/Image%20FP_2024/avatar-cute-6.jpg"
   },
   {
     "id": 7,
@@ -54,7 +60,8 @@
     "email": "organizer7@volunteerhub.local",
     "passwordHash": "$2a$10$wPHxwfsfTnOJAdgYcerBt.utdAvC24B/DWfuXMCKVIb1H2qE81VHq",
     "role": "organizer",
-    "status": "active"
+    "status": "active",
+    "avatar_url": "https://cdn11.dienmaycholon.vn/filewebdmclnew/public/userupload/files/Image%20FP_2024/avatar-cute-7.jpg"
   },
   {
     "id": 8,
@@ -62,7 +69,8 @@
     "email": "organizer8@volunteerhub.local",
     "passwordHash": "$2a$10$wPHxwfsfTnOJAdgYcerBt.utdAvC24B/DWfuXMCKVIb1H2qE81VHq",
     "role": "organizer",
-    "status": "active"
+    "status": "active",
+    "avatar_url": "https://cdn11.dienmaycholon.vn/filewebdmclnew/public/userupload/files/Image%20FP_2024/avatar-cute-8.jpg"
   },
   {
     "id": 9,
@@ -70,7 +78,8 @@
     "email": "organizer9@volunteerhub.local",
     "passwordHash": "$2a$10$wPHxwfsfTnOJAdgYcerBt.utdAvC24B/DWfuXMCKVIb1H2qE81VHq",
     "role": "organizer",
-    "status": "active"
+    "status": "active",
+    "avatar_url": "https://cdn11.dienmaycholon.vn/filewebdmclnew/public/userupload/files/Image%20FP_2024/avatar-cute-9.jpg"
   },
   {
     "id": 10,
@@ -78,7 +87,8 @@
     "email": "organizer10@volunteerhub.local",
     "passwordHash": "$2a$10$wPHxwfsfTnOJAdgYcerBt.utdAvC24B/DWfuXMCKVIb1H2qE81VHq",
     "role": "organizer",
-    "status": "active"
+    "status": "active",
+    "avatar_url": "https://cdn11.dienmaycholon.vn/filewebdmclnew/public/userupload/files/Image%20FP_2024/avatar-cute-10.jpg"
   },
   {
     "id": 11,
@@ -86,7 +96,8 @@
     "email": "vol1@vh.test",
     "passwordHash": "$2a$10$wPHxwfsfTnOJAdgYcerBt.utdAvC24B/DWfuXMCKVIb1H2qE81VHq",
     "role": "volunteer",
-    "status": "active"
+    "status": "active",
+    "avatar_url": "https://cdn11.dienmaycholon.vn/filewebdmclnew/public/userupload/files/Image%20FP_2024/avatar-cute-11.jpg"
   },
   {
     "id": 12,
@@ -94,7 +105,8 @@
     "email": "vol2@vh.test",
     "passwordHash": "$2a$10$wPHxwfsfTnOJAdgYcerBt.utdAvC24B/DWfuXMCKVIb1H2qE81VHq",
     "role": "volunteer",
-    "status": "active"
+    "status": "active",
+    "avatar_url": "https://cdn11.dienmaycholon.vn/filewebdmclnew/public/userupload/files/Image%20FP_2024/avatar-cute-12.jpg"
   },
   {
     "id": 13,
@@ -102,7 +114,8 @@
     "email": "volunteer3@volunteerhub.local",
     "passwordHash": "$2a$10$wPHxwfsfTnOJAdgYcerBt.utdAvC24B/DWfuXMCKVIb1H2qE81VHq",
     "role": "volunteer",
-    "status": "active"
+    "status": "active",
+    "avatar_url": "https://cdn11.dienmaycholon.vn/filewebdmclnew/public/userupload/files/Image%20FP_2024/avatar-cute-13.jpg"
   },
   {
     "id": 14,
@@ -110,7 +123,8 @@
     "email": "volunteer4@volunteerhub.local",
     "passwordHash": "$2a$10$wPHxwfsfTnOJAdgYcerBt.utdAvC24B/DWfuXMCKVIb1H2qE81VHq",
     "role": "volunteer",
-    "status": "active"
+    "status": "active",
+    "avatar_url": "https://cdn11.dienmaycholon.vn/filewebdmclnew/public/userupload/files/Image%20FP_2024/avatar-cute-14.jpg"
   },
   {
     "id": 15,
@@ -118,7 +132,8 @@
     "email": "volunteer5@volunteerhub.local",
     "passwordHash": "$2a$10$wPHxwfsfTnOJAdgYcerBt.utdAvC24B/DWfuXMCKVIb1H2qE81VHq",
     "role": "volunteer",
-    "status": "active"
+    "status": "active",
+    "avatar_url": "https://cdn11.dienmaycholon.vn/filewebdmclnew/public/userupload/files/Image%20FP_2024/avatar-cute-15.jpg"
   },
   {
     "id": 16,
@@ -126,7 +141,8 @@
     "email": "volunteer6@volunteerhub.local",
     "passwordHash": "$2a$10$wPHxwfsfTnOJAdgYcerBt.utdAvC24B/DWfuXMCKVIb1H2qE81VHq",
     "role": "volunteer",
-    "status": "active"
+    "status": "active",
+    "avatar_url": "https://cdn11.dienmaycholon.vn/filewebdmclnew/public/userupload/files/Image%20FP_2024/avatar-cute-16.jpg"
   },
   {
     "id": 17,
@@ -134,7 +150,8 @@
     "email": "volunteer7@volunteerhub.local",
     "passwordHash": "$2a$10$wPHxwfsfTnOJAdgYcerBt.utdAvC24B/DWfuXMCKVIb1H2qE81VHq",
     "role": "volunteer",
-    "status": "active"
+    "status": "active",
+    "avatar_url": "https://cdn11.dienmaycholon.vn/filewebdmclnew/public/userupload/files/Image%20FP_2024/avatar-cute-17.jpg"
   },
   {
     "id": 18,
@@ -142,7 +159,8 @@
     "email": "volunteer8@volunteerhub.local",
     "passwordHash": "$2a$10$wPHxwfsfTnOJAdgYcerBt.utdAvC24B/DWfuXMCKVIb1H2qE81VHq",
     "role": "volunteer",
-    "status": "active"
+    "status": "active",
+    "avatar_url": "https://cdn11.dienmaycholon.vn/filewebdmclnew/public/userupload/files/Image%20FP_2024/avatar-cute-18.jpg"
   },
   {
     "id": 19,
@@ -150,7 +168,8 @@
     "email": "volunteer9@volunteerhub.local",
     "passwordHash": "$2a$10$wPHxwfsfTnOJAdgYcerBt.utdAvC24B/DWfuXMCKVIb1H2qE81VHq",
     "role": "volunteer",
-    "status": "active"
+    "status": "active",
+    "avatar_url": "https://cdn11.dienmaycholon.vn/filewebdmclnew/public/userupload/files/Image%20FP_2024/avatar-cute-19.jpg"
   },
   {
     "id": 20,
@@ -158,7 +177,8 @@
     "email": "volunteer10@volunteerhub.local",
     "passwordHash": "$2a$10$wPHxwfsfTnOJAdgYcerBt.utdAvC24B/DWfuXMCKVIb1H2qE81VHq",
     "role": "volunteer",
-    "status": "active"
+    "status": "active",
+    "avatar_url": "https://cdn11.dienmaycholon.vn/filewebdmclnew/public/userupload/files/Image%20FP_2024/avatar-cute-20.jpg"
   },
   {
     "id": 21,
@@ -166,7 +186,8 @@
     "email": "volunteer11@volunteerhub.local",
     "passwordHash": "$2a$10$wPHxwfsfTnOJAdgYcerBt.utdAvC24B/DWfuXMCKVIb1H2qE81VHq",
     "role": "volunteer",
-    "status": "active"
+    "status": "active",
+    "avatar_url": "https://cdn11.dienmaycholon.vn/filewebdmclnew/public/userupload/files/Image%20FP_2024/avatar-cute-21.jpg"
   },
   {
     "id": 22,
@@ -174,7 +195,8 @@
     "email": "volunteer12@volunteerhub.local",
     "passwordHash": "$2a$10$wPHxwfsfTnOJAdgYcerBt.utdAvC24B/DWfuXMCKVIb1H2qE81VHq",
     "role": "volunteer",
-    "status": "active"
+    "status": "active",
+    "avatar_url": "https://cdn11.dienmaycholon.vn/filewebdmclnew/public/userupload/files/Image%20FP_2024/avatar-cute-22.jpg"
   },
   {
     "id": 23,
@@ -182,7 +204,8 @@
     "email": "volunteer13@volunteerhub.local",
     "passwordHash": "$2a$10$wPHxwfsfTnOJAdgYcerBt.utdAvC24B/DWfuXMCKVIb1H2qE81VHq",
     "role": "volunteer",
-    "status": "active"
+    "status": "active",
+    "avatar_url": "https://cdn11.dienmaycholon.vn/filewebdmclnew/public/userupload/files/Image%20FP_2024/avatar-cute-23.jpg"
   },
   {
     "id": 24,
@@ -190,7 +213,8 @@
     "email": "volunteer14@volunteerhub.local",
     "passwordHash": "$2a$10$wPHxwfsfTnOJAdgYcerBt.utdAvC24B/DWfuXMCKVIb1H2qE81VHq",
     "role": "volunteer",
-    "status": "active"
+    "status": "active",
+    "avatar_url": "https://cdn11.dienmaycholon.vn/filewebdmclnew/public/userupload/files/Image%20FP_2024/avatar-cute-24.jpg"
   },
   {
     "id": 25,
@@ -198,7 +222,8 @@
     "email": "volunteer15@volunteerhub.local",
     "passwordHash": "$2a$10$wPHxwfsfTnOJAdgYcerBt.utdAvC24B/DWfuXMCKVIb1H2qE81VHq",
     "role": "volunteer",
-    "status": "active"
+    "status": "active",
+    "avatar_url": "https://cdn11.dienmaycholon.vn/filewebdmclnew/public/userupload/files/Image%20FP_2024/avatar-cute-25.jpg"
   },
   {
     "id": 26,
@@ -206,7 +231,8 @@
     "email": "volunteer16@volunteerhub.local",
     "passwordHash": "$2a$10$wPHxwfsfTnOJAdgYcerBt.utdAvC24B/DWfuXMCKVIb1H2qE81VHq",
     "role": "volunteer",
-    "status": "active"
+    "status": "active",
+    "avatar_url": "https://cdn11.dienmaycholon.vn/filewebdmclnew/public/userupload/files/Image%20FP_2024/avatar-cute-26.jpg"
   },
   {
     "id": 27,
@@ -214,7 +240,8 @@
     "email": "volunteer17@volunteerhub.local",
     "passwordHash": "$2a$10$wPHxwfsfTnOJAdgYcerBt.utdAvC24B/DWfuXMCKVIb1H2qE81VHq",
     "role": "volunteer",
-    "status": "active"
+    "status": "active",
+    "avatar_url": "https://cdn11.dienmaycholon.vn/filewebdmclnew/public/userupload/files/Image%20FP_2024/avatar-cute-27.jpg"
   },
   {
     "id": 28,
@@ -222,7 +249,8 @@
     "email": "volunteer18@volunteerhub.local",
     "passwordHash": "$2a$10$wPHxwfsfTnOJAdgYcerBt.utdAvC24B/DWfuXMCKVIb1H2qE81VHq",
     "role": "volunteer",
-    "status": "active"
+    "status": "active",
+    "avatar_url": "https://cdn11.dienmaycholon.vn/filewebdmclnew/public/userupload/files/Image%20FP_2024/avatar-cute-28.jpg"
   },
   {
     "id": 29,
@@ -230,7 +258,8 @@
     "email": "volunteer19@volunteerhub.local",
     "passwordHash": "$2a$10$wPHxwfsfTnOJAdgYcerBt.utdAvC24B/DWfuXMCKVIb1H2qE81VHq",
     "role": "volunteer",
-    "status": "active"
+    "status": "active",
+    "avatar_url": "https://cdn11.dienmaycholon.vn/filewebdmclnew/public/userupload/files/Image%20FP_2024/avatar-cute-29.jpg"
   },
   {
     "id": 30,
@@ -238,7 +267,8 @@
     "email": "volunteer20@volunteerhub.local",
     "passwordHash": "$2a$10$wPHxwfsfTnOJAdgYcerBt.utdAvC24B/DWfuXMCKVIb1H2qE81VHq",
     "role": "volunteer",
-    "status": "active"
+    "status": "active",
+    "avatar_url": "https://cdn11.dienmaycholon.vn/filewebdmclnew/public/userupload/files/Image%20FP_2024/avatar-cute-30.jpg"
   },
   {
     "id": 31,
@@ -246,7 +276,8 @@
     "email": "volunteer21@volunteerhub.local",
     "passwordHash": "$2a$10$wPHxwfsfTnOJAdgYcerBt.utdAvC24B/DWfuXMCKVIb1H2qE81VHq",
     "role": "volunteer",
-    "status": "active"
+    "status": "active",
+    "avatar_url": "https://cdn11.dienmaycholon.vn/filewebdmclnew/public/userupload/files/Image%20FP_2024/avatar-cute-31.jpg"
   },
   {
     "id": 32,
@@ -254,7 +285,8 @@
     "email": "volunteer22@volunteerhub.local",
     "passwordHash": "$2a$10$wPHxwfsfTnOJAdgYcerBt.utdAvC24B/DWfuXMCKVIb1H2qE81VHq",
     "role": "volunteer",
-    "status": "active"
+    "status": "active",
+    "avatar_url": "https://cdn11.dienmaycholon.vn/filewebdmclnew/public/userupload/files/Image%20FP_2024/avatar-cute-32.jpg"
   },
   {
     "id": 33,
@@ -262,7 +294,8 @@
     "email": "volunteer23@volunteerhub.local",
     "passwordHash": "$2a$10$wPHxwfsfTnOJAdgYcerBt.utdAvC24B/DWfuXMCKVIb1H2qE81VHq",
     "role": "volunteer",
-    "status": "active"
+    "status": "active",
+    "avatar_url": "https://cdn11.dienmaycholon.vn/filewebdmclnew/public/userupload/files/Image%20FP_2024/avatar-cute-33.jpg"
   },
   {
     "id": 34,
@@ -270,7 +303,8 @@
     "email": "volunteer24@volunteerhub.local",
     "passwordHash": "$2a$10$wPHxwfsfTnOJAdgYcerBt.utdAvC24B/DWfuXMCKVIb1H2qE81VHq",
     "role": "volunteer",
-    "status": "active"
+    "status": "active",
+    "avatar_url": "https://cdn11.dienmaycholon.vn/filewebdmclnew/public/userupload/files/Image%20FP_2024/avatar-cute-34.jpg"
   },
   {
     "id": 35,
@@ -278,7 +312,8 @@
     "email": "volunteer25@volunteerhub.local",
     "passwordHash": "$2a$10$wPHxwfsfTnOJAdgYcerBt.utdAvC24B/DWfuXMCKVIb1H2qE81VHq",
     "role": "volunteer",
-    "status": "active"
+    "status": "active",
+    "avatar_url": "https://cdn11.dienmaycholon.vn/filewebdmclnew/public/userupload/files/Image%20FP_2024/avatar-cute-35.jpg"
   },
   {
     "id": 36,
@@ -286,7 +321,8 @@
     "email": "volunteer26@volunteerhub.local",
     "passwordHash": "$2a$10$wPHxwfsfTnOJAdgYcerBt.utdAvC24B/DWfuXMCKVIb1H2qE81VHq",
     "role": "volunteer",
-    "status": "active"
+    "status": "active",
+    "avatar_url": "https://cdn11.dienmaycholon.vn/filewebdmclnew/public/userupload/files/Image%20FP_2024/avatar-cute-36.jpg"
   },
   {
     "id": 37,
@@ -294,7 +330,8 @@
     "email": "volunteer27@volunteerhub.local",
     "passwordHash": "$2a$10$wPHxwfsfTnOJAdgYcerBt.utdAvC24B/DWfuXMCKVIb1H2qE81VHq",
     "role": "volunteer",
-    "status": "active"
+    "status": "active",
+    "avatar_url": "https://cdn11.dienmaycholon.vn/filewebdmclnew/public/userupload/files/Image%20FP_2024/avatar-cute-37.jpg"
   },
   {
     "id": 38,
@@ -302,7 +339,8 @@
     "email": "volunteer28@volunteerhub.local",
     "passwordHash": "$2a$10$wPHxwfsfTnOJAdgYcerBt.utdAvC24B/DWfuXMCKVIb1H2qE81VHq",
     "role": "volunteer",
-    "status": "active"
+    "status": "active",
+    "avatar_url": "https://cdn11.dienmaycholon.vn/filewebdmclnew/public/userupload/files/Image%20FP_2024/avatar-cute-38.jpg"
   },
   {
     "id": 39,
@@ -310,7 +348,8 @@
     "email": "volunteer29@volunteerhub.local",
     "passwordHash": "$2a$10$wPHxwfsfTnOJAdgYcerBt.utdAvC24B/DWfuXMCKVIb1H2qE81VHq",
     "role": "volunteer",
-    "status": "active"
+    "status": "active",
+    "avatar_url": "https://cdn11.dienmaycholon.vn/filewebdmclnew/public/userupload/files/Image%20FP_2024/avatar-cute-39.jpg"
   },
   {
     "id": 40,
@@ -318,7 +357,8 @@
     "email": "volunteer30@volunteerhub.local",
     "passwordHash": "$2a$10$wPHxwfsfTnOJAdgYcerBt.utdAvC24B/DWfuXMCKVIb1H2qE81VHq",
     "role": "volunteer",
-    "status": "active"
+    "status": "active",
+    "avatar_url": "https://cdn11.dienmaycholon.vn/filewebdmclnew/public/userupload/files/Image%20FP_2024/avatar-cute-40.jpg"
   },
   {
     "id": 41,
@@ -326,7 +366,8 @@
     "email": "volunteer31@volunteerhub.local",
     "passwordHash": "$2a$10$wPHxwfsfTnOJAdgYcerBt.utdAvC24B/DWfuXMCKVIb1H2qE81VHq",
     "role": "volunteer",
-    "status": "active"
+    "status": "active",
+    "avatar_url": "https://cdn11.dienmaycholon.vn/filewebdmclnew/public/userupload/files/Image%20FP_2024/avatar-cute-41.jpg"
   },
   {
     "id": 42,
@@ -334,7 +375,8 @@
     "email": "volunteer32@volunteerhub.local",
     "passwordHash": "$2a$10$wPHxwfsfTnOJAdgYcerBt.utdAvC24B/DWfuXMCKVIb1H2qE81VHq",
     "role": "volunteer",
-    "status": "active"
+    "status": "active",
+    "avatar_url": "https://cdn11.dienmaycholon.vn/filewebdmclnew/public/userupload/files/Image%20FP_2024/avatar-cute-42.jpg"
   },
   {
     "id": 43,
@@ -342,7 +384,8 @@
     "email": "volunteer33@volunteerhub.local",
     "passwordHash": "$2a$10$wPHxwfsfTnOJAdgYcerBt.utdAvC24B/DWfuXMCKVIb1H2qE81VHq",
     "role": "volunteer",
-    "status": "active"
+    "status": "active",
+    "avatar_url": "https://cdn11.dienmaycholon.vn/filewebdmclnew/public/userupload/files/Image%20FP_2024/avatar-cute-43.jpg"
   },
   {
     "id": 44,
@@ -350,7 +393,8 @@
     "email": "volunteer34@volunteerhub.local",
     "passwordHash": "$2a$10$wPHxwfsfTnOJAdgYcerBt.utdAvC24B/DWfuXMCKVIb1H2qE81VHq",
     "role": "volunteer",
-    "status": "active"
+    "status": "active",
+    "avatar_url": "https://cdn11.dienmaycholon.vn/filewebdmclnew/public/userupload/files/Image%20FP_2024/avatar-cute-44.jpg"
   },
   {
     "id": 45,
@@ -358,7 +402,8 @@
     "email": "volunteer35@volunteerhub.local",
     "passwordHash": "$2a$10$wPHxwfsfTnOJAdgYcerBt.utdAvC24B/DWfuXMCKVIb1H2qE81VHq",
     "role": "volunteer",
-    "status": "active"
+    "status": "active",
+    "avatar_url": "https://cdn11.dienmaycholon.vn/filewebdmclnew/public/userupload/files/Image%20FP_2024/avatar-cute-45.jpg"
   },
   {
     "id": 46,
@@ -366,7 +411,8 @@
     "email": "volunteer36@volunteerhub.local",
     "passwordHash": "$2a$10$wPHxwfsfTnOJAdgYcerBt.utdAvC24B/DWfuXMCKVIb1H2qE81VHq",
     "role": "volunteer",
-    "status": "active"
+    "status": "active",
+    "avatar_url": "https://cdn11.dienmaycholon.vn/filewebdmclnew/public/userupload/files/Image%20FP_2024/avatar-cute-46.jpg"
   },
   {
     "id": 47,
@@ -374,7 +420,8 @@
     "email": "volunteer37@volunteerhub.local",
     "passwordHash": "$2a$10$wPHxwfsfTnOJAdgYcerBt.utdAvC24B/DWfuXMCKVIb1H2qE81VHq",
     "role": "volunteer",
-    "status": "active"
+    "status": "active",
+    "avatar_url": "https://cdn11.dienmaycholon.vn/filewebdmclnew/public/userupload/files/Image%20FP_2024/avatar-cute-47.jpg"
   },
   {
     "id": 48,
@@ -382,7 +429,8 @@
     "email": "volunteer38@volunteerhub.local",
     "passwordHash": "$2a$10$wPHxwfsfTnOJAdgYcerBt.utdAvC24B/DWfuXMCKVIb1H2qE81VHq",
     "role": "volunteer",
-    "status": "active"
+    "status": "active",
+    "avatar_url": "https://cdn11.dienmaycholon.vn/filewebdmclnew/public/userupload/files/Image%20FP_2024/avatar-cute-48.jpg"
   },
   {
     "id": 49,
@@ -390,7 +438,8 @@
     "email": "volunteer39@volunteerhub.local",
     "passwordHash": "$2a$10$wPHxwfsfTnOJAdgYcerBt.utdAvC24B/DWfuXMCKVIb1H2qE81VHq",
     "role": "volunteer",
-    "status": "active"
+    "status": "active",
+    "avatar_url": "https://cdn11.dienmaycholon.vn/filewebdmclnew/public/userupload/files/Image%20FP_2024/avatar-cute-49.jpg"
   },
   {
     "id": 50,
@@ -398,7 +447,8 @@
     "email": "volunteer40@volunteerhub.local",
     "passwordHash": "$2a$10$wPHxwfsfTnOJAdgYcerBt.utdAvC24B/DWfuXMCKVIb1H2qE81VHq",
     "role": "volunteer",
-    "status": "active"
+    "status": "active",
+    "avatar_url": "https://cdn11.dienmaycholon.vn/filewebdmclnew/public/userupload/files/Image%20FP_2024/avatar-cute-50.jpg"
   },
   {
     "id": 51,
@@ -406,6 +456,7 @@
     "email": "admin@vh.test",
     "passwordHash": "$2a$10$wPHxwfsfTnOJAdgYcerBt.utdAvC24B/DWfuXMCKVIb1H2qE81VHq",
     "role": "admin",
-    "status": "active"
+    "status": "active",
+    "avatar_url": "https://cdn11.dienmaycholon.vn/filewebdmclnew/public/userupload/files/Image%20FP_2024/avatar-cute-51.jpg"
   }
 ]

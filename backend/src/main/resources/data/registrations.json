@@ -1,13 +1,13 @@
 [
-  { "eventId": 1, "volunteerId": 11, "status": "completed", "note": "Đã hiến 350ml máu" },
-  { "eventId": 1, "volunteerId": 12, "status": "completed", "note": "Sức khỏe tốt" },
+  { "eventId": 1, "volunteerId": 11, "status": "completed" },
+  { "eventId": 1, "volunteerId": 12, "status": "completed" },
   { "eventId": 1, "volunteerId": 13, "status": "approved" },
   { "eventId": 1, "volunteerId": 14, "status": "approved" },
   { "eventId": 1, "volunteerId": 15, "status": "pending" },
 
   { "eventId": 2, "volunteerId": 16, "status": "approved" },
   { "eventId": 2, "volunteerId": 17, "status": "approved" },
-  { "eventId": 2, "volunteerId": 18, "status": "rejected", "note": "Không đủ sức khỏe tham gia" },
+  { "eventId": 2, "volunteerId": 18, "status": "rejected" },
   { "eventId": 2, "volunteerId": 19, "status": "approved" },
 
   { "eventId": 3, "volunteerId": 20, "status": "approved" },
@@ -19,7 +19,7 @@
   { "eventId": 4, "volunteerId": 25, "status": "pending" },
 
   { "eventId": 5, "volunteerId": 26, "status": "approved" },
-  { "eventId": 5, "volunteerId": 27, "status": "completed", "note": "Đến rất đúng giờ" },
+  { "eventId": 5, "volunteerId": 27, "status": "completed" },
 
   { "eventId": 17, "volunteerId": 28, "status": "approved" },
   { "eventId": 17, "volunteerId": 29, "status": "approved" },
@@ -30,7 +30,7 @@
 
   { "eventId": 18, "volunteerId": 32, "status": "approved" },
   { "eventId": 18, "volunteerId": 33, "status": "approved" },
-  { "eventId": 18, "volunteerId": 34, "status": "rejected", "note": "Đăng ký quá muộn" },
+  { "eventId": 18, "volunteerId": 34, "status": "rejected" },
   { "eventId": 18, "volunteerId": 35, "status": "approved" },
   { "eventId": 18, "volunteerId": 36, "status": "approved" },
 
@@ -51,8 +51,8 @@
   { "eventId": 21, "volunteerId": 49, "status": "pending" },
   { "eventId": 21, "volunteerId": 50, "status": "rejected" },
 
-  { "eventId": 11, "volunteerId": 11, "status": "pending", "note": "Em rất thích làm đồ handmade, mong được duyệt ạ." },
-  { "eventId": 3, "volunteerId": 11, "status": "approved", "note": null },
-  { "eventId": 6, "volunteerId": 11, "status": "rejected", "note": "Đã đủ số lượng TNV nam" },
-  { "eventId": 8, "volunteerId": 11, "status": "completed", "note": "Hoàn thành cự ly 5km" }
+  { "eventId": 11, "volunteerId": 11, "status": "pending" },
+  { "eventId": 3, "volunteerId": 11, "status": "approved" },
+  { "eventId": 6, "volunteerId": 11, "status": "rejected" },
+  { "eventId": 8, "volunteerId": 11, "status": "completed" }
 ]
