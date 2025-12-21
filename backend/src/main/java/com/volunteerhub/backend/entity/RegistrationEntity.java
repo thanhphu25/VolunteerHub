@@ -9,23 +9,25 @@ import lombok.Setter;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "registrations",
-        uniqueConstraints = @UniqueConstraint(name = "unique_registration", columnNames = {"event_id", "volunteer_id"}))
+@Table(name = "registrations", uniqueConstraints = @UniqueConstraint(name = "unique_registration", columnNames = {
+        "event_id", "volunteer_id" }))
 @Getter
 @Setter
 @NoArgsConstructor
+/**
+ * Represents a volunteer's registration for an event,
+ * tracking approval, attendance, and completion lifecycle.
+ */
 public class RegistrationEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // event_id
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "event_id", nullable = false)
     private com.volunteerhub.backend.entity.EventEntity event;
 
-    // volunteer_id
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "volunteer_id", nullable = false)
     private UserEntity volunteer;

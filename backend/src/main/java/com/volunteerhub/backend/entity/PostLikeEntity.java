@@ -9,22 +9,25 @@ import lombok.Setter;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "post_likes", uniqueConstraints = @UniqueConstraint(name = "unique_like", columnNames = {"post_id","user_id"}))
+@Table(name = "post_likes", uniqueConstraints = @UniqueConstraint(name = "unique_like", columnNames = { "post_id",
+        "user_id" }))
 @Getter
 @Setter
 @NoArgsConstructor
+/**
+ * Represents a "like" reaction from a user on a post.
+ * Uniqueness is enforced per user-post pair.
+ */
 public class PostLikeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // post_id
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "post_id", nullable = false)
     private PostEntity post;
 
-    // user_id
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private UserEntity user;

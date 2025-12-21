@@ -1,6 +1,5 @@
 package com.volunteerhub.backend.entity;
 
-import com.volunteerhub.backend.entity.UserEntity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -13,33 +12,37 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @NoArgsConstructor
+/**
+ * Represents a volunteer event with scheduling, capacity,
+ * categorization, and moderation metadata.
+ * Includes lifecycle timestamps and optimistic locking via `version`.
+ */
 public class EventEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // organizer_id
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "organizer_id", nullable = false)
     private UserEntity organizer;
 
-    @Column(name = "name", nullable = false, length = 255)
+    @Column(nullable = false, length = 255)
     private String name;
 
-    @Column(name = "slug", length = 255)
+    @Column(length = 255)
     private String slug;
 
-    @Column(name = "description", columnDefinition = "TEXT", nullable = false)
+    @Column(columnDefinition = "TEXT", nullable = false)
     private String description;
 
-    @Column(name = "category", length = 100, nullable = false)
+    @Column(length = 100, nullable = false)
     private String category;
 
-    @Column(name = "location", length = 500, nullable = false)
+    @Column(length = 500, nullable = false)
     private String location;
 
-    @Column(name = "address", columnDefinition = "TEXT")
+    @Column(columnDefinition = "TEXT")
     private String address;
 
     @Column(name = "start_date", nullable = false)
@@ -51,20 +54,20 @@ public class EventEntity {
     @Column(name = "max_volunteers")
     private Integer maxVolunteers;
 
-    @Column(name = "current_volunteers")
+    @Column(name = "current_volunteers", nullable = false)
     private Integer currentVolunteers = 0;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false, length = 20)
+    @Column(nullable = false, length = 20)
     private EventStatus status = EventStatus.pending;
 
     @Column(name = "image_url", length = 500)
     private String imageUrl;
 
-    @Column(name = "requirements", columnDefinition = "TEXT")
+    @Column(columnDefinition = "TEXT")
     private String requirements;
 
-    @Column(name = "benefits", columnDefinition = "TEXT")
+    @Column(columnDefinition = "TEXT")
     private String benefits;
 
     @Column(name = "contact_info", length = 255)
@@ -89,9 +92,8 @@ public class EventEntity {
     @Column(name = "approved_at")
     private LocalDateTime approvedAt;
 
-    // approved_by -> reference to users.id
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "approved_by")
+    @JoinColumn(name = "approved_by", nullable = true)
     private UserEntity approvedBy;
 
     @PrePersist
@@ -99,7 +101,10 @@ public class EventEntity {
         LocalDateTime now = LocalDateTime.now();
         this.createdAt = now;
         this.updatedAt = now;
-        if (this.currentVolunteers == null) this.currentVolunteers = 0;
+        if (this.currentVolunteers == null)
+            this.currentVolunteers = 0;
+        if (this.version == null)
+            this.version = 0L;
     }
 
     @PreUpdate

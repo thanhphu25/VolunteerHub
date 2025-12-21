@@ -19,6 +19,10 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Date;
 
+/**
+ * Implementation of IAuthService.
+ * Handles user registration, login, token refresh, and logout with JWT-based authentication.
+ */
 @Service
 public class AuthServiceImpl implements IAuthService {
 
@@ -51,7 +55,41 @@ public class AuthServiceImpl implements IAuthService {
         u.setPasswordHash(passwordEncoder.encode(req.getPassword()));
         u.setFullName(req.getFullName());
         u.setPhone(req.getPhone());
-        u.setRole(Role.volunteer); // default
+
+        // Determine role: default volunteer
+        Role assignedRole = Role.volunteer;
+        String r = req.getRole();
+        if (r != null && !r.isBlank()) {
+            try {
+                assignedRole = Role.valueOf(r); // expects exact enum name, e.g., "volunteer" or "organizer"
+            } catch (Exception ex) {
+                throw new IllegalArgumentException("Invalid role");
+            }
+            if (assignedRole == Role.admin) {
+                throw new IllegalArgumentException("Cannot register as admin");
+            }
+        }
+        u.setRole(assignedRole);
+
+        return userRepository.save(u);
+    }
+
+    @Override
+    @Transactional
+    public UserEntity registerAdmin(RegisterRequest req) {
+        if (userRepository.existsByEmail(req.getEmail())) {
+            throw new IllegalArgumentException("Email already in use");
+        }
+
+        UserEntity u = new UserEntity();
+        u.setEmail(req.getEmail().toLowerCase().trim());
+        u.setPasswordHash(passwordEncoder.encode(req.getPassword()));
+        u.setFullName(req.getFullName());
+        u.setPhone(req.getPhone());
+
+        u.setRole(Role.admin);
+
+
         return userRepository.save(u);
     }
 
@@ -68,7 +106,7 @@ public class AuthServiceImpl implements IAuthService {
         String refresh = jwtProvider.generateRefreshToken(user.getId(), user.getEmail(), user.getRole().name());
 
         Date expDate = jwtProvider.getClaims(refresh).getExpiration();
-        LocalDateTime expiresAt = LocalDateTime.ofInstant(expDate.toInstant(), ZoneId.systemDefault());
+        java.time.LocalDateTime expiresAt = LocalDateTime.ofInstant(expDate.toInstant(), ZoneId.systemDefault());
         refreshTokenService.createRefreshToken(user, refresh, expiresAt);
 
         return new AuthResponse(access, refresh, user.getId(), user.getEmail(), user.getFullName(), user.getRole().name());

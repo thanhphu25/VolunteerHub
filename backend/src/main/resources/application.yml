@@ -17,8 +17,19 @@ spring:
     enabled: true
     locations: classpath:db/migration
 
+  file:
+    upload-dir: uploads
+    max-size-bytes: 5242880
+    allowed-types: image/png,image/jpeg,image/webp,image/gif
+
+webpush:
+  vapid:
+    public-key: BHtXUMbNNQa7Z2PKQBFaXh1ddarrHfxQzFidtfauNiPkZxcqZOjBkwH18t2vAzcCNK-tOcytQc3pfEOak5r2Az0
+    private-key: kFdYtDBws7CuV0HWulSbLrKaS5kGW63LpWfcIzTjbxc
+    subject: ${VAPID_SUBJECT:mailto:admin@vh.test}
+
 jwt:
-  secret: ${JWT_SECRET:change_this_to_a_very_long_random_secret_key_for_dev_only}
+  secret: ${JWT_SECRET}
   expirationMs: ${JWT_EXP_MS:3600000}
 
 server:

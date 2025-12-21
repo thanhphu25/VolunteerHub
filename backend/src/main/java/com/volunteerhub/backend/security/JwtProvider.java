@@ -7,6 +7,11 @@ import org.springframework.stereotype.Component;
 import java.security.Key;
 import java.util.Date;
 
+/**
+ * Component for generating, validating, and parsing JWT tokens.
+ * Supports both access and refresh token creation with HS256 signature algorithm.
+ * Handles token claims extraction and type validation.
+ */
 @Component
 public class JwtProvider {
 
@@ -17,7 +22,6 @@ public class JwtProvider {
         this.properties = properties;
         String secret = properties.getSecret();
         if (secret == null || secret.length() < 32) {
-            // For dev convenience; set env JWT_SECRET in real env
             secret = "change_this_to_a_very_long_random_secret_key_for_dev_only";
         }
         this.key = Keys.hmacShaKeyFor(secret.getBytes());
@@ -65,7 +69,8 @@ public class JwtProvider {
     }
 
     public boolean isRefreshToken(String token) {
-        if (!validateToken(token)) return false;
+        if (!validateToken(token))
+            return false;
         var claims = getClaims(token);
         String typ = claims.get("typ", String.class);
         return "refresh".equalsIgnoreCase(typ);

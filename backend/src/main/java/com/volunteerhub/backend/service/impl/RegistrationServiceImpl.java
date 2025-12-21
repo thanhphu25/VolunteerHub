@@ -7,16 +7,19 @@ import com.volunteerhub.backend.entity.RegistrationEntity;
 import com.volunteerhub.backend.repository.RegistrationRepository;
 import com.volunteerhub.backend.repository.EventRepository;
 import com.volunteerhub.backend.mapper.RegistrationMapper;
+import com.volunteerhub.backend.service.IAuditService;
 import com.volunteerhub.backend.service.IRegistrationService;
 import com.volunteerhub.backend.entity.UserEntity;
 import com.volunteerhub.backend.repository.UserRepository;
 import com.volunteerhub.backend.security.CustomUserDetails;
+import com.volunteerhub.backend.service.INotificationService;
 import jakarta.transaction.Transactional;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -26,15 +29,21 @@ public class RegistrationServiceImpl implements IRegistrationService {
     private final EventRepository eventRepo;
     private final UserRepository userRepo;
     private final RegistrationMapper mapper;
+    private final INotificationService notificationService;
+    private final IAuditService auditService;
 
     public RegistrationServiceImpl(RegistrationRepository regRepo,
                                    EventRepository eventRepo,
                                    UserRepository userRepo,
-                                   RegistrationMapper mapper) {
+                                   RegistrationMapper mapper,
+                                   INotificationService notificationService,
+                                   IAuditService auditService) {
         this.regRepo = regRepo;
         this.eventRepo = eventRepo;
         this.userRepo = userRepo;
         this.mapper = mapper;
+        this.notificationService = notificationService;
+        this.auditService = auditService;
     }
 
     private UserEntity currentUser(Authentication auth) {
@@ -60,12 +69,37 @@ public class RegistrationServiceImpl implements IRegistrationService {
             }
         }
 
-        // prevent duplicate
-        var existing = regRepo.findByEventAndVolunteer(event, volunteer);
-        if (existing.isPresent()) {
-            throw new IllegalArgumentException("Already registered for this event");
+        // Check for existing registration
+        var existingRegistration = regRepo.findByEventAndVolunteer(event, volunteer);
+        
+        if (existingRegistration.isPresent()) {
+            RegistrationEntity existing = existingRegistration.get();
+            
+            // If there's an active registration, prevent duplicate
+            if (existing.getStatus() == RegistrationEntity.RegistrationStatus.pending ||
+                existing.getStatus() == RegistrationEntity.RegistrationStatus.approved ||
+                existing.getStatus() == RegistrationEntity.RegistrationStatus.completed) {
+                throw new IllegalArgumentException("Already registered for this event");
+            }
+            
+            // If there's a cancelled or rejected registration, reactivate it
+            if (existing.getStatus() == RegistrationEntity.RegistrationStatus.cancelled ||
+                existing.getStatus() == RegistrationEntity.RegistrationStatus.rejected) {
+                
+                // Update the existing registration
+                existing.setStatus(RegistrationEntity.RegistrationStatus.pending);
+                existing.setRegisteredAt(LocalDateTime.now());
+                existing.setCancelledAt(null); // Clear cancellation timestamp
+                existing.setApprovedAt(null); // Clear approval timestamp
+                existing.setNote(req.getNote()); // Update with new note
+                
+                RegistrationEntity saved = regRepo.save(existing);
+                notifyOrganizerOfNewRegistration(event, volunteer);
+                return mapper.toResponse(saved);
+            }
         }
 
+        // No existing registration, create new one
         RegistrationEntity r = mapper.toEntity(req);
         r.setEvent(event);
         r.setVolunteer(volunteer);
@@ -73,6 +107,7 @@ public class RegistrationServiceImpl implements IRegistrationService {
         r.setRegisteredAt(LocalDateTime.now());
 
         RegistrationEntity saved = regRepo.save(r);
+        notifyOrganizerOfNewRegistration(event, volunteer);
         return mapper.toResponse(saved);
     }
 
@@ -88,9 +123,9 @@ public class RegistrationServiceImpl implements IRegistrationService {
 
         EventEntity event = reg.getEvent();
         // only before event start
-        if (event.getStartDate() != null && LocalDateTime.now().isAfter(event.getStartDate())) {
-            throw new IllegalArgumentException("Cannot cancel after event start");
-        }
+//        if (event.getStartDate() != null && LocalDateTime.now().isAfter(event.getStartDate())) {
+//            throw new IllegalArgumentException("Cannot cancel after event start");
+//        }
 
         // if previously approved, decrement currentVolunteers
         if (reg.getStatus() == RegistrationEntity.RegistrationStatus.approved) {
@@ -119,6 +154,45 @@ public class RegistrationServiceImpl implements IRegistrationService {
     }
 
     @Override
+    public RegistrationResponse getRegistrationByEventAndVolunteer(Long eventId, Authentication auth) {
+        try {
+            UserEntity user = currentUser(auth);
+            
+            // First check if event exists and is not deleted
+            EventEntity event = eventRepo.findById(eventId)
+                .orElseThrow(() -> new IllegalArgumentException("Event not found"));
+            
+            if (Boolean.TRUE.equals(event.getIsDeleted())) {
+                throw new IllegalArgumentException("Event not found");
+            }
+            
+            // Try the simple query first
+            Optional<RegistrationEntity> registrationOpt = regRepo.findByEventIdAndVolunteerIdSimple(eventId, user.getId());
+            
+            if (registrationOpt.isEmpty()) {
+                return null;
+            }
+            
+            RegistrationEntity registration = registrationOpt.get();
+            // Manually fetch the related entities to avoid lazy loading issues
+            registration.getEvent().getName(); // Trigger lazy loading
+            registration.getVolunteer().getFullName(); // Trigger lazy loading
+            registration.getVolunteer().getEmail(); // Trigger lazy loading
+            
+            return mapper.toResponse(registration);
+        } catch (IllegalArgumentException iae) {
+            throw iae;
+        } catch (SecurityException se) {
+            throw se;
+        } catch (Exception e) {
+            // Log the error for debugging
+            System.err.println("Error in getRegistrationByEventAndVolunteer: " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("Unable to get registration: " + e.getMessage(), e);
+        }
+    }
+
+    @Override
     @Transactional
     public RegistrationResponse approve(Long eventId, Long registrationId, Authentication auth) {
         // only organizer of event or admin allowed (controller enforces)
@@ -139,6 +213,22 @@ public class RegistrationServiceImpl implements IRegistrationService {
         event.setCurrentVolunteers(current + 1);
         eventRepo.save(event);
 
+        // create in-app notification for volunteer
+        try {
+            String title = "Đăng ký được duyệt";
+            String message = "Đăng ký của bạn cho sự kiện \"" + event.getName() + "\" đã được duyệt.";
+            String payload = null; // you can include JSON payload if needed (e.g. eventId)
+            String link = "/events/" + event.getId();
+            notificationService.createNotification(reg.getVolunteer().getId(), "registration_approved", title, message, payload, link);
+            auditService.log(null, "registration:approve", java.util.Map.of(
+                    "eventId", event.getId(),
+                    "registrationId", reg.getId(),
+                    "volunteerId", reg.getVolunteer().getId()
+            ));
+        } catch (Exception ex) {
+            // log and ignore
+        }
+
         return mapper.toResponse(saved);
     }
 
@@ -149,18 +239,109 @@ public class RegistrationServiceImpl implements IRegistrationService {
         reg.setStatus(RegistrationEntity.RegistrationStatus.rejected);
         reg.setApprovedAt(LocalDateTime.now()); // set as processed
         RegistrationEntity saved = regRepo.save(reg);
+
+        try {
+            EventEntity event = reg.getEvent();
+            UserEntity volunteer = reg.getVolunteer();
+            if (event != null && volunteer != null && volunteer.getId() != null) {
+                String eventName = event.getName() != null ? event.getName() : "sự kiện";
+                String title = "Đăng ký bị từ chối";
+                String message = "Yêu cầu tham gia sự kiện \"" + eventName + "\" đã bị từ chối.";
+                String payload = event.getId() != null
+                        ? String.format("{\"eventId\":%d}", event.getId())
+                        : null;
+                String link = "/events/" + event.getId();
+                notificationService.createNotification(
+                        volunteer.getId(),
+                        "volunteer:registration_rejected",
+                        title,
+                        message,
+                        payload,
+                        link
+                );
+            }
+        } catch (Exception ex) {
+            // ignore notification failures to keep rejection flow working
+        }
         return mapper.toResponse(saved);
     }
 
     @Override
     @Transactional
     public RegistrationResponse markCompleted(Long eventId, Long registrationId, boolean present, String completionNote, Authentication auth) {
-        RegistrationEntity reg = regRepo.findById(registrationId).orElseThrow(() -> new IllegalArgumentException("Registration not found"));
-        reg.setStatus(RegistrationEntity.RegistrationStatus.completed);
+        // 1. Tìm bản ghi
+        RegistrationEntity reg = regRepo.findById(registrationId)
+                .orElseThrow(() -> new IllegalArgumentException("Registration not found"));
+
+        // 2. Validate: Có đúng sự kiện không?
+        if (!reg.getEvent().getId().equals(eventId)) {
+            throw new IllegalArgumentException("Registration does not belong to this event");
+        }
+
+        // 3. Validate quyền Organizer/Admin
+        UserEntity currentUser = currentUser(auth);
+        boolean isOrganizer = reg.getEvent().getOrganizer().getId().equals(currentUser.getId());
+        boolean isAdmin = currentUser.getRole().name().equalsIgnoreCase("ADMIN");
+
+        if (!isOrganizer && !isAdmin) {
+            throw new SecurityException("Bạn không có quyền chấm công cho sự kiện này");
+        }
+
+        // 4. Cập nhật thông tin chi tiết (Theo code của bạn)
         reg.setCompletedAt(LocalDateTime.now());
+
+        // Lưu trạng thái điểm danh (Present/Absent) vào trường riêng
         reg.setAttendanceStatus(present ? RegistrationEntity.AttendanceStatus.present : RegistrationEntity.AttendanceStatus.absent);
-        reg.setCompletionNote(completionNote);
+
+        // Lưu ghi chú
+        String notePrefix = present ? "[CÓ MẶT] " : "[VẮNG MẶT] ";
+        reg.setCompletionNote(notePrefix + (completionNote != null ? completionNote : ""));
+
+        // 5. QUAN TRỌNG: Cập nhật Trạng thái chính (Status) để Frontend hiển thị đúng
+        if (present) {
+            // Nếu có mặt -> Trạng thái là HOÀN THÀNH
+            reg.setStatus(RegistrationEntity.RegistrationStatus.completed);
+        } else {
+            // Nếu vắng mặt -> Trạng thái là TỪ CHỐI (hoặc Không hoàn thành)
+            // Để Frontend hiện nút màu đỏ thay vì nút xanh "Đã hoàn thành"
+            reg.setStatus(RegistrationEntity.RegistrationStatus.rejected);
+        }
+
+        // 6. Lưu và trả về
         RegistrationEntity saved = regRepo.save(reg);
         return mapper.toResponse(saved);
+    }
+
+    private void notifyOrganizerOfNewRegistration(EventEntity event, UserEntity volunteer) {
+        try {
+            if (event.getOrganizer() == null || event.getOrganizer().getId() == null) {
+                return;
+            }
+
+            Long organizerId = event.getOrganizer().getId();
+            if (volunteer != null && organizerId.equals(volunteer.getId())) {
+                return;
+            }
+
+            String volunteerName = (volunteer != null && volunteer.getFullName() != null)
+                    ? volunteer.getFullName()
+                    : "Một tình nguyện viên";
+            String eventName = event.getName() != null ? event.getName() : "sự kiện";
+            String payload = event.getId() != null
+                    ? String.format("{\"eventId\":%d}", event.getId())
+                    : null;
+            String link = "/organizer/events/" + event.getId() + "/registrations";
+
+            notificationService.createNotification(
+                    organizerId,
+                    "organizer:new_registration",
+                    "Đăng ký mới cho sự kiện",
+                    volunteerName + " đã đăng ký tham gia \"" + eventName + "\".",
+                    payload,
+                    link
+            );
+        } catch (Exception ex) {
+            // ignore notification failure to keep registration flow working
+        }
     }
 }

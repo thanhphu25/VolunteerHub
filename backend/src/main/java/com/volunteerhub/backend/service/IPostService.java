@@ -11,12 +11,22 @@ import org.springframework.security.core.Authentication;
 
 import java.util.List;
 
+/**
+ * Service interface for managing posts, comments, and likes.
+ * Handles event-tied post lifecycle and engagement metrics.
+ */
 public interface IPostService {
     PostResponse createPost(Long eventId, PostCreateRequest req, Authentication auth);
-    Page<PostResponse> listPosts(Long eventId, Pageable pageable);
+
+    Page<PostResponse> listPosts(Long eventId, Pageable pageable, Authentication auth);
+
     CommentResponse addComment(Long postId, CommentCreateRequest req, Authentication auth);
+
     List<CommentResponse> listComments(Long postId);
+
     void likePost(Long postId, Authentication auth);
+
     void unlikePost(Long postId, Authentication auth);
+
     List<PostLikeResponse> listLikes(Long postId);
 }

@@ -12,6 +12,10 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @NoArgsConstructor
+/**
+ * Represents an application user profile, authentication metadata,
+ * and lifecycle timestamps. Supports soft deletion and email verification.
+ */
 public class UserEntity {
 
     @Id
@@ -34,8 +38,9 @@ public class UserEntity {
     @Column(nullable = false, length = 20)
     private Role role = Role.volunteer;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
-    private String status = "active";
+    private Status status = Status.active;
 
     @Column(name = "avatar_url", length = 500)
     private String avatarUrl;
@@ -57,6 +62,12 @@ public class UserEntity {
 
     @Column(name = "last_login")
     private LocalDateTime lastLogin;
+
+    @Column(name = "email_verified", nullable = false)
+    private Boolean emailVerified = false;
+
+    @Column(name = "email_verified_at")
+    private LocalDateTime emailVerifiedAt;
 
     @PrePersist
     public void prePersist() {

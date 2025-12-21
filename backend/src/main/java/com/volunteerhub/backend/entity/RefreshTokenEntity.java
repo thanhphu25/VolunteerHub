@@ -13,17 +13,19 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @NoArgsConstructor
+/**
+ * Persists refresh tokens used for session renewal.
+ * Includes token hash, revocation state, and expiry metadata.
+ */
 public class RefreshTokenEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // store raw token optional (TEXT), not indexed
     @Column(name = "token", columnDefinition = "TEXT")
     private String token;
 
-    // SHA-256 hex of token, used for lookup & unique index
     @Column(name = "token_hash", nullable = false, length = 64, unique = true)
     private String tokenHash;
 

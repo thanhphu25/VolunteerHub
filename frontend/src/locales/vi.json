@@ -1,0 +1,132 @@
+{
+    "nav": {
+        "home": "Trang chủ",
+        "events": "Sự kiện",
+        "myRegistrations": "Đăng ký của tôi",
+        "manageEvents": "Quản lý sự kiện",
+        "approveEvents": "Quản lý sự kiện",
+        "manageUsers": "Quản lý User",
+        "login": "Đăng nhập",
+        "register": "Đăng ký",
+        "profile": "Trang cá nhân",
+        "logout": "Đăng xuất",
+        "notifications": "Thông báo",
+        "account": "Tài khoản"
+    },
+    "home": {
+        "hero": {
+            "title": "Kết nối trái tim – Lan tỏa yêu thương",
+            "subtitle": "Tham gia cộng đồng tình nguyện lớn nhất Việt Nam",
+            "cta": "Khám phá sự kiện",
+            "ctaSecondary": "Tìm hiểu thêm"
+        },
+        "whyChoose": {
+            "title": "Vì sao chọn Volunteer Hub?",
+            "features": {
+                "connect": {
+                    "title": "Kết nối cộng đồng",
+                    "desc": "Tạo cầu nối giữa những người có cùng đam mê giúp đỡ xã hội."
+                },
+                "experience": {
+                    "title": "Cơ hội trải nghiệm",
+                    "desc": "Tham gia các hoạt động thực tế đầy ý nghĩa và sáng tạo."
+                },
+                "develop": {
+                    "title": "Phát triển bản thân",
+                    "desc": "Rèn luyện kỹ năng làm việc nhóm, lãnh đạo và quản lý dự án."
+                },
+                "spread": {
+                    "title": "Lan tỏa yêu thương",
+                    "desc": "Góp phần mang lại niềm vui và hy vọng cho những hoàn cảnh khó khăn."
+                }
+            }
+        },
+        "features": {
+            "title": "Tính năng nổi bật",
+            "volunteerManagement": {
+                "title": "Quản lý Tình nguyện viên",
+                "desc": "Theo dõi và quản lý thông tin tình nguyện viên một cách hiệu quả"
+            },
+            "eventManagement": {
+                "title": "Quản lý Sự kiện",
+                "desc": "Tạo và quản lý các sự kiện tình nguyện dễ dàng"
+            },
+            "communication": {
+                "title": "Giao tiếp",
+                "desc": "Kết nối và giao tiếp với cộng đồng tình nguyện"
+            },
+            "tracking": {
+                "title": "Theo dõi Giờ",
+                "desc": "Theo dõi và ghi nhận giờ tình nguyện chính xác"
+            }
+        },
+        "testimonials": {
+            "title": "Người dùng nói gì về chúng tôi",
+            "subtitle": "Hàng nghìn tổ chức tin tưởng VolunteerHub"
+        },
+        "events": {
+            "title": "Sự kiện nổi bật",
+            "viewAll": "Xem tất cả sự kiện",
+            "noEvents": "Hiện chưa có sự kiện nào được duyệt."
+        }
+    },
+    "events": {
+        "title": "Danh sách sự kiện",
+        "filters": "Bộ lọc",
+        "search": "Tìm kiếm",
+        "searchPlaceholder": "Tìm theo tên hoặc mô tả sự kiện...",
+        "category": "Danh mục",
+        "location": "Địa điểm",
+        "organizer": "Tên người tổ chức",
+        "timeStatus": "Trạng thái thời gian",
+        "fromDate": "Từ ngày",
+        "toDate": "Đến ngày",
+        "apply": "Áp dụng bộ lọc",
+        "clear": "Xóa bộ lọc",
+        "activeFilters": "Bộ lọc đang áp dụng:",
+        "noResults": "Không tìm thấy sự kiện nào phù hợp với bộ lọc của bạn.",
+        "noEvents": "Hiện tại chưa có sự kiện nào được phê duyệt.",
+        "manage": "Quản lý",
+        "ongoing": "Đang diễn ra",
+        "upcoming": "Chưa diễn ra",
+        "ended": "Đã kết thúc"
+    },
+    "auth": {
+        "login": {
+            "title": "Đăng nhập",
+            "email": "Email",
+            "password": "Mật khẩu",
+            "submit": "Đăng nhập",
+            "noAccount": "Chưa có tài khoản?",
+            "register": "Đăng ký ngay",
+            "showPassword": "Hiển thị mật khẩu",
+            "hidePassword": "Ẩn mật khẩu"
+        },
+        "register": {
+            "title": "Đăng ký tài khoản",
+            "fullName": "Họ và tên",
+            "email": "Email",
+            "phone": "Số điện thoại",
+            "password": "Mật khẩu",
+            "confirmPassword": "Xác nhận mật khẩu",
+            "role": "Vai trò",
+            "volunteer": "Tình nguyện viên",
+            "organizer": "Người tổ chức",
+            "admin": "Quản trị viên",
+            "submit": "Đăng ký",
+            "showPassword": "Hiển thị mật khẩu",
+            "hidePassword": "Ẩn mật khẩu"
+        }
+    },
+    "common": {
+        "loading": "Đang tải...",
+        "error": "Đã xảy ra lỗi",
+        "success": "Thành công",
+        "viewDetails": "Xem chi tiết",
+        "edit": "Sửa",
+        "delete": "Xóa",
+        "cancel": "Hủy",
+        "save": "Lưu",
+        "close": "Đóng"
+    }
+}
