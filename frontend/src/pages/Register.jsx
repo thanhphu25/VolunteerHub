@@ -23,7 +23,7 @@ import {
   Visibility, VisibilityOff, PersonOutline, EmailOutlined,
   PhoneOutlined, LockOutlined, VolunteerActivism
 } from "@mui/icons-material";
-import heroImg from "../assets/hero.jpg";
+import heroImg from "../assets/hero.png";
 
 /**
  * Yup validation schema for registration form fields
@@ -107,7 +107,7 @@ export default function Register() {
   };
 
   return (
-    <Box sx={{ display: 'flex', minHeight: '100vh', width: '100vw', overflow: 'hidden' }}>
+    <Box sx={{ display: 'flex', height: { md: 'calc(100vh - 64px)', xs: 'auto' }, minHeight: { xs: '100vh', md: '0' }, width: '100vw', overflow: 'hidden' }}>
       <CssBaseline />
 
       { }
@@ -119,22 +119,23 @@ export default function Register() {
           justifyContent: 'center',
           alignItems: 'center',
           bgcolor: 'background.paper',
-          p: 4,
+          p: 2,
           zIndex: 2,
-          boxShadow: { md: '4px 0 20px rgba(0,0,0,0.1)' }
+          boxShadow: { md: '4px 0 20px rgba(0,0,0,0.1)' },
+          overflowY: 'auto'
         }}
       >
         <Box sx={{ width: '100%', maxWidth: 450 }}>
-          <Box display="flex" flexDirection="column" alignItems="center" mb={3}>
-            <Avatar sx={{ m: 1, bgcolor: 'primary.main', width: 56, height: 56 }}>
-              <VolunteerActivism fontSize="large" />
+          <Box display="flex" flexDirection="column" alignItems="center" mb={1.5}>
+            <Avatar sx={{ m: 1, bgcolor: 'primary.main', width: 44, height: 44 }}>
+              <VolunteerActivism fontSize="medium" />
             </Avatar>
             <Typography variant="h4" fontWeight="800" color="text.primary">Tạo tài khoản</Typography>
             <Typography variant="body1" color="text.secondary">Bắt đầu hành trình thiện nguyện ngay.</Typography>
           </Box>
 
           <form onSubmit={handleSubmit(onRegisterSubmit)}>
-            <Stack spacing={2}>
+            <Stack spacing={1.5}>
               <TextField
                 fullWidth label="Họ và tên" {...register("fullName")}
                 error={!!errors.fullName} helperText={errors.fullName?.message}
@@ -190,7 +191,7 @@ export default function Register() {
             </Stack>
           </form>
 
-          <Box mt={3} textAlign="center">
+          <Box mt={2} textAlign="center">
             <Typography variant="body2">
               Đã có tài khoản? <Link component={RouterLink} to="/login" fontWeight="bold" underline="hover">Đăng nhập</Link>
             </Typography>

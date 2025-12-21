@@ -1,29 +1,31 @@
-/**
- * ImageUploader Component
- * Provides image upload functionality with preview capability.
- * Supports direct URL input or file upload from user's device.
- * Displays image preview and validates file type before upload.
- *
- * @component
- * @param {Object} props - Component props
- * @param {string} props.label - Label text for the image uploader
- * @param {string} [props.value] - Current image URL value
- * @param {Function} props.onChange - Callback function when image URL changes
- * @param {string} [props.placeholder] - Placeholder text for URL input field
- * @returns {JSX.Element} Image upload interface with preview
- */
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     Box, TextField, Button, CircularProgress,
-    IconButton, InputAdornment, Typography, Stack
+    InputAdornment, Typography, Stack
 } from '@mui/material';
 import { CloudUpload as CloudUploadIcon, Image as ImageIcon } from '@mui/icons-material';
 import axiosClient from '../api/axiosClient';
 
 const BACKEND_URL = 'http://localhost:8080';
 
+/**
+ * ImageUploader Component
+ * * Logic hiển thị URL:
+ * - Nếu người dùng nhập tay (http...): Hiển thị URL trong ô input.
+ * - Nếu người dùng upload file hoặc load ảnh từ backend: Ẩn URL trong ô input (để trống) nhưng vẫn hiện ảnh preview.
+ */
 export default function ImageUploader({ label, value, onChange, placeholder }) {
     const [uploading, setUploading] = useState(false);
+
+    const [isUploaded, setIsUploaded] = useState(() => {
+        return value && !value.startsWith('http');
+    });
+
+    useEffect(() => {
+        if (value && !value.startsWith('http')) {
+            setIsUploaded(true);
+        }
+    }, [value]);
 
     const handleFileSelect = async (e) => {
         const file = e.target.files[0];
@@ -45,13 +47,14 @@ export default function ImageUploader({ label, value, onChange, placeholder }) {
 
             if (res.data && res.data.url) {
                 onChange(res.data.url);
+                setIsUploaded(true);
             }
         } catch (err) {
             console.error(err);
             alert('Lỗi upload ảnh: ' + (err.response?.data?.error || 'Lỗi server'));
         } finally {
             setUploading(false);
-            e.target.value = null;
+            e.target.value = null; // Reset input file để chọn lại được file cũ nếu muốn
         }
     };
 
@@ -68,13 +71,16 @@ export default function ImageUploader({ label, value, onChange, placeholder }) {
             </Typography>
 
             <Stack direction="row" spacing={1} alignItems="flex-start">
-                { }
+                {/* Ô nhập URL */}
                 <TextField
                     fullWidth
                     size="small"
                     placeholder={placeholder || "https://..."}
-                    value={value || ''}
-                    onChange={(e) => onChange(e.target.value)}
+                    value={isUploaded ? '' : (value || '')}
+                    onChange={(e) => {
+                        setIsUploaded(false);
+                        onChange(e.target.value);
+                    }}
                     disabled={uploading}
                     InputProps={{
                         startAdornment: (
@@ -85,7 +91,7 @@ export default function ImageUploader({ label, value, onChange, placeholder }) {
                     }}
                 />
 
-                { }
+                {/* Nút Upload */}
                 <Box>
                     <input
                         accept="image/*"
@@ -108,7 +114,7 @@ export default function ImageUploader({ label, value, onChange, placeholder }) {
                 </Box>
             </Stack>
 
-            { }
+            {/* Phần hiển thị Preview (Luôn hiện nếu có value) */}
             {value && (
                 <Box
                     sx={{
