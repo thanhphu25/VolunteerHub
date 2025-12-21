@@ -8,11 +8,15 @@ import lombok.Setter;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "organizer_follows",
-        uniqueConstraints = @UniqueConstraint(name = "unique_follow", columnNames = {"follower_id", "organizer_id"}))
+@Table(name = "organizer_follows", uniqueConstraints = @UniqueConstraint(name = "unique_follow", columnNames = {
+        "follower_id", "organizer_id" }))
 @Getter
 @Setter
 @NoArgsConstructor
+/**
+ * Represents a follower relationship where a `follower` user follows an
+ * `organizer` user. Uniqueness is enforced per follower-organizer pair.
+ */
 public class OrganizerFollowEntity {
 
     @Id

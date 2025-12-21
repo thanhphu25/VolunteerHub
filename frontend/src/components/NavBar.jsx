@@ -1,3 +1,12 @@
+/**
+ * NavBar Component
+ * Main application navigation bar displayed across all pages.
+ * Features responsive design, user menu, theme toggle, language selection,
+ * and notifications. Displays different navigation options based on user role.
+ *
+ * @component
+ * @returns {JSX.Element} Application header with navigation and user controls
+ */
 import React from "react";
 import { Link as RouterLink, useNavigate, useLocation } from "react-router-dom";
 import {
@@ -33,12 +42,16 @@ import profileApi from "../api/profileApi";
 import { toast } from "react-toastify";
 import logo from "../assets/logo-removebg.png";
 
+/**
+ * Main navigation bar component
+ * @returns {JSX.Element} Responsive navbar with user menu and theme controls
+ */
 function NavBar() {
   const { user, logout, loading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const { mode, toggleColorMode } = useThemeMode();
-  const { language, t } = useLanguage(); // Giữ lại t để hiển thị chữ, bỏ setLanguage
+  const { language, t } = useLanguage();
   const [anchorElNav, setAnchorElNav] = React.useState(null);
   const [anchorElUser, setAnchorElUser] = React.useState(null);
   const [unreadCount, setUnreadCount] = React.useState(0);
@@ -167,7 +180,6 @@ function NavBar() {
     return () => clearInterval(interval);
   }, [user, fetchNotifications]);
 
-  // --- RENDER ---
   return (
     <AppBar
       position="sticky"
@@ -175,56 +187,55 @@ function NavBar() {
       elevation={0}
       sx={{
         backgroundColor: mode === "dark" ? "#0f172a" : "#ffffff",
-        transition: "background-color 0.3s ease", // Smooth transition when switching themes
+        transition: "background-color 0.3s ease",
       }}
-      // CHANGE 2: Removed background classes from here to avoid conflicts
       className="border-b border-slate-200 dark:border-slate-800"
     >
       <Container maxWidth="xl">
         <Toolbar disableGutters>
-            {/* 1. DESKTOP LOGO (Đã sửa thêm slogan) */}
+          { }
+          <Box
+            component={RouterLink}
+            to="/"
+            sx={{
+              display: { xs: "none", md: "flex" },
+              alignItems: "center",
+              textDecoration: "none",
+              mr: 4,
+            }}
+          >
             <Box
-                component={RouterLink}
-                to="/"
+              component="img"
+              src={logo}
+              alt="Volunteer Hub Logo"
+              sx={{ height: 50, mr: 1.5 }}
+            />
+            <Box display="flex" flexDirection="column" justifyContent="center">
+              <Typography
+                variant="h6"
+                noWrap
+                className="font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-teal-600 to-cyan-600 hover:opacity-80 transition-opacity cursor-pointer"
+                sx={{ lineHeight: 1 }}
+              >
+                VOLUNTEER HUB
+              </Typography>
+              <Typography
+                variant="caption"
                 sx={{
-                    display: { xs: "none", md: "flex" },
-                    alignItems: "center",
-                    textDecoration: "none",
-                    mr: 4,
+                  fontSize: '0.7rem',
+                  fontWeight: 600,
+                  color: 'text.secondary',
+                  letterSpacing: '0.5px',
+                  textTransform: 'uppercase',
+                  mt: 0.3
                 }}
-            >
-                <Box
-                    component="img"
-                    src={logo}
-                    alt="Volunteer Hub Logo"
-                    sx={{ height: 50, mr: 1.5 }} // Giảm nhẹ size logo để cân đối
-                />
-                <Box display="flex" flexDirection="column" justifyContent="center">
-                    <Typography
-                        variant="h6"
-                        noWrap
-                        className="font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-teal-600 to-cyan-600 hover:opacity-80 transition-opacity cursor-pointer"
-                        sx={{ lineHeight: 1 }} // Dòng trên sát dòng dưới
-                    >
-                        VOLUNTEER HUB
-                    </Typography>
-                    <Typography
-                        variant="caption"
-                        sx={{
-                            fontSize: '0.7rem',
-                            fontWeight: 600,
-                            color: 'text.secondary', // Màu xám nhẹ
-                            letterSpacing: '0.5px',
-                            textTransform: 'uppercase',
-                            mt: 0.3 // Khoảng cách nhỏ với tên chính
-                        }}
-                    >
-                        Kết nối - Hành động - Thay đổi
-                    </Typography>
-                </Box>
+              >
+                Kết nối - Hành động - Thay đổi
+              </Typography>
             </Box>
+          </Box>
 
-          {/* 2. MOBILE MENU ICON */}
+          { }
           <Box sx={{ flexGrow: 1, display: { xs: "flex", md: "none" } }}>
             <IconButton
               size="large"
@@ -284,7 +295,7 @@ function NavBar() {
             </Menu>
           </Box>
 
-          {/* 3. MOBILE LOGO */}
+          { }
           <Box
             component={RouterLink}
             to="/"
@@ -310,7 +321,7 @@ function NavBar() {
             </Typography>
           </Box>
 
-          {/* 4. DESKTOP MENU ITEMS */}
+          { }
           <Box
             sx={{ flexGrow: 1, display: { xs: "none", md: "flex" }, gap: 1 }}
           >
@@ -324,10 +335,9 @@ function NavBar() {
                   onClick={handleCloseNavMenu}
                   className={`
                     normal-case px-4 py-2 rounded-full text-sm font-semibold transition-all duration-200
-                    ${
-                      isActive
-                        ? "bg-teal-50 text-teal-700 dark:bg-teal-900/30 dark:text-teal-300"
-                        : "text-slate-600 hover:bg-slate-100 hover:text-teal-600 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
+                    ${isActive
+                      ? "bg-teal-50 text-teal-700 dark:bg-teal-900/30 dark:text-teal-300"
+                      : "text-slate-600 hover:bg-slate-100 hover:text-teal-600 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
                     }
                   `}
                 >
@@ -337,13 +347,13 @@ function NavBar() {
             })}
           </Box>
 
-          {/* 5. RIGHT ACTIONS */}
+          { }
           <Box
             sx={{ flexGrow: 0, display: "flex", alignItems: "center", gap: 1 }}
           >
-            {/* Đã xóa nút chuyển ngôn ngữ ở đây */}
+            { }
 
-            {/* Theme Toggle */}
+            { }
             <Tooltip
               title={
                 mode === "dark"
@@ -351,8 +361,8 @@ function NavBar() {
                     ? "Chế độ sáng"
                     : "Light mode"
                   : language === "vi"
-                  ? "Chế độ tối"
-                  : "Dark mode"
+                    ? "Chế độ tối"
+                    : "Dark mode"
               }
             >
               <IconButton
@@ -366,7 +376,6 @@ function NavBar() {
             {loading ? (
               <CircularProgress size={24} className="ml-2 text-teal-600" />
             ) : user ? (
-              // LOGGED IN STATE
               <>
                 <Tooltip title={t("nav.notifications")}>
                   <IconButton
@@ -420,7 +429,7 @@ function NavBar() {
                   }}
                 >
                   <Box className="px-4 py-3">
-                    {/* Đã sửa màu chữ tại đây từ yêu cầu trước */}
+                    { }
                     <Typography
                       variant="subtitle2"
                       color="text.primary"
@@ -469,7 +478,6 @@ function NavBar() {
                 </Menu>
               </>
             ) : (
-              // GUEST STATE
               <div className="hidden md:flex items-center gap-3 ml-2">
                 <Button
                   component={RouterLink}

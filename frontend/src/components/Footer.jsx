@@ -1,21 +1,33 @@
+/**
+ * Footer Component
+ * Application footer displaying logo, contact information, and navigation links.
+ * Responsive design with dark mode support.
+ * Includes links to community pages, organizer resources, and contact information.
+ *
+ * @component
+ * @returns {JSX.Element} Footer section with company info and navigation links
+ */
 import React from "react";
 import { Link } from "react-router-dom";
-import { useTheme } from "@mui/material"; // Import hook để lấy trạng thái Sáng/Tối
+import { useTheme } from "@mui/material";
 import logo from "../assets/logo.jpg";
 
+/**
+ * Footer component displaying application branding and navigation links
+ * @returns {JSX.Element} Footer element with responsive layout
+ */
 const Footer = () => {
-    const theme = useTheme(); // Lấy theme hiện tại
-    const isDark = theme.palette.mode === 'dark'; // Kiểm tra xem có phải chế độ tối không
+    const theme = useTheme();
+    const isDark = theme.palette.mode === 'dark';
 
-    // Định nghĩa màu sắc dựa trên chế độ Sáng/Tối
     const colors = {
         bg: isDark ? "bg-slate-900" : "bg-teal-50",
         textMain: isDark ? "text-slate-300" : "text-slate-700",
         textSub: isDark ? "text-slate-400" : "text-slate-600",
         border: isDark ? "border-slate-800" : "border-slate-200",
-        accent: isDark ? "text-teal-400" : "text-teal-600", // Màu điểm nhấn (Icon, Tiêu đề nhỏ)
+        accent: isDark ? "text-teal-400" : "text-teal-600",
         hover: isDark ? "hover:text-teal-400" : "hover:text-teal-600",
-        logoText: "text-transparent bg-clip-text bg-gradient-to-r from-teal-600 to-cyan-600" // Giữ nguyên gradient
+        logoText: "text-transparent bg-clip-text bg-gradient-to-r from-teal-600 to-cyan-600"
     };
 
     return (
@@ -25,10 +37,10 @@ const Footer = () => {
         >
             <div className="container mx-auto px-4">
                 <div className="md:flex md:justify-between">
-                    {/* Cột 1: Logo và Thông tin chính */}
+                    { }
                     <div className="w-full md:w-1/2 mb-8 md:mb-0 pr-0 md:pr-8">
                         <div className="site-footer__inner">
-                            {/* Hiển thị Logo và Tên thương hiệu */}
+                            { }
                             <div className="flex items-center mb-6">
                                 <img
                                     src={logo}
@@ -67,10 +79,10 @@ const Footer = () => {
                         </div>
                     </div>
 
-                    {/* Cột 2 & 3: Liên kết nhanh */}
+                    { }
                     <div className="w-full md:w-1/2 mt-4 md:mt-0">
                         <div className="flex flex-wrap h-full content-start">
-                            {/* Cột Danh mục */}
+                            { }
                             <div className="w-1/2 pr-4">
                                 <p className={`text-base font-bold mb-6 ${colors.accent} uppercase tracking-wider`}>
                                     Cộng đồng
@@ -83,7 +95,7 @@ const Footer = () => {
                                 </ul>
                             </div>
 
-                            {/* Cột Tổ chức */}
+                            { }
                             <div className="w-1/2">
                                 <p className={`text-base font-bold mb-6 ${colors.accent} uppercase tracking-wider`}>
                                     Dành cho Tổ chức
@@ -99,7 +111,7 @@ const Footer = () => {
                     </div>
                 </div>
 
-                {/* Phần chân Footer */}
+                { }
                 <div className={`mt-12 pt-6 border-t ${colors.border} text-center`}>
                     <p className={`text-xs ${colors.textSub} font-medium`}>
                         &copy; {new Date().getFullYear()} VolunteerHub. Phát triển với tâm huyết vì sự phát triển của cộng đồng.

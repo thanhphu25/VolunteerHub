@@ -10,39 +10,42 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.List;
 
+/**
+ * Service interface for event lifecycle management.
+ * Supports creation, querying, filtering, approval workflow, and trending events.
+ */
 public interface IEventService {
-    EventResponse createEvent(EventCreateRequest req, Authentication auth);
+        EventResponse createEvent(EventCreateRequest req, Authentication auth);
 
-    Page<EventResponse> listEvents(Optional<String> statusOpt, Optional<String> timeStatusOpt, Pageable pageable);
+        Page<EventResponse> listEvents(Optional<String> statusOpt, Optional<String> timeStatusOpt, Pageable pageable);
 
-    Page<EventResponse> listEventsWithFilters(Optional<String> statusOpt, Optional<String> category,
-            Optional<String> location, Optional<String> search,
-            Optional<LocalDateTime> startDate, Optional<LocalDateTime> endDate,
-            Optional<String> organizerNameOpt,
-            Optional<String> timeStatusOpt,
-            Pageable pageable);
+        Page<EventResponse> listEventsWithFilters(Optional<String> statusOpt, Optional<String> category,
+                        Optional<String> location, Optional<String> search,
+                        Optional<LocalDateTime> startDate, Optional<LocalDateTime> endDate,
+                        Optional<String> organizerNameOpt,
+                        Optional<String> timeStatusOpt,
+                        Pageable pageable);
 
-    EventResponse getEvent(Long id);
+        EventResponse getEvent(Long id);
 
-    EventResponse updateEvent(Long id, EventCreateRequest req, Authentication auth);
+        EventResponse updateEvent(Long id, EventCreateRequest req, Authentication auth);
 
-    EventResponse approveEvent(Long id, Authentication auth);
+        EventResponse approveEvent(Long id, Authentication auth);
 
-    EventResponse rejectEvent(Long id, String reason, Authentication auth);
+        EventResponse rejectEvent(Long id, String reason, Authentication auth);
 
-    EventResponse cancelEvent(Long id, Authentication auth);
+        EventResponse cancelEvent(Long id, Authentication auth);
 
-    void deleteEvent(Long id, Authentication auth);
+        void deleteEvent(Long id, Authentication auth);
 
-    Page<EventResponse> listOrganizerEvents(Long organizerId,
-            Optional<String> statusOpt,
-            Optional<String> category,
-            Optional<String> location,
-            Optional<String> search,
-            Optional<LocalDateTime> startDate,
-            Optional<LocalDateTime> endDate,
-            Pageable pageable);
+        Page<EventResponse> listOrganizerEvents(Long organizerId,
+                        Optional<String> statusOpt,
+                        Optional<String> category,
+                        Optional<String> location,
+                        Optional<String> search,
+                        Optional<LocalDateTime> startDate,
+                        Optional<LocalDateTime> endDate,
+                        Pageable pageable);
 
-    // --- Mới thêm: Lấy danh sách sự kiện nổi bật ---
-    List<EventResponse> getTrendingEvents(int limit);
+        List<EventResponse> getTrendingEvents(int limit);
 }

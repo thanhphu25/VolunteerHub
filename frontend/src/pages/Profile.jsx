@@ -1,3 +1,12 @@
+/**
+ * Profile Page
+ * Displays and manages user profile information including avatar, personal details, and role.
+ * Allows users to edit profile information and view event history and organizer relationships.
+ * Includes tabs for profile details, attended events, and followed organizers.
+ *
+ * @component
+ * @returns {JSX.Element} User profile page with editable information and tabs
+ */
 import React, { useEffect, useMemo, useState } from "react";
 import {
     Avatar,
@@ -18,7 +27,7 @@ import {
     List,
     ListItem,
     ListItemAvatar,
-    ListItemSecondaryAction, // Giữ nguyên import gốc
+    ListItemSecondaryAction,
     ListItemText,
     Paper,
     Stack,
@@ -43,17 +52,14 @@ import {
 import profileApi from "../api/profileApi";
 import { useAuth } from "../context/AuthContext";
 import { toast } from "react-toastify";
-// 1. IMPORT IMAGE UPLOADER
 import ImageUploader from "../components/ImageUploader";
 
-// 2. HÀM HELPER ĐỂ XỬ LÝ LINK ẢNH (QUAN TRỌNG)
 const getAvatarUrl = (url) => {
     if (!url) return undefined;
-    if (url.startsWith("http")) return url; // Ảnh online
-    return `http://localhost:8080${url}`;  // Ảnh local -> Thêm localhost
+    if (url.startsWith("http")) return url;
+    return `http://localhost:8080${url}`;
 };
 
-// Helper component cho thẻ thống kê đẹp hơn
 const StatBox = ({ icon, title, value, color }) => (
     <Paper
         elevation={0}
@@ -95,7 +101,7 @@ export default function Profile() {
     const [error, setError] = useState(null);
     const [editOpen, setEditOpen] = useState(false);
     const [saving, setSaving] = useState(false);
-    const [tabValue, setTabValue] = useState(0); // State cho Tabs
+    const [tabValue, setTabValue] = useState(0);
     const [formValues, setFormValues] = useState({
         fullName: "",
         phone: "",
@@ -159,7 +165,7 @@ export default function Profile() {
             await fetchProfile();
             setEditOpen(false);
             toast.success("Cập nhật hồ sơ thành công!");
-        } catch  {
+        } catch {
             toast.error("Không thể cập nhật thông tin.");
         } finally {
             setSaving(false);
@@ -189,13 +195,12 @@ export default function Profile() {
     const organizerStats = summary.organizer ?? {};
     const adminStats = summary.admin ?? {};
 
-    // --- RENDER CONTENT SECTIONS ---
 
     const renderVolunteerStats = () => (
         <Grid container spacing={3}>
             <Grid item xs={12} sm={4}>
                 <StatBox
-                    icon={<EventIcon fontSize="large"/>}
+                    icon={<EventIcon fontSize="large" />}
                     title="Đã tham gia"
                     value={volunteerStats.participated ?? 0}
                     color={theme.palette.primary.main}
@@ -203,7 +208,7 @@ export default function Profile() {
             </Grid>
             <Grid item xs={12} sm={4}>
                 <StatBox
-                    icon={<AccessTimeIcon fontSize="large"/>}
+                    icon={<AccessTimeIcon fontSize="large" />}
                     title="Chờ duyệt"
                     value={volunteerStats.pending ?? 0}
                     color={theme.palette.warning.main}
@@ -211,7 +216,7 @@ export default function Profile() {
             </Grid>
             <Grid item xs={12} sm={4}>
                 <StatBox
-                    icon={<StarIcon fontSize="large"/>}
+                    icon={<StarIcon fontSize="large" />}
                     title="Đang theo dõi"
                     value={volunteerStats.followingOrganizers ?? 0}
                     color={theme.palette.info.main}
@@ -223,16 +228,16 @@ export default function Profile() {
     const renderOrganizerStats = () => (
         <Grid container spacing={3}>
             <Grid item xs={12} sm={6} md={3}>
-                <StatBox icon={<EventIcon fontSize="medium"/>} title="Đã tổ chức" value={organizerStats.hosted ?? 0} color="#2e7d32" />
+                <StatBox icon={<EventIcon fontSize="medium" />} title="Đã tổ chức" value={organizerStats.hosted ?? 0} color="#2e7d32" />
             </Grid>
             <Grid item xs={12} sm={6} md={3}>
-                <StatBox icon={<AccessTimeIcon fontSize="medium"/>} title="Chờ duyệt" value={organizerStats.pending ?? 0} color="#ed6c02" />
+                <StatBox icon={<AccessTimeIcon fontSize="medium" />} title="Chờ duyệt" value={organizerStats.pending ?? 0} color="#ed6c02" />
             </Grid>
             <Grid item xs={12} sm={6} md={3}>
-                <StatBox icon={<GroupsIcon fontSize="medium"/>} title="Người tham gia" value={organizerStats.totalParticipants ?? 0} color="#0288d1" />
+                <StatBox icon={<GroupsIcon fontSize="medium" />} title="Người tham gia" value={organizerStats.totalParticipants ?? 0} color="#0288d1" />
             </Grid>
             <Grid item xs={12} sm={6} md={3}>
-                <StatBox icon={<StarIcon fontSize="medium"/>} title="Người theo dõi" value={organizerStats.followers ?? 0} color="#9c27b0" />
+                <StatBox icon={<StarIcon fontSize="medium" />} title="Người theo dõi" value={organizerStats.followers ?? 0} color="#9c27b0" />
             </Grid>
         </Grid>
     );
@@ -242,20 +247,20 @@ export default function Profile() {
             <Paper variant="outlined" sx={{ p: 3, borderRadius: 3 }}>
                 <Typography variant="h6" gutterBottom fontWeight="bold">Trạng thái hệ thống</Typography>
                 <Grid container spacing={2}>
-                    <Grid item xs={6} md={3}><Chip label={`Đã duyệt: ${adminStats.approvals?.approved ?? 0}`} color="success" variant="outlined" sx={{width: '100%', fontWeight: 'bold'}} /></Grid>
-                    <Grid item xs={6} md={3}><Chip label={`Chờ duyệt: ${adminStats.approvals?.pending ?? 0}`} color="warning" variant="outlined" sx={{width: '100%', fontWeight: 'bold'}} /></Grid>
-                    <Grid item xs={6} md={3}><Chip label={`Đang diễn ra: ${adminStats.timeline?.ongoing ?? 0}`} color="primary" variant="outlined" sx={{width: '100%', fontWeight: 'bold'}} /></Grid>
-                    <Grid item xs={6} md={3}><Chip label={`Sắp tới: ${adminStats.timeline?.upcoming ?? 0}`} color="info" variant="outlined" sx={{width: '100%', fontWeight: 'bold'}} /></Grid>
+                    <Grid item xs={6} md={3}><Chip label={`Đã duyệt: ${adminStats.approvals?.approved ?? 0}`} color="success" variant="outlined" sx={{ width: '100%', fontWeight: 'bold' }} /></Grid>
+                    <Grid item xs={6} md={3}><Chip label={`Chờ duyệt: ${adminStats.approvals?.pending ?? 0}`} color="warning" variant="outlined" sx={{ width: '100%', fontWeight: 'bold' }} /></Grid>
+                    <Grid item xs={6} md={3}><Chip label={`Đang diễn ra: ${adminStats.timeline?.ongoing ?? 0}`} color="primary" variant="outlined" sx={{ width: '100%', fontWeight: 'bold' }} /></Grid>
+                    <Grid item xs={6} md={3}><Chip label={`Sắp tới: ${adminStats.timeline?.upcoming ?? 0}`} color="info" variant="outlined" sx={{ width: '100%', fontWeight: 'bold' }} /></Grid>
                 </Grid>
             </Paper>
 
-            {/* Top Events List can go here if needed */}
+            { }
         </Stack>
     );
 
     return (
         <Box sx={{ bgcolor: "background.default", minHeight: "100vh", pb: 8 }}>
-            {/* 1. COVER PHOTO HEADER */}
+            { }
             <Box
                 sx={{
                     height: { xs: 200, md: 280 },
@@ -265,7 +270,7 @@ export default function Profile() {
                 }}
             >
                 <Container maxWidth="lg" sx={{ height: '100%', position: 'relative' }}>
-                    {/* Avatar & Main Info Overlapping */}
+                    { }
                     <Box
                         sx={{
                             position: 'absolute',
@@ -280,7 +285,7 @@ export default function Profile() {
                         }}
                     >
                         <Box position="relative">
-                            {/* SỬA CHỖ NÀY: Dùng getAvatarUrl */}
+                            { }
                             <Avatar
                                 src={getAvatarUrl(userInfo.avatarUrl)}
                                 alt={userInfo.fullName}
@@ -304,11 +309,11 @@ export default function Profile() {
                                 onClick={handleOpenEdit}
                                 size="small"
                             >
-                                <CameraIcon color="primary" fontSize="small"/>
+                                <CameraIcon color="primary" fontSize="small" />
                             </IconButton>
                         </Box>
 
-                        <Box sx={{ pb: { md: 2 }, textAlign: { xs: 'center', md: 'left' }, color: { xs: 'text.primary', md: 'white' }, mb: {xs: -6, md: 0} }}>
+                        <Box sx={{ pb: { md: 2 }, textAlign: { xs: 'center', md: 'left' }, color: { xs: 'text.primary', md: 'white' }, mb: { xs: -6, md: 0 } }}>
                             <Typography variant="h4" fontWeight="800" sx={{ textShadow: { md: '0 2px 4px rgba(0,0,0,0.3)' } }}>
                                 {userInfo.fullName ?? "Chưa đặt tên"}
                             </Typography>
@@ -317,7 +322,7 @@ export default function Profile() {
                                     icon={<VerifiedUserIcon fontSize="small" />}
                                     label={role.toUpperCase()}
                                     size="small"
-                                    color="secondary" // Màu cam/vàng sẽ nổi trên nền xanh
+                                    color="secondary"
                                     sx={{ fontWeight: 'bold', boxShadow: { md: '0 2px 4px rgba(0,0,0,0.2)' } }}
                                 />
                                 <Typography variant="body1" sx={{ color: { xs: 'text.secondary', md: 'rgba(255,255,255,0.9)' }, fontWeight: 500 }}>
@@ -328,7 +333,7 @@ export default function Profile() {
 
                         <Box sx={{ ml: { md: 'auto' }, pb: 2, display: { xs: 'none', md: 'block' } }}>
                             <Button variant="contained" startIcon={<EditIcon />} onClick={handleOpenEdit}
-                                    sx={{ bgcolor: 'white', color: 'primary.main', '&:hover': { bgcolor: 'grey.100' }, fontWeight: 'bold' }}>
+                                sx={{ bgcolor: 'white', color: 'primary.main', '&:hover': { bgcolor: 'grey.100' }, fontWeight: 'bold' }}>
                                 Chỉnh sửa hồ sơ
                             </Button>
                         </Box>
@@ -336,10 +341,10 @@ export default function Profile() {
                 </Container>
             </Box>
 
-            {/* 2. MAIN CONTENT LAYOUT */}
+            { }
             <Container maxWidth="lg" sx={{ mt: 4 }}>
                 <Grid container spacing={4}>
-                    {/* Left Column: Personal Info */}
+                    { }
                     <Grid item xs={12} md={4}>
                         <Card sx={{ borderRadius: 3, mb: 3 }} elevation={0} variant="outlined">
                             <CardContent>
@@ -370,7 +375,7 @@ export default function Profile() {
                         </Card>
                     </Grid>
 
-                    {/* Right Column: Dynamic Content (Tabs) */}
+                    { }
                     <Grid item xs={12} md={8}>
                         <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
                             <Tabs value={tabValue} onChange={handleTabChange} aria-label="profile tabs">
@@ -379,7 +384,7 @@ export default function Profile() {
                             </Tabs>
                         </Box>
 
-                        {/* Tab 0: Overview (Stats) */}
+                        { }
                         <Box role="tabpanel" hidden={tabValue !== 0}>
                             {tabValue === 0 && (
                                 <Box>
@@ -393,7 +398,7 @@ export default function Profile() {
                             )}
                         </Box>
 
-                        {/* Tab 1: Following (Only for Volunteers) */}
+                        { }
                         <Box role="tabpanel" hidden={tabValue !== 1}>
                             {tabValue === 1 && role === 'volunteer' && (
                                 <Stack spacing={2}>
@@ -432,7 +437,7 @@ export default function Profile() {
                 </Grid>
             </Container>
 
-            {/* EDIT DIALOG */}
+            { }
             <Dialog open={editOpen} onClose={() => setEditOpen(false)} fullWidth maxWidth="sm">
                 <DialogTitle sx={{ borderBottom: '1px solid #eee' }}>Chỉnh sửa thông tin</DialogTitle>
                 <DialogContent sx={{ pt: 3 }}>
@@ -440,23 +445,23 @@ export default function Profile() {
                         <TextField
                             label="Họ và tên"
                             value={formValues.fullName}
-                            onChange={(e) => setFormValues({...formValues, fullName: e.target.value})}
+                            onChange={(e) => setFormValues({ ...formValues, fullName: e.target.value })}
                             fullWidth
                             variant="outlined"
                         />
                         <TextField
                             label="Số điện thoại"
                             value={formValues.phone}
-                            onChange={(e) => setFormValues({...formValues, phone: e.target.value})}
+                            onChange={(e) => setFormValues({ ...formValues, phone: e.target.value })}
                             fullWidth
                             variant="outlined"
                         />
 
-                        {/* THAY THẾ TEXTFIELD CŨ BẰNG IMAGE UPLOADER */}
+                        { }
                         <ImageUploader
                             label="Ảnh đại diện (Avatar)"
                             value={formValues.avatarUrl}
-                            onChange={(url) => setFormValues({...formValues, avatarUrl: url})}
+                            onChange={(url) => setFormValues({ ...formValues, avatarUrl: url })}
                             placeholder="Tải ảnh lên hoặc dán link..."
                         />
 

@@ -12,6 +12,10 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @NoArgsConstructor
+/**
+ * Represents a verification or password-reset token associated
+ * with a user, including type, expiry, usage flag, and creation time.
+ */
 public class VerificationTokenEntity {
 
     @Id
@@ -45,6 +49,7 @@ public class VerificationTokenEntity {
     @PrePersist
     public void prePersist() {
         this.createdAt = LocalDateTime.now();
-        if (this.used == null) this.used = false;
+        if (this.used == null)
+            this.used = false;
     }
 }

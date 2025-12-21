@@ -6,8 +6,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 /**
- * Development email sender — logs emails to application log.
- * Replace with JavaMailSender implementation for production.
+ * Development email implementation that logs to application log.
+ * Use for testing; replace with JavaMailSender for production.
  */
 @Service
 public class ConsoleEmailService implements EmailService {

@@ -24,6 +24,10 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Implementation of IProfileService.
+ * Aggregates profile data and statistics specific to volunteer, organizer, or admin roles.
+ */
 @Service
 public class ProfileServiceImpl implements IProfileService {
 

@@ -12,6 +12,10 @@ import java.nio.file.*;
 import java.time.Instant;
 import java.util.UUID;
 
+/**
+ * Implementation of StorageService for local file system storage.
+ * Stores uploaded files on disk with UUID-based naming and validation.
+ */
 @Service
 public class LocalStorageService implements StorageService {
 
@@ -20,7 +24,7 @@ public class LocalStorageService implements StorageService {
 
     private Path root;
 
-    private final FileValidationService fileValidationService; // may be injected
+    private final FileValidationService fileValidationService;
 
     public LocalStorageService(FileValidationService fileValidationService) {
         this.fileValidationService = fileValidationService;
@@ -40,30 +44,29 @@ public class LocalStorageService implements StorageService {
             throw new IOException("Empty file");
         }
 
-        // optional validation
         try {
             if (fileValidationService != null) {
                 fileValidationService.validateImage(file);
             }
         } catch (FileValidationException fve) {
-            // wrap to IOException so callers get consistent exception type, or rethrow as-is
             throw new IOException("File validation failed: " + fve.getMessage(), fve);
         }
 
         String original = StringUtils.cleanPath(file.getOriginalFilename());
         String ext = "";
         int idx = original.lastIndexOf('.');
-        if (idx >= 0) ext = original.substring(idx);
+        if (idx >= 0)
+            ext = original.substring(idx);
         String filename = Instant.now().getEpochSecond() + "-" + UUID.randomUUID().toString().replace("-", "") + ext;
         Path target = root.resolve(filename);
         Files.copy(file.getInputStream(), target, StandardCopyOption.REPLACE_EXISTING);
-        // return public URL path starting with /uploads/
         return "/uploads/" + filename;
     }
 
     @Override
     public Path resolve(String relativeUrl) {
-        if (relativeUrl == null) return null;
+        if (relativeUrl == null)
+            return null;
         String prefix = "/uploads/";
         if (relativeUrl.startsWith(prefix)) {
             return root.resolve(relativeUrl.substring(prefix.length()));

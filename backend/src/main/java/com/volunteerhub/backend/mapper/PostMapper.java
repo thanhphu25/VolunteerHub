@@ -7,20 +7,21 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
 /**
- * MapStruct mapper for Post.
- * - toEntity ignores event & user (controller will set them)
+ * Mapper interface for converting post-related objects.
+ * Transforms between {@link PostCreateRequest}, {@link PostEntity}, and {@link PostResponse}
+ * using MapStruct for compile-time type-safe mapping.
  */
 @Mapper(componentModel = "spring")
 public interface PostMapper {
 
     @Mapping(target = "id", ignore = true)
-    @Mapping(target = "event", ignore = true)       // controller will set event
-    @Mapping(target = "user", ignore = true)        // controller will set user
-    @Mapping(target = "likesCount", ignore = true)  // DB default / prePersist handles
+    @Mapping(target = "event", ignore = true)
+    @Mapping(target = "user", ignore = true)
+    @Mapping(target = "likesCount", ignore = true)
     @Mapping(target = "commentsCount", ignore = true)
     @Mapping(target = "isDeleted", ignore = true)
     @Mapping(target = "deletedAt", ignore = true)
-    @Mapping(target = "createdAt", ignore = true)   // prePersist will set
+    @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     PostEntity toEntity(PostCreateRequest dto);
 

@@ -11,7 +11,9 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * CustomUserDetails — wrapper around com.volunteerhub.entity.UserEntity
+ * Custom implementation of Spring Security's UserDetails.
+ * Adapts {@link UserEntity} to provide authentication and authorization information
+ * for the Spring Security framework.
  */
 public class CustomUserDetails implements UserDetails {
 
@@ -50,7 +52,6 @@ public class CustomUserDetails implements UserDetails {
     @Override
     public boolean isAccountNonLocked() {
         Status s = userEntity.getStatus();
-        // if status enum present, check locked; if null treat as active
         return s == null || s != Status.locked;
     }
 

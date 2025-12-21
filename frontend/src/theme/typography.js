@@ -1,4 +1,3 @@
-// src/theme/typography.js
 const typography = {
   fontFamily: "'Inter', 'Roboto', 'Helvetica', 'Arial', sans-serif",
   h1: {

@@ -1,3 +1,12 @@
+/**
+ * Notifications Page
+ * Displays list of user notifications with read/unread status.
+ * Allows marking individual notifications or all notifications as read.
+ * Shows notification type indicators and timestamps.
+ *
+ * @component
+ * @returns {JSX.Element} Notifications listing page with read status controls
+ */
 import React, { useEffect, useMemo, useState } from "react";
 import {
   Box,
@@ -187,7 +196,7 @@ export default function Notifications() {
                           display: 'flex',
                           alignItems: 'center',
                           alignSelf: { xs: 'flex-start', md: 'center' },
-                          ml: { xs: 4, md: 0 } // Indent on mobile to align with text roughly if desired, or 0
+                          ml: { xs: 4, md: 0 }
                         }}>
                           <Stack direction="row" spacing={1}>
                             {item.link && (

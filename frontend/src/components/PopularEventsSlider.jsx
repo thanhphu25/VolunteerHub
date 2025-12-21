@@ -1,3 +1,14 @@
+/**
+ * PopularEventsSlider Component
+ * Displays a carousel of popular volunteer events with featured promotions.
+ * Shows event image, title, date, location, and volunteer capacity.
+ * Auto-rotates through events with manual navigation and click-to-view functionality.
+ *
+ * @component
+ * @param {Object} props - Component props
+ * @param {Array<Object>} props.events - Array of popular event objects
+ * @returns {JSX.Element} Carousel slider showcasing popular volunteer events
+ */
 import React from 'react';
 import Slider from "react-slick";
 import { Box, Typography, Button, Container, Card, CardContent, Chip } from '@mui/material';
@@ -36,7 +47,7 @@ export default function PopularEventsSlider({ events }) {
             <Slider {...settings}>
                 {events.map((event) => (
                     <Box key={event.id} sx={{ outline: 'none', position: 'relative' }}>
-                        {/* Background Image */}
+                        { }
                         <Box
                             sx={{
                                 width: '100%',
@@ -48,7 +59,7 @@ export default function PopularEventsSlider({ events }) {
                                 position: 'relative',
                             }}
                         >
-                            {/* Overlay */}
+                            { }
                             <Box
                                 sx={{
                                     position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
@@ -56,7 +67,7 @@ export default function PopularEventsSlider({ events }) {
                                 }}
                             />
 
-                            {/* Content */}
+                            { }
                             <Container
                                 sx={{
                                     height: '100%',

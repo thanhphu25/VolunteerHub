@@ -1,46 +1,62 @@
-// App.jsx
 import React from "react";
 import { Route, Routes, useLocation } from "react-router-dom";
 import { Box } from "@mui/material";
+
+// Layout Components
 import NavBar from "./components/NavBar";
+import Footer from "./components/Footer.jsx";
+
+// Public Pages
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Events from "./pages/Events";
 import EventDetail from "./pages/EventDetail.jsx";
+
+// Protected Pages
 import MyRegistrations from "./pages/MyRegistrations.jsx";
 import Profile from "./pages/Profile";
 import Notifications from "./pages/Notifications";
+
+// Security Wrappers
 import PrivateRoute from "./components/PrivateRoute";
 import RoleBasedRoute from "./components/RoleBasedRoute";
+
+// Admin & Organizer Specific Pages
 import OrganizerEvents from "./pages/admin/OrganizerEvents";
 import AdminEventManagement from "./pages/admin/AdminEventManagement";
 import EventRegistrations from "./pages/admin/EventRegistrations.jsx";
 import AdminUserManagement from "./pages/admin/AdminUserManagement.jsx";
-import Footer from "./components/Footer.jsx";
 
+/**
+ * Root Application Component
+ * Manages global routing, layout structure, and access control.
+ */
 export default function App() {
   const location = useLocation();
 
-  // 1. Xác định các trang không hiển thị Footer
+  // Define paths where the footer should not be displayed (e.g., auth pages)
   const hideFooterPaths = ["/login", "/register"];
   const shouldHideFooter = hideFooterPaths.includes(location.pathname);
 
   return (
+    // Main container using Flexbox to ensure the footer stays at the bottom
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       
-      {/* 2. Thanh NavBar luôn luôn hiển thị trên mọi trang */}
+      {/* Global Navigation Bar */}
       <NavBar />
 
+      {/* Main Content Area: flexGrow allows it to take up remaining space */}
       <Box component="main" sx={{ flexGrow: 1 }}>
         <Routes>
+          {/* --- Public Routes --- */}
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/events" element={<Events />} />
           <Route path="/events/:eventId" element={<EventDetail />} />
 
-          {/* Các Route bảo mật và phân quyền */}
+          {/* --- Authenticated Routes (Any Role) --- */}
           <Route
             path="/profile"
             element={
@@ -57,6 +73,8 @@ export default function App() {
               </PrivateRoute>
             }
           />
+
+          {/* --- Volunteer Specific Routes --- */}
           <Route
             path="/my-registrations"
             element={
@@ -65,6 +83,8 @@ export default function App() {
               </RoleBasedRoute>
             }
           />
+
+          {/* --- Organizer Specific Routes --- */}
           <Route
             path="/organizer/events"
             element={
@@ -81,6 +101,8 @@ export default function App() {
               </RoleBasedRoute>
             }
           />
+
+          {/* --- Admin Specific Routes --- */}
           <Route
             path="/admin/events"
             element={
@@ -98,11 +120,12 @@ export default function App() {
             }
           />
 
+          {/* --- Fallback 404 Route --- */}
           <Route path="*" element={<h2>404 - Không tìm thấy trang</h2>} />
         </Routes>
       </Box>
 
-      {/* 3. Footer chỉ hiển thị nếu không phải trang login/register */}
+      {/* Conditional Rendering of Footer */}
       {!shouldHideFooter && <Footer />}
 
     </Box>

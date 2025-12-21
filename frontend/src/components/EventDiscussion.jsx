@@ -1,5 +1,17 @@
-// src/components/EventDiscussion.jsx
-import React, {useCallback, useEffect, useMemo, useState} from 'react';
+/**
+ * EventDiscussion Component
+ * Manages event discussion feature allowing registered volunteers and event organizers
+ * to create posts, add comments, and like content within an event's discussion board.
+ * Supports pagination, image uploads, and real-time interaction feedback.
+ *
+ * @component
+ * @param {Object} props - Component props
+ * @param {string} props.eventId - ID of the event for which to display discussions
+ * @param {Object} props.event - Event object containing event details
+ * @param {Object} props.registration - Current user's event registration information
+ * @returns {JSX.Element} Discussion board interface with post creation and viewing features
+ */
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
     Alert,
     Avatar,
@@ -22,15 +34,19 @@ import FavoriteIcon from '@mui/icons-material/Favorite';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
 import SendIcon from '@mui/icons-material/Send';
-import {toast} from 'react-toastify';
+import { toast } from 'react-toastify';
 
 import postApi from '../api/postApi';
-import {useAuth} from '../context/AuthContext';
-// 1. IMPORT IMAGE UPLOADER
+import { useAuth } from '../context/AuthContext';
 import ImageUploader from './ImageUploader';
 
 const DEFAULT_PAGE_SIZE = 10;
 
+/**
+ * Formats a date value to Vietnamese locale date-time string
+ * @param {string|Date} value - Date value to format
+ * @returns {string} Formatted date-time string or original value if parsing fails
+ */
 function formatDateTime(value) {
     if (!value) return '';
     try {
@@ -50,8 +66,8 @@ const emptyPage = {
     number: 0
 };
 
-export default function EventDiscussion({eventId, event, registration}) {
-    const {user} = useAuth();
+export default function EventDiscussion({ eventId, event, registration }) {
+    const { user } = useAuth();
 
     const [postsPage, setPostsPage] = useState(emptyPage);
     const [loading, setLoading] = useState(true);
@@ -72,7 +88,7 @@ export default function EventDiscussion({eventId, event, registration}) {
         setLoading(true);
         setError(null);
         try {
-            const res = await postApi.listPosts(eventId, {page, size: DEFAULT_PAGE_SIZE});
+            const res = await postApi.listPosts(eventId, { page, size: DEFAULT_PAGE_SIZE });
             setPostsPage(res.data ?? emptyPage);
         } catch (err) {
             console.error('Failed to load posts', err);
@@ -98,7 +114,7 @@ export default function EventDiscussion({eventId, event, registration}) {
                     newLikingMap[post.id] = post.isLiked;
                 }
             });
-            setLikingMap(prev => ({...prev, ...newLikingMap}));
+            setLikingMap(prev => ({ ...prev, ...newLikingMap }));
         }
     }, [postsPage.content]);
 
@@ -115,7 +131,6 @@ export default function EventDiscussion({eventId, event, registration}) {
 
         if (role === 'admin') return true;
         if (role === 'organizer' && organizerId != null && userId != null && organizerId === userId) return true;
-        // Logic cho phép cả approved, completed và rejected
         if (role === 'volunteer' && (
             registrationStatus === 'approved' ||
             registrationStatus === 'completed' ||
@@ -142,7 +157,7 @@ export default function EventDiscussion({eventId, event, registration}) {
             });
             toast.success('Đăng bài thành công.');
             setNewPostContent('');
-            setNewPostImageUrl(''); // Reset ảnh sau khi đăng
+            setNewPostImageUrl('');
             await loadPosts(0);
         } catch (err) {
             console.error('Failed to create post', err);
@@ -167,7 +182,7 @@ export default function EventDiscussion({eventId, event, registration}) {
             }
             return {
                 ...prev,
-                [postId]: {items: [], loading: true}
+                [postId]: { items: [], loading: true }
             };
         });
 
@@ -175,13 +190,13 @@ export default function EventDiscussion({eventId, event, registration}) {
             const res = await postApi.listComments(postId);
             setCommentsMap(prev => ({
                 ...prev,
-                [postId]: {items: res.data ?? [], loading: false}
+                [postId]: { items: res.data ?? [], loading: false }
             }));
         } catch (err) {
             console.error('Failed to load comments', err);
             setCommentsMap(prev => ({
                 ...prev,
-                [postId]: {items: [], loading: false, error: err.response?.data?.error || 'Không thể tải bình luận.'}
+                [postId]: { items: [], loading: false, error: err.response?.data?.error || 'Không thể tải bình luận.' }
             }));
             toast.error(err.response?.data?.error || 'Không thể tải bình luận.');
         }
@@ -199,10 +214,10 @@ export default function EventDiscussion({eventId, event, registration}) {
         }
         setCommentsMap(prev => ({
             ...prev,
-            [postId]: {...(prev[postId] ?? {items: []}), submitting: true}
+            [postId]: { ...(prev[postId] ?? { items: [] }), submitting: true }
         }));
         try {
-            const res = await postApi.addComment(postId, {content: draft});
+            const res = await postApi.addComment(postId, { content: draft });
             setCommentsMap(prev => ({
                 ...prev,
                 [postId]: {
@@ -211,13 +226,13 @@ export default function EventDiscussion({eventId, event, registration}) {
                     submitting: false
                 }
             }));
-            setCommentDrafts(prev => ({...prev, [postId]: ''}));
+            setCommentDrafts(prev => ({ ...prev, [postId]: '' }));
             await loadPosts(currentPage);
         } catch (err) {
             console.error('Failed to add comment', err);
             setCommentsMap(prev => ({
                 ...prev,
-                [postId]: {...(prev[postId] ?? {items: []}), submitting: false}
+                [postId]: { ...(prev[postId] ?? { items: [] }), submitting: false }
             }));
             toast.error(err.response?.data?.error || 'Không thể gửi bình luận.');
         }
@@ -231,7 +246,7 @@ export default function EventDiscussion({eventId, event, registration}) {
         const post = postsPage.content?.find(p => p.id === postId);
         const currentlyLiked = likingMap[postId] ?? post?.isLiked ?? false;
 
-        setLikingMap(prev => ({...prev, [postId]: !currentlyLiked}));
+        setLikingMap(prev => ({ ...prev, [postId]: !currentlyLiked }));
 
         try {
             if (currentlyLiked) {
@@ -242,7 +257,7 @@ export default function EventDiscussion({eventId, event, registration}) {
             await loadPosts(currentPage);
         } catch (err) {
             console.error('Failed to toggle like', err);
-            setLikingMap(prev => ({...prev, [postId]: currentlyLiked}));
+            setLikingMap(prev => ({ ...prev, [postId]: currentlyLiked }));
             toast.error(err.response?.data?.error || 'Không thể cập nhật lượt thích.');
         }
     };
@@ -253,14 +268,14 @@ export default function EventDiscussion({eventId, event, registration}) {
 
     const renderPostCard = (post) => {
         const postId = post.id;
-        const commentsState = commentsMap[postId] || {items: [], loading: false};
+        const commentsState = commentsMap[postId] || { items: [], loading: false };
         const draft = commentDrafts[postId] ?? '';
         const isExpanded = expandedPosts.includes(postId);
         const isSubmittingComment = Boolean(commentsState.submitting);
         const liked = likingMap[postId] ?? post.isLiked ?? false;
 
         return (
-            <Card key={postId} sx={{mb: 3}}>
+            <Card key={postId} sx={{ mb: 3 }}>
                 <CardHeader
                     avatar={
                         <Avatar
@@ -278,16 +293,15 @@ export default function EventDiscussion({eventId, event, registration}) {
                     subheader={formatDateTime(post.createdAt)}
                 />
                 <CardContent>
-                    <Typography variant="body1" sx={{whiteSpace: 'pre-line'}}>
+                    <Typography variant="body1" sx={{ whiteSpace: 'pre-line' }}>
                         {post.content}
                     </Typography>
                     {post.imageUrl && (
                         <Box
                             component="img"
-                            // Xử lý hiển thị ảnh: nếu là link http thì giữ nguyên, nếu không thì nối localhost
                             src={post.imageUrl.startsWith('http') ? post.imageUrl : `http://localhost:8080${post.imageUrl}`}
                             alt="Post"
-                            sx={{mt: 2, maxHeight: 300, width: '100%', objectFit: 'contain', borderRadius: 1, bgcolor: '#f5f5f5'}}
+                            sx={{ mt: 2, maxHeight: 300, width: '100%', objectFit: 'contain', borderRadius: 1, bgcolor: '#f5f5f5' }}
                             onError={(e) => { e.target.onerror = null; e.target.src = "https://placehold.co/600x400?text=Image+Error" }}
                         />
                     )}
@@ -295,28 +309,28 @@ export default function EventDiscussion({eventId, event, registration}) {
                 <CardActions disableSpacing>
                     <Stack direction="row" spacing={1} alignItems="center">
                         <IconButton onClick={() => handleToggleLike(postId)} color={liked ? 'error' : 'default'} disabled={!canParticipate}>
-                            {liked ? <FavoriteIcon/> : <FavoriteBorderIcon/>}
+                            {liked ? <FavoriteIcon /> : <FavoriteBorderIcon />}
                         </IconButton>
                         <Typography variant="body2">{post.likesCount}</Typography>
                     </Stack>
-                    <Stack direction="row" spacing={1} alignItems="center" sx={{ml: 2}}>
+                    <Stack direction="row" spacing={1} alignItems="center" sx={{ ml: 2 }}>
                         <IconButton onClick={() => toggleComments(postId)}>
-                            <ChatBubbleOutlineIcon/>
+                            <ChatBubbleOutlineIcon />
                         </IconButton>
                         <Typography variant="body2">{post.commentsCount}</Typography>
                     </Stack>
                 </CardActions>
                 <Collapse in={isExpanded} timeout="auto" unmountOnExit>
-                    <Divider/>
+                    <Divider />
                     <CardContent>
                         {commentsState.loading ? (
                             <Box display="flex" justifyContent="center" py={2}>
-                                <CircularProgress size={24}/>
+                                <CircularProgress size={24} />
                             </Box>
                         ) : (
                             <Stack spacing={2}>
                                 {(commentsState.items ?? []).map(comment => (
-                                    <Box key={comment.id} sx={{display: 'flex', gap: 1.5}}>
+                                    <Box key={comment.id} sx={{ display: 'flex', gap: 1.5 }}>
                                         <Avatar
                                             alt={comment.userName || 'User'}
                                             src={comment.userAvatarUrl ? (
@@ -324,19 +338,19 @@ export default function EventDiscussion({eventId, event, registration}) {
                                                     ? comment.userAvatarUrl
                                                     : `http://localhost:8080${comment.userAvatarUrl}`
                                             ) : undefined}
-                                            sx={{width: 32, height: 32}}
+                                            sx={{ width: 32, height: 32 }}
                                         >
                                             {comment.userName?.charAt(0)?.toUpperCase() ?? '?'}
                                         </Avatar>
-                                        <Box sx={{flex: 1}}>
+                                        <Box sx={{ flex: 1 }}>
                                             <Typography variant="subtitle2">{comment.userName}</Typography>
                                             <Typography variant="caption" color="text.secondary">
                                                 {formatDateTime(comment.createdAt)}
                                             </Typography>
-                                            <Typography variant="body2" sx={{whiteSpace: 'pre-line', mt: 0.5}}>
+                                            <Typography variant="body2" sx={{ whiteSpace: 'pre-line', mt: 0.5 }}>
                                                 {comment.content}
                                             </Typography>
-                                            <Divider sx={{mt: 1}}/>
+                                            <Divider sx={{ mt: 1 }} />
                                         </Box>
                                     </Box>
                                 ))}
@@ -347,14 +361,14 @@ export default function EventDiscussion({eventId, event, registration}) {
                                             multiline
                                             minRows={2}
                                             value={draft}
-                                            onChange={(e) => setCommentDrafts(prev => ({...prev, [postId]: e.target.value}))}
+                                            onChange={(e) => setCommentDrafts(prev => ({ ...prev, [postId]: e.target.value }))}
                                             fullWidth
                                         />
                                         <Box display="flex" justifyContent="flex-end">
                                             <Button
                                                 variant="contained"
                                                 size="small"
-                                                endIcon={<SendIcon/>}
+                                                endIcon={<SendIcon />}
                                                 onClick={() => handleAddComment(postId)}
                                                 disabled={isSubmittingComment}
                                             >
@@ -382,13 +396,13 @@ export default function EventDiscussion({eventId, event, registration}) {
     };
 
     return (
-        <Box sx={{mt: 4}}>
+        <Box sx={{ mt: 4 }}>
             <Typography variant="h5" gutterBottom fontWeight="bold">
                 Kênh trao đổi
             </Typography>
 
             {isAuthenticated && canParticipate && (
-                <Card sx={{mb: 3}}>
+                <Card sx={{ mb: 3 }}>
                     <CardContent>
                         <Typography variant="subtitle1" gutterBottom>
                             Tạo bài đăng mới
@@ -403,7 +417,7 @@ export default function EventDiscussion({eventId, event, registration}) {
                                 fullWidth
                             />
 
-                            {/* --- 2. THAY THẾ TEXTFIELD BẰNG IMAGE UPLOADER --- */}
+                            { }
                             <Box>
                                 <ImageUploader
                                     label="Hình ảnh đính kèm (Tùy chọn)"
@@ -412,7 +426,7 @@ export default function EventDiscussion({eventId, event, registration}) {
                                     placeholder="Nhập link hoặc tải ảnh lên..."
                                 />
                             </Box>
-                            {/* ------------------------------------------------ */}
+                            { }
 
                             <Box display="flex" justifyContent="flex-end">
                                 <Button
@@ -429,18 +443,18 @@ export default function EventDiscussion({eventId, event, registration}) {
             )}
 
             {isAuthenticated && !canParticipate && (
-                <Alert severity="info" sx={{mb: 2}}>
+                <Alert severity="info" sx={{ mb: 2 }}>
                     Chỉ tình nguyện viên đã được duyệt, người tổ chức hoặc quản trị viên mới có thể tạo bài đăng và tương tác trong kênh này.
                 </Alert>
             )}
 
             {error && (
-                <Alert severity="error" sx={{mb: 2}}>{error}</Alert>
+                <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>
             )}
 
             {loading ? (
                 <Box display="flex" justifyContent="center" py={4}>
-                    <CircularProgress/>
+                    <CircularProgress />
                 </Box>
             ) : (
                 <>

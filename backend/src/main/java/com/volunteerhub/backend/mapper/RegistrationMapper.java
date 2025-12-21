@@ -5,6 +5,11 @@ import com.volunteerhub.backend.dto.RegistrationResponse;
 import com.volunteerhub.backend.entity.RegistrationEntity;
 import org.mapstruct.*;
 
+/**
+ * Mapper interface for converting registration-related objects.
+ * Transforms between {@link RegistrationCreateRequest}, {@link RegistrationEntity}, and {@link RegistrationResponse}
+ * using MapStruct for compile-time type-safe mapping.
+ */
 @Mapper(componentModel = "spring")
 public interface RegistrationMapper {
 

@@ -13,18 +13,20 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @NoArgsConstructor
+/**
+ * Represents a user-generated post tied to an event,
+ * including content, optional image, counts, and timestamps.
+ */
 public class PostEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // event_id
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "event_id", nullable = false)
     private EventEntity event;
 
-    // user_id (author)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private UserEntity user;
@@ -58,8 +60,10 @@ public class PostEntity {
         LocalDateTime now = LocalDateTime.now();
         this.createdAt = now;
         this.updatedAt = now;
-        if (this.likesCount == null) this.likesCount = 0;
-        if (this.commentsCount == null) this.commentsCount = 0;
+        if (this.likesCount == null)
+            this.likesCount = 0;
+        if (this.commentsCount == null)
+            this.commentsCount = 0;
     }
 
     @PreUpdate

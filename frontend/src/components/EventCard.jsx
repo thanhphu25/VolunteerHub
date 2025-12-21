@@ -1,3 +1,26 @@
+/**
+ * EventCard Component
+ * Displays a formatted card showing event information including image, title, category,
+ * description, location, start date, volunteer count, and progress bar.
+ * Provides visual feedback on hover and navigates to event details on click.
+ *
+ * @component
+ * @param {Object} props - Component props
+ * @param {Object} props.event - Event object containing all event details
+ * @param {string} props.event.id - Unique event identifier
+ * @param {string} props.event.name - Event title
+ * @param {string} props.event.category - Event category
+ * @param {string} props.event.imageUrl - Event cover image URL
+ * @param {string} props.event.description - Event description
+ * @param {string} props.event.location - Event location
+ * @param {string} props.event.startDate - Event start date
+ * @param {number} props.event.currentVolunteers - Current number of volunteers
+ * @param {number} props.event.maxVolunteers - Maximum number of volunteers
+ * @param {string} props.event.organizerName - Name of event organizer
+ * @param {boolean} [props.showOrganizerName=false] - Whether to display organizer name
+ * @param {Object} [props.sx={}] - Additional MUI sx styling props
+ * @returns {JSX.Element} Formatted event card component
+ */
 import React from "react";
 import {
     Box,
@@ -24,15 +47,11 @@ export default function EventCard({ event, showOrganizerName = false, sx = {} })
     const { t } = useLanguage();
     const theme = useTheme();
 
-    // --- 1. THÊM HÀM XỬ LÝ URL ẢNH ---
     const getImageUrl = (url) => {
         if (!url) return "https://placehold.co/400x225?text=No+Image";
-        // Nếu là link online (http...) thì giữ nguyên
         if (url.startsWith("http")) return url;
-        // Nếu là link local (/uploads...) thì thêm localhost:8080
         return `http://localhost:8080${url}`;
     };
-    // ---------------------------------
 
     const current = event.currentVolunteers || 0;
     const max = event.maxVolunteers || 100;
@@ -59,7 +78,7 @@ export default function EventCard({ event, showOrganizerName = false, sx = {} })
                 ...sx
             }}
         >
-            {/* KHUNG ẢNH 16:9 */}
+            { }
             <Box
                 sx={{
                     width: '100%',
@@ -71,9 +90,7 @@ export default function EventCard({ event, showOrganizerName = false, sx = {} })
             >
                 <Box
                     component="img"
-                    // --- 2. GỌI HÀM getImageUrl TẠI ĐÂY ---
                     src={getImageUrl(event.imageUrl)}
-                    // -------------------------------------
                     alt={event.name}
                     sx={{
                         position: 'absolute',
@@ -83,7 +100,6 @@ export default function EventCard({ event, showOrganizerName = false, sx = {} })
                         objectFit: 'cover',
                         p: 0.5
                     }}
-                    // Thêm xử lý lỗi nếu ảnh hỏng
                     onError={(e) => {
                         e.target.onerror = null;
                         e.target.src = "https://placehold.co/400x225?text=Error";

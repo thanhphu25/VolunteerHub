@@ -1,12 +1,11 @@
-// src/theme/theme.js
-import {createTheme} from '@mui/material/styles'
+import { createTheme } from '@mui/material/styles'
 import palette from './palette'
 import typography from './typography'
 
 export const getDesignTokens = (mode) => ({
   palette: palette(mode),
   typography,
-  shape: {borderRadius: 10},
+  shape: { borderRadius: 10 },
   components: {
     MuiButton: {
       styleOverrides: {
@@ -19,4 +18,4 @@ export const getDesignTokens = (mode) => ({
 })
 
 export const createVolunteerTheme = (mode = 'light') =>
-    createTheme(getDesignTokens(mode))
+  createTheme(getDesignTokens(mode))

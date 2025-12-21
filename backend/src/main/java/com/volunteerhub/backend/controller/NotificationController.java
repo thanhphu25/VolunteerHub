@@ -11,17 +11,31 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/**
+ * Controller for managing user notifications and Web Push subscriptions.
+ * Provides endpoints to handle subscription lifecycle and notification reading status.
+ */
 @RestController
 @RequestMapping("/api")
 public class NotificationController {
 
     private final INotificationService svc;
 
+    /**
+     * Constructs the NotificationController with the notification service.
+     * @param svc Service handling notification delivery and state management.
+     */
     public NotificationController(INotificationService svc) {
         this.svc = svc;
     }
 
-    // Subscribe to push (store subscription). Requires authentication.
+    /**
+     * Registers a Web Push subscription for the authenticated user.
+     * This allows the server to send push notifications to the user's browser/device.
+     * @param req The subscription details (endpoint, keys) from the browser.
+     * @param auth Current authentication context.
+     * @return ResponseEntity confirming the subscription.
+     */
     @PreAuthorize("isAuthenticated()")
     @PostMapping("/push/subscribe")
     public ResponseEntity<?> subscribe(@Valid @RequestBody PushSubscriptionRequest req, Authentication auth) {
@@ -33,7 +47,12 @@ public class NotificationController {
         }
     }
 
-    // Unsubscribe
+    /**
+     * Removes a Web Push subscription for the authenticated user.
+     * @param req The subscription details to be removed.
+     * @param auth Current authentication context.
+     * @return ResponseEntity confirming the unsubscription.
+     */
     @PreAuthorize("isAuthenticated()")
     @PostMapping("/push/unsubscribe")
     public ResponseEntity<?> unsubscribe(@Valid @RequestBody PushSubscriptionRequest req, Authentication auth) {
@@ -45,7 +64,11 @@ public class NotificationController {
         }
     }
 
-    // List current user's notifications (in-app)
+    /**
+     * Retrieves all notifications for the currently authenticated user.
+     * @param auth Current authentication context.
+     * @return List of notifications wrapped in NotificationResponse objects.
+     */
     @PreAuthorize("isAuthenticated()")
     @GetMapping("/me/notifications")
     public ResponseEntity<List<NotificationResponse>> listNotifications(Authentication auth) {
@@ -56,6 +79,11 @@ public class NotificationController {
         }
     }
 
+    /**
+     * Retrieves a feed of notifications, often filtered or prioritized for the user.
+     * @param auth Current authentication context.
+     * @return List of notifications for the feed.
+     */
     @PreAuthorize("isAuthenticated()")
     @GetMapping("/me/notifications/feed")
     public ResponseEntity<List<NotificationResponse>> feed(Authentication auth) {
@@ -66,7 +94,12 @@ public class NotificationController {
         }
     }
 
-    // Mark a notification as read
+    /**
+     * Marks a specific notification as read.
+     * @param id The ID of the notification to update.
+     * @param auth Current authentication context.
+     * @return ResponseEntity confirming the update, or error if not found/unauthorized.
+     */
     @PreAuthorize("isAuthenticated()")
     @PostMapping("/me/notifications/{id}/read")
     public ResponseEntity<?> markRead(@PathVariable Long id, Authentication auth) {
@@ -82,6 +115,11 @@ public class NotificationController {
         }
     }
 
+    /**
+     * Marks all notifications belonging to the authenticated user as read.
+     * @param auth Current authentication context.
+     * @return ResponseEntity confirming the bulk update.
+     */
     @PreAuthorize("isAuthenticated()")
     @PostMapping("/me/notifications/read-all")
     public ResponseEntity<?> markAllRead(Authentication auth) {

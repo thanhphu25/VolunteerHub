@@ -18,8 +18,8 @@ import java.security.Security;
 import java.util.Map;
 
 /**
- * Robust WebPushService: try multiple send(...) signatures and only use Notification constructor
- * by reflection as last resort. This avoids compile/runtime errors on different library versions.
+ * Service for sending Web Push notifications via VAPID.
+ * Uses reflection for compatibility across different webpush library versions.
  */
 @Service
 public class WebPushService {

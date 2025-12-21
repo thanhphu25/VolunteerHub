@@ -7,25 +7,22 @@ import lombok.Setter;
 
 import java.time.LocalDateTime;
 
-/**
- * Event entity mapped to table `events` (matches V1__init.sql).
- * - organizer: ManyToOne -> users (organizer)
- * - approvedBy: ManyToOne -> users (nullable)
- * - status: use shared enum com.volunteerhub.backend.entity.EventStatus
- * - version: optimistic locking column mapped to `version`
- */
 @Entity
 @Table(name = "events")
 @Getter
 @Setter
 @NoArgsConstructor
+/**
+ * Represents a volunteer event with scheduling, capacity,
+ * categorization, and moderation metadata.
+ * Includes lifecycle timestamps and optimistic locking via `version`.
+ */
 public class EventEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // organizer reference to users.id
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "organizer_id", nullable = false)
     private UserEntity organizer;
@@ -55,12 +52,11 @@ public class EventEntity {
     private LocalDateTime endDate;
 
     @Column(name = "max_volunteers")
-    private Integer maxVolunteers; // nullable -> no limit
+    private Integer maxVolunteers;
 
     @Column(name = "current_volunteers", nullable = false)
     private Integer currentVolunteers = 0;
 
-    // use shared enum declared elsewhere in package
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private EventStatus status = EventStatus.pending;
@@ -96,7 +92,6 @@ public class EventEntity {
     @Column(name = "approved_at")
     private LocalDateTime approvedAt;
 
-    // Approved by as reference to user who approved (matches FK in DB)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "approved_by", nullable = true)
     private UserEntity approvedBy;
@@ -106,8 +101,10 @@ public class EventEntity {
         LocalDateTime now = LocalDateTime.now();
         this.createdAt = now;
         this.updatedAt = now;
-        if (this.currentVolunteers == null) this.currentVolunteers = 0;
-        if (this.version == null) this.version = 0L;
+        if (this.currentVolunteers == null)
+            this.currentVolunteers = 0;
+        if (this.version == null)
+            this.version = 0L;
     }
 
     @PreUpdate

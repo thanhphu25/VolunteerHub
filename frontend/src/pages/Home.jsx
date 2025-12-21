@@ -1,3 +1,12 @@
+/**
+ * Home Page
+ * Landing page showcasing the volunteer platform with hero carousel, popular events,
+ * newest events, testimonials, and call-to-action sections.
+ * Displays statistics about platform usage and volunteer impact.
+ *
+ * @component
+ * @returns {JSX.Element} Home page with carousel, featured events, and platform information
+ */
 import React, { useEffect, useState } from "react";
 import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
@@ -37,9 +46,9 @@ import {
 } from "@mui/icons-material";
 
 const getImageUrl = (url) => {
-    if (!url) return undefined;
-    if (url.startsWith("http")) return url; // Link online giữ nguyên
-    return `http://localhost:8080${url}`;  // Link local thêm localhost
+  if (!url) return undefined;
+  if (url.startsWith("http")) return url;
+  return `http://localhost:8080${url}`;
 };
 export default function Home() {
   const navigate = useNavigate();
@@ -51,51 +60,47 @@ export default function Home() {
   const [error, setError] = useState(null);
   const [slideIndex, setSlideIndex] = useState(0);
 
-  // 🔥 Lấy dữ liệu cho cả 2 phần: Nổi bật và Mới nhất
-    useEffect(() => {
-        const fetchHomeData = async () => {
-            try {
-                setLoading(true);
-                setError(null);
+  useEffect(() => {
+    const fetchHomeData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
 
-                const [popularRes, recentRes] = await Promise.all([
-                    eventApi.getAll({
-                        page: 0,
-                        size: 5,
-                        status: "approved",
-                        sort: "popularity",
-                    }),
-                    eventApi.getAll({
-                        page: 0,
-                        size: 5,
-                        status: "approved",
-                        sort: "recent_activity",
-                    })
-                ]);
+        const [popularRes, recentRes] = await Promise.all([
+          eventApi.getAll({
+            page: 0,
+            size: 5,
+            status: "approved",
+            sort: "popularity",
+          }),
+          eventApi.getAll({
+            page: 0,
+            size: 5,
+            status: "approved",
+            sort: "recent_activity",
+          })
+        ]);
 
-                // --- 2. SỬA ĐOẠN XỬ LÝ DỮ LIỆU NÀY ---
-                // Hàm phụ để xử lý danh sách sự kiện
-                const processEvents = (events) => events.map(ev => ({
-                    ...ev,
-                    imageUrl: getImageUrl(ev.imageUrl) // Gọi hàm sửa URL ảnh ở đây
-                }));
+        const processEvents = (events) => events.map(ev => ({
+          ...ev,
+          imageUrl: getImageUrl(ev.imageUrl)
+        }));
 
-                const popEvents = processEvents(popularRes.data.content || []);
-                const recEvents = processEvents(recentRes.data.content || []);
-                // -------------------------------------
+        const popEvents = processEvents(popularRes.data.content || []);
+        const recEvents = processEvents(recentRes.data.content || []);
 
-                setPopularEvents(popEvents);
-                setRecentEvents(recEvents);
+        setPopularEvents(popEvents);
+        setRecentEvents(recEvents);
 
-            } catch (err) {
-                console.error("Không thể tải dữ liệu trang chủ:", err);
-                setError("Đã xảy ra lỗi khi tải dữ liệu sự kiện.");
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchHomeData();
-    }, []);
+      } catch (err) {
+        console.error("Không thể tải dữ liệu trang chủ:", err);
+        setError("Đã xảy ra lỗi khi tải dữ liệu sự kiện.");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchHomeData();
+  }, []);
 
   const features = [
     {
@@ -209,7 +214,7 @@ export default function Home() {
           width: 48,
           height: 48,
           "&:hover": { bgcolor: "grey.100" },
-          display: "flex", // Force display
+          display: "flex",
         }}
       >
         <ArrowForwardIcon color="primary" />
@@ -234,7 +239,7 @@ export default function Home() {
           width: 48,
           height: 48,
           "&:hover": { bgcolor: "grey.100" },
-          display: "flex", // Force display
+          display: "flex",
         }}
       >
         <ArrowBackIcon color="primary" />
@@ -265,10 +270,10 @@ export default function Home() {
 
   return (
     <Box sx={{ bgcolor: "background.default", minHeight: "100vh", pb: 8 }}>
-      {/* HERO SLIDER */}
+      { }
       <HeroSlider />
 
-      {/* FEATURED EVENTS SECTION */}
+      { }
       <Box sx={{ bgcolor: "background.paper", py: 10 }}>
         <Container maxWidth="lg">
           <Typography
@@ -291,7 +296,7 @@ export default function Home() {
             </Alert>
           ) : (
             <Grid container spacing={3} sx={{ flexWrap: { xs: 'wrap', md: 'nowrap' } }}>
-              {/* Popular Events Slider (Left 60%) */}
+              { }
               <Grid item xs={12} md={7} sx={{
                 minWidth: 0,
                 width: { md: '60%' },
@@ -302,12 +307,12 @@ export default function Home() {
                 <PopularEventsSlider events={popularEvents} />
               </Grid>
 
-              {/* Newest Events List (Right 40%) */}
+              { }
               <Grid item xs={12} md={5} sx={{
                 width: { md: '40%' },
                 flexBasis: { md: '40%' },
                 maxWidth: { md: '40%' },
-                minWidth: '300px' // Slightly wider min-width for better list display
+                minWidth: '300px'
               }}>
                 <NewestEventsList events={recentEvents} />
               </Grid>
@@ -334,7 +339,7 @@ export default function Home() {
         </Container>
       </Box>
 
-      {/* WHY CHOOSE US SECTION */}
+      { }
       <Container id="why-choose-us" maxWidth="lg" sx={{ mt: 10, mb: 8, scrollMarginTop: "100px" }}>
         <Typography
           variant="h2"
@@ -388,7 +393,7 @@ export default function Home() {
         </Grid>
       </Container>
 
-      {/* FEATURES SECTION */}
+      { }
       <Box sx={{ bgcolor: "background.default", py: 10 }}>
         <Container maxWidth="lg">
           <Typography
@@ -438,7 +443,7 @@ export default function Home() {
         </Container>
       </Box>
 
-      {/* TESTIMONIALS SECTION */}
+      { }
       <Container maxWidth="lg" sx={{ mt: 10, mb: 8 }}>
         <Typography
           variant="h2"
@@ -543,10 +548,8 @@ export default function Home() {
                       </Typography>
                     </Box>
 
-                    {/* Avatar and Info outside the colored card for center effect, 
-                        or inside but styled differently? 
-                        User image shows it overlapping the bottom. 
-                        Let's position it absolute at bottom. */}
+                    {
+                    }
                     <Box
                       sx={{
                         display: "flex",

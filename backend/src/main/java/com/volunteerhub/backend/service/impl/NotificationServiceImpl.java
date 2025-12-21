@@ -23,6 +23,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+/**
+ * Implementation of INotificationService.
+ * Manages notification persistence, Web Push subscriptions, and delivery.
+ */
 @Service
 public class NotificationServiceImpl implements INotificationService {
 

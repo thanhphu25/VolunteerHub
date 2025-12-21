@@ -6,10 +6,12 @@ import java.security.NoSuchAlgorithmException;
 
 public final class TokenUtils {
 
-    private TokenUtils() {}
+    private TokenUtils() {
+    }
 
     public static String sha256Hex(String input) {
-        if (input == null) return null;
+        if (input == null)
+            return null;
         try {
             MessageDigest md = MessageDigest.getInstance("SHA-256");
             byte[] digest = md.digest(input.getBytes(StandardCharsets.UTF_8));

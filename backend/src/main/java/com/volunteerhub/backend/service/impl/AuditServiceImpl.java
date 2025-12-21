@@ -13,6 +13,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
+/**
+ * Implementation of IAuditService.
+ * Logs user actions and system events with optional JSON details.
+ */
 @Service
 public class AuditServiceImpl implements IAuditService {
 

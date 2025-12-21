@@ -1,6 +1,14 @@
-// src/pages/admin/EventRegistrations.jsx
-import React, {useCallback, useEffect, useState} from "react";
-import {useNavigate, useParams} from "react-router-dom";
+/**
+ * EventRegistrations Page
+ * Organizer/Admin page for managing event registrations and volunteer attendance.
+ * Displays registered volunteers in a table with approval/rejection controls.
+ * Allows recording volunteer attendance with optional notes.
+ *
+ * @component
+ * @returns {JSX.Element} Event registrations management page with volunteer table
+ */
+import React, { useCallback, useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import {
     Alert,
     Box,
@@ -18,7 +26,6 @@ import {
     TableRow,
     Tooltip,
     Typography,
-    // --- THÊM IMPORT MỚI ---
     Dialog, DialogTitle, DialogContent, DialogActions,
     FormControl, FormLabel, RadioGroup, FormControlLabel, Radio, TextField,
     Stack
@@ -27,39 +34,35 @@ import {
     ArrowBack as BackIcon,
     Cancel as RejectIcon,
     CheckCircle as ApproveIcon,
-    EventAvailable as AttendanceIcon // Icon chấm công
+    EventAvailable as AttendanceIcon
 } from "@mui/icons-material";
 import registrationApi from "../../api/registrationApi";
 import eventApi from "../../api/eventApi";
-import {toast} from "react-toastify";
-import {useLanguage} from "../../context/LanguageContext";
+import { toast } from "react-toastify";
+import { useLanguage } from "../../context/LanguageContext";
 
 export default function EventRegistrations() {
-    const {eventId} = useParams(); // Lấy ID từ URL (lưu ý: kiểm tra router đặt tên param là :id hay :eventId)
-    // Nếu router của bạn là path="/organizer/events/:id/registrations" thì dùng const { id } = useParams();
-    // Ở đây tôi giả định bạn dùng :id, nếu code cũ dùng :eventId thì sửa lại dòng dưới:
-    // const { id: eventId } = useParams();
+    const { eventId } = useParams();
 
     const navigate = useNavigate();
-    const {language} = useLanguage();
+    const { language } = useLanguage();
     const [registrations, setRegistrations] = useState([]);
     const [eventName, setEventName] = useState("");
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [updatingId, setUpdatingId] = useState(null);
 
-    // --- STATE CHO CHỨC NĂNG CHẤM CÔNG ---
     const [attendanceOpen, setAttendanceOpen] = useState(false);
     const [selectedReg, setSelectedReg] = useState(null);
     const [attendanceNote, setAttendanceNote] = useState('');
     const [isPresent, setIsPresent] = useState(true);
 
     const statusLabels = {
-        pending: {vi: "Chờ duyệt", en: "Pending"},
-        approved: {vi: "Đã duyệt", en: "Approved"},
-        rejected: {vi: "Vắng mặt", en: "Rejected"},
-        cancelled: {vi: "Đã hủy", en: "Cancelled"},
-        completed: {vi: "Hoàn thành", en: "Completed"},
+        pending: { vi: "Chờ duyệt", en: "Pending" },
+        approved: { vi: "Đã duyệt", en: "Approved" },
+        rejected: { vi: "Vắng mặt", en: "Rejected" },
+        cancelled: { vi: "Đã hủy", en: "Cancelled" },
+        completed: { vi: "Hoàn thành", en: "Completed" },
     };
 
     const statusColors = {
@@ -75,7 +78,7 @@ export default function EventRegistrations() {
             setLoading(true);
             setError(null);
             try {
-                const eventRes = await eventApi.getById(eventId); // Dùng eventId lấy từ params
+                const eventRes = await eventApi.getById(eventId);
                 setEventName(eventRes.data?.name || (language === "vi" ? `Sự kiện #${eventId}` : `Event #${eventId}`));
             } catch (eventErr) {
                 console.warn("Không thể lấy tên sự kiện:", eventErr);
@@ -102,7 +105,7 @@ export default function EventRegistrations() {
         try {
             await registrationApi.approve(eventId, registrationId);
             toast.success(language === "vi" ? "Đã duyệt đăng ký!" : "Registration approved!");
-            fetchRegistrations(); // Reload lại để cập nhật trạng thái mới nhất
+            fetchRegistrations();
         } catch (err) {
             toast.error(err.response?.data?.error || "Error approving");
         } finally {
@@ -126,7 +129,6 @@ export default function EventRegistrations() {
         }
     };
 
-    // --- HÀM MỞ DIALOG CHẤM CÔNG ---
     const handleOpenAttendance = (reg) => {
         setSelectedReg(reg);
         setAttendanceNote('');
@@ -134,16 +136,14 @@ export default function EventRegistrations() {
         setAttendanceOpen(true);
     };
 
-    // --- HÀM GỬI API CHẤM CÔNG ---
     const handleSubmitAttendance = async () => {
         if (!selectedReg) return;
         try {
-            // Gọi API complete
             await registrationApi.markCompleted(eventId, selectedReg.id, isPresent, attendanceNote);
             toast.success(language === "vi" ? "Đã chấm công thành công!" : "Marked as completed!");
 
             setAttendanceOpen(false);
-            fetchRegistrations(); // Reload lại danh sách
+            fetchRegistrations();
         } catch (err) {
             console.error(err);
             toast.error(language === "vi" ? "Lỗi chấm công." : "Error marking completion.");
@@ -152,10 +152,10 @@ export default function EventRegistrations() {
 
     if (loading) {
         return (
-            <Box sx={{bgcolor: "background.default", minHeight: "calc(100vh - 64px)"}}>
+            <Box sx={{ bgcolor: "background.default", minHeight: "calc(100vh - 64px)" }}>
                 <Container>
                     <Box display="flex" justifyContent="center" alignItems="center" minHeight="50vh">
-                        <CircularProgress/>
+                        <CircularProgress />
                     </Box>
                 </Container>
             </Box>
@@ -164,10 +164,10 @@ export default function EventRegistrations() {
 
     if (error) {
         return (
-            <Box sx={{bgcolor: "background.default", minHeight: "calc(100vh - 64px)", py: 4}}>
+            <Box sx={{ bgcolor: "background.default", minHeight: "calc(100vh - 64px)", py: 4 }}>
                 <Container>
-                    <Alert severity="error" sx={{mb: 3, borderRadius: 2}}>{error}</Alert>
-                    <Button variant="outlined" startIcon={<BackIcon/>} onClick={() => navigate(-1)}>
+                    <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>{error}</Alert>
+                    <Button variant="outlined" startIcon={<BackIcon />} onClick={() => navigate(-1)}>
                         {language === "vi" ? "Quay lại" : "Go Back"}
                     </Button>
                 </Container>
@@ -176,14 +176,14 @@ export default function EventRegistrations() {
     }
 
     return (
-        <Box sx={{bgcolor: "background.default", minHeight: "calc(100vh - 64px)", py: 4}}>
+        <Box sx={{ bgcolor: "background.default", minHeight: "calc(100vh - 64px)", py: 4 }}>
             <Container maxWidth="lg">
                 <Box display="flex" alignItems="center" mb={4}>
                     <IconButton onClick={() => navigate(-1)} sx={{ mr: 2, borderRadius: 2 }}>
-                        <BackIcon/>
+                        <BackIcon />
                     </IconButton>
                     <Box>
-                        <Typography variant="h4" fontWeight="bold" sx={{color: "primary.main"}}>
+                        <Typography variant="h4" fontWeight="bold" sx={{ color: "primary.main" }}>
                             {language === "vi" ? "Quản lý Tình nguyện viên" : "Volunteer Management"}
                         </Typography>
                         <Typography variant="subtitle1" color="text.secondary">
@@ -193,7 +193,7 @@ export default function EventRegistrations() {
                 </Box>
 
                 {registrations.length === 0 ? (
-                    <Alert severity="info" sx={{borderRadius: 2}}>
+                    <Alert severity="info" sx={{ borderRadius: 2 }}>
                         {language === "vi" ? "Chưa có ai đăng ký tham gia sự kiện này." : "No registrations yet."}
                     </Alert>
                 ) : (
@@ -202,11 +202,11 @@ export default function EventRegistrations() {
                             <Table stickyHeader>
                                 <TableHead sx={{ bgcolor: 'grey.50' }}>
                                     <TableRow>
-                                        <TableCell sx={{fontWeight: 700}}>{language === "vi" ? "Tên TNV" : "Volunteer"}</TableCell>
-                                        <TableCell sx={{fontWeight: 700}}>Email</TableCell>
-                                        <TableCell sx={{fontWeight: 700}}>{language === "vi" ? "Ghi chú" : "Note"}</TableCell>
-                                        <TableCell sx={{fontWeight: 700}}>{language === "vi" ? "Trạng thái" : "Status"}</TableCell>
-                                        <TableCell align="right" sx={{fontWeight: 700}}>{language === "vi" ? "Hành động" : "Actions"}</TableCell>
+                                        <TableCell sx={{ fontWeight: 700 }}>{language === "vi" ? "Tên TNV" : "Volunteer"}</TableCell>
+                                        <TableCell sx={{ fontWeight: 700 }}>Email</TableCell>
+                                        <TableCell sx={{ fontWeight: 700 }}>{language === "vi" ? "Ghi chú" : "Note"}</TableCell>
+                                        <TableCell sx={{ fontWeight: 700 }}>{language === "vi" ? "Trạng thái" : "Status"}</TableCell>
+                                        <TableCell align="right" sx={{ fontWeight: 700 }}>{language === "vi" ? "Hành động" : "Actions"}</TableCell>
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
@@ -218,10 +218,8 @@ export default function EventRegistrations() {
                                                 <Tooltip title={reg.completionNote || reg.note || ''}>
                                                     <Typography noWrap variant="body2" sx={{ cursor: 'help' }}>
                                                         {reg.completionNote ? (
-                                                            // Nếu có ghi chú chấm công -> Hiện màu xanh đậm
                                                             <span style={{ fontWeight: 'bold', color: '#1976d2' }}>{reg.completionNote}</span>
                                                         ) : (
-                                                            // Nếu chỉ có ghi chú đăng ký -> Hiện màu xám
                                                             <span style={{ color: 'gray' }}>{reg.note || "-"}</span>
                                                         )}
                                                     </Typography>
@@ -232,27 +230,27 @@ export default function EventRegistrations() {
                                                     label={statusLabels[reg.status]?.[language] || reg.status}
                                                     color={statusColors[reg.status] || "default"}
                                                     size="small"
-                                                    sx={{fontWeight: 600}}
+                                                    sx={{ fontWeight: 600 }}
                                                 />
                                             </TableCell>
                                             <TableCell align="right">
-                                                {/* NẾU LÀ PENDING -> HIỆN DUYỆT / TỪ CHỐI */}
+                                                { }
                                                 {reg.status === "pending" && (
                                                     <Stack direction="row" spacing={1} justifyContent="flex-end">
                                                         <Tooltip title={language === "vi" ? "Duyệt" : "Approve"}>
                                                             <IconButton color="success" onClick={() => handleApprove(reg.id)} disabled={updatingId === reg.id}>
-                                                                <ApproveIcon/>
+                                                                <ApproveIcon />
                                                             </IconButton>
                                                         </Tooltip>
                                                         <Tooltip title={language === "vi" ? "Từ chối" : "Reject"}>
                                                             <IconButton color="error" onClick={() => handleReject(reg.id)} disabled={updatingId === reg.id}>
-                                                                <RejectIcon/>
+                                                                <RejectIcon />
                                                             </IconButton>
                                                         </Tooltip>
                                                     </Stack>
                                                 )}
 
-                                                {/* ✅ NẾU LÀ APPROVED -> HIỆN NÚT CHẤM CÔNG */}
+                                                { }
                                                 {reg.status === "approved" && (
                                                     <Button
                                                         variant="contained"
@@ -266,7 +264,7 @@ export default function EventRegistrations() {
                                                     </Button>
                                                 )}
 
-                                                {/* NẾU LÀ COMPLETED -> HIỆN CHỮ */}
+                                                { }
                                                 {reg.status === "completed" && (
                                                     <Typography variant="caption" color="success.main" fontWeight="bold">
                                                         {language === "vi" ? "Đã hoàn thành" : "Confirmed"}
@@ -282,7 +280,7 @@ export default function EventRegistrations() {
                 )}
             </Container>
 
-            {/* --- DIALOG CHẤM CÔNG (MODAL) --- */}
+            { }
             <Dialog open={attendanceOpen} onClose={() => setAttendanceOpen(false)} maxWidth="sm" fullWidth>
                 <DialogTitle sx={{ fontWeight: 'bold' }}>
                     {language === "vi" ? "Xác nhận hoàn thành nhiệm vụ" : "Confirm Completion"}

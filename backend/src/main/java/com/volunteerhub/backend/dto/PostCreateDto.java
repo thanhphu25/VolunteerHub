@@ -4,32 +4,97 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
 /**
- * DTO used when creating a post (without file). Controller will set eventId/userId/imageUrl as needed.
+ * Data Transfer Object for creating a new post.
+ * This class captures the content and associations (user and event) required 
+ * to publish a post in the event's discussion feed.
  */
 public class PostCreateDto {
 
+    /**
+     * The main textual content of the post.
+     * Restricted to 2000 characters to ensure concise community updates 
+     * and efficient database storage.
+     */
     @NotBlank
     @Size(max = 2000)
     private String content;
 
-    // eventId and userId populated by controller, not by client (path/auth)
+    /** The ID of the event under which this post is being published. */
     private Long eventId;
+
+    /** The ID of the user who is creating the post. */
     private Long userId;
 
-    // imageUrl set when file uploaded
+    /** Optional URL for an image attached to the post. */
     private String imageUrl;
 
-    public PostCreateDto() {}
+    /**
+     * Default no-args constructor for JSON deserialization.
+     */
+    public PostCreateDto() {
+    }
 
-    public String getContent() { return content; }
-    public void setContent(String content) { this.content = content; }
+    /**
+     * Gets the post content.
+     * @return the content string.
+     */
+    public String getContent() {
+        return content;
+    }
 
-    public Long getEventId() { return eventId; }
-    public void setEventId(Long eventId) { this.eventId = eventId; }
+    /**
+     * Sets the post content.
+     * @param content the textual content of the post.
+     */
+    public void setContent(String content) {
+        this.content = content;
+    }
 
-    public Long getUserId() { return userId; }
-    public void setUserId(Long userId) { this.userId = userId; }
+    /**
+     * Gets the associated event ID.
+     * @return the event unique identifier.
+     */
+    public Long getEventId() {
+        return eventId;
+    }
 
-    public String getImageUrl() { return imageUrl; }
-    public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
+    /**
+     * Sets the associated event ID.
+     * @param eventId the event unique identifier.
+     */
+    public void setEventId(Long eventId) {
+        this.eventId = eventId;
+    }
+
+    /**
+     * Gets the creator's user ID.
+     * @return the user unique identifier.
+     */
+    public Long getUserId() {
+        return userId;
+    }
+
+    /**
+     * Sets the creator's user ID.
+     * @param userId the user unique identifier.
+     */
+    public void setUserId(Long userId) {
+        this.userId = userId;
+    }
+
+    /**
+     * Gets the attached image URL.
+     * @return the image URL string.
+     */
+    public String getImageUrl() {
+        return imageUrl;
+    }
+
+    /**
+     * Sets the attached image URL.
+     * @param imageUrl the image URL string.
+     */
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
+    }
 }

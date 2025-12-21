@@ -1,6 +1,9 @@
-// src/api/postApi.js
 import axiosClient from './axiosClient';
 
+/**
+ * Post API service module.
+ * Manages posts, comments, and likes for event discussions.
+ */
 const postApi = {
   /**
    * Fetch paginated posts for an event.
@@ -8,9 +11,9 @@ const postApi = {
    * @param {{page?: number, size?: number}} options
    */
   listPosts: (eventId, options = {}) => {
-    const {page = 0, size = 10} = options;
+    const { page = 0, size = 10 } = options;
     return axiosClient.get(`/events/${eventId}/posts`, {
-      params: {page, size}
+      params: { page, size }
     });
   },
 

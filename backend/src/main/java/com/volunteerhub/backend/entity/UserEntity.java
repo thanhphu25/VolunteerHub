@@ -12,6 +12,10 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @NoArgsConstructor
+/**
+ * Represents an application user profile, authentication metadata,
+ * and lifecycle timestamps. Supports soft deletion and email verification.
+ */
 public class UserEntity {
 
     @Id

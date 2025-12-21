@@ -1,59 +1,63 @@
-// src/api/adminApi.js
 import axiosClient from './axiosClient';
 
+/**
+ * Admin API service module.
+ * Provides administrative operations for user management, account locking,
+ * role changes, and data export functionality.
+ */
 const adminApi = {
-  /**
-   * Lấy danh sách user (có phân trang)
-   * @param {object} params - Ví dụ: { page: 0, size: 20 }
-   * @returns Promise<AxiosResponse<any>>
-   */
-  listUsers: (params) =>
-      axiosClient.get('/admin/users', {params}), //
+    /**
+     * Retrieve a paginated list of all users.
+     * @param {object} params - Query parameters (e.g., page: 0, size: 20)
+     * @returns {Promise<AxiosResponse>} Paginated user list
+     */
+    listUsers: (params) =>
+        axiosClient.get('/admin/users', { params }),
 
-  /**
-   * Khóa tài khoản user
-   * @param {number|string} userId - ID của user cần khóa
-   * @returns Promise<AxiosResponse<any>>
-   */
-  lockUser: (userId) =>
-      axiosClient.post(`/admin/users/${userId}/lock`), //
+    /**
+     * Lock a user account to prevent access.
+     * @param {number|string} userId - The ID of the user to lock
+     * @returns {Promise<AxiosResponse>} Lock operation response
+     */
+    lockUser: (userId) =>
+        axiosClient.post(`/admin/users/${userId}/lock`),
 
-  /**
-   * Mở khóa tài khoản user
-   * @param {number|string} userId - ID của user cần mở khóa
-   * @returns Promise<AxiosResponse<any>>
-   */
-  unlockUser: (userId) =>
-      axiosClient.post(`/admin/users/${userId}/unlock`), //
+    /**
+     * Unlock a previously locked user account.
+     * @param {number|string} userId - The ID of the user to unlock
+     * @returns {Promise<AxiosResponse>} Unlock operation response
+     */
+    unlockUser: (userId) =>
+        axiosClient.post(`/admin/users/${userId}/unlock`),
 
-  /**
-   * (Tùy chọn) Thay đổi vai trò user
-   * @param {number|string} userId - ID của user
-   * @param {string} role - Vai trò mới ('volunteer', 'organizer', 'admin')
-   * @returns Promise<AxiosResponse<any>>
-   */
-  changeRole: (userId, role) =>
-      axiosClient.post(`/admin/users/${userId}/role`, {role}), //
+    /**
+     * Change a user's role.
+     * @param {number|string} userId - The ID of the user
+     * @param {string} role - New role: 'volunteer', 'organizer', or 'admin'
+     * @returns {Promise<AxiosResponse>} Role change response
+     */
+    changeRole: (userId, role) =>
+        axiosClient.post(`/admin/users/${userId}/role`, { role }),
 
-  /**
-   * (Tùy chọn) Xuất danh sách user
-   * @param {string} format - 'csv' hoặc 'json'
-   * @returns Promise<AxiosResponse<Blob>>
-   */
-  exportUsers: (format = 'csv') =>
-      axiosClient.get(`/admin/export/users?format=${format}`, { //
-        responseType: 'blob', // Yêu cầu trả về dữ liệu dạng file (Blob)
-      }),
+    /**
+     * Export the user list in specified format.
+     * @param {string} [format='csv'] - Export format: 'csv' or 'json'
+     * @returns {Promise<AxiosResponse>} Blob response containing exported data
+     */
+    exportUsers: (format = 'csv') =>
+        axiosClient.get(`/admin/export/users?format=${format}`, {
+            responseType: 'blob',
+        }),
 
-  /**
-   * (Tùy chọn) Xuất danh sách sự kiện
-   * @param {string} format - 'csv' hoặc 'json'
-   * @returns Promise<AxiosResponse<Blob>>
-   */
-  exportEvents: (format = 'csv') =>
-      axiosClient.get(`/admin/export/events?format=${format}`, { //
-        responseType: 'blob', // Yêu cầu trả về dữ liệu dạng file (Blob)
-      }),
+    /**
+     * Export the event list in specified format.
+     * @param {string} [format='csv'] - Export format: 'csv' or 'json'
+     * @returns {Promise<AxiosResponse>} Blob response containing exported data
+     */
+    exportEvents: (format = 'csv') =>
+        axiosClient.get(`/admin/export/events?format=${format}`, {
+            responseType: 'blob',
+        }),
 };
 
 export default adminApi;

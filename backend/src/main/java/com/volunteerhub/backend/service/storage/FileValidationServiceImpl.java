@@ -11,10 +11,8 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * Default implementation:
- * - allowedTypes: comma separated list like "image/png,image/jpeg,image/webp,image/gif"
- * - if allowedTypes contains "image/*" then accept any image/*
- * - maxSizeBytes in bytes (e.g. 5*1024*1024)
+ * Implementation of FileValidationService.
+ * Validates image files by type, size, and format based on configuration.
  */
 @Service
 public class FileValidationServiceImpl implements FileValidationService {
@@ -22,7 +20,7 @@ public class FileValidationServiceImpl implements FileValidationService {
     @Value("${file.allowed-types:image/png,image/jpeg,image/webp,image/gif}")
     private String allowedTypesConfig;
 
-    @Value("${file.max-size-bytes:5242880}") // 5 MB default
+    @Value("${file.max-size-bytes:5242880}")
     private long maxSizeBytes;
 
     private Set<String> allowedTypes;
@@ -55,7 +53,6 @@ public class FileValidationServiceImpl implements FileValidationService {
 
         String contentType = file.getContentType();
         if (contentType == null || contentType.isBlank()) {
-            // try to infer from filename extension as best-effort
             String ext = StringUtils.getFilenameExtension(file.getOriginalFilename());
             if (ext == null || ext.isBlank()) {
                 throw new FileValidationException("Unknown file type");
@@ -74,7 +71,6 @@ public class FileValidationServiceImpl implements FileValidationService {
                 throw new FileValidationException("Invalid file type: " + ct);
             }
         } else {
-            // default accept any image/*
             if (!ct.startsWith("image/")) {
                 throw new FileValidationException("Only image files are allowed");
             }

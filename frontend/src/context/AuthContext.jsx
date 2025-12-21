@@ -1,11 +1,14 @@
-// src/context/AuthContext.jsx
 import React, { createContext, useContext, useEffect, useState } from "react";
 import axiosClient from "../api/axiosClient";
-import authApi from "../api/authApi"; // <--- THÊM IMPORT NÀY
+import authApi from "../api/authApi";
 
 const AuthContext = createContext(null);
 
-// ✅ Helper: Decode JWT safely (Giữ nguyên)
+/**
+ * Decodes a JWT token to extract payload information
+ * @param {string} token - JWT token to decode
+ * @returns {Object|null} Decoded token payload or null if decoding fails
+ */
 function decodeJWT(token) {
     try {
         const base64Url = token.split(".")[1];
@@ -23,8 +26,18 @@ function decodeJWT(token) {
     }
 }
 
+/**
+ * AuthProvider Component
+ * Provides authentication context to the entire application.
+ * Manages login/logout, JWT tokens, and user information.
+ * Automatically restores authentication state from localStorage on app startup.
+ *
+ * @component
+ * @param {Object} props - Component props
+ * @param {JSX.Element} props.children - Child components to provide auth context to
+ * @returns {JSX.Element} Context provider wrapping children
+ */
 export function AuthProvider({ children }) {
-    // ✅ Consistent key name: accessToken
     const [token, setToken] = useState(() => localStorage.getItem("accessToken"));
     const [user, setUser] = useState(() => {
         const storedToken = localStorage.getItem("accessToken");
@@ -34,7 +47,6 @@ export function AuthProvider({ children }) {
                 ? {
                     id: decoded.userId || decoded.sub,
                     email: decoded.email || decoded.sub,
-                    // Fix: Chuyển role về chữ thường để khớp với logic check
                     role: (decoded.role || decoded.authorities?.[0]?.replace("ROLE_", ""))?.toLowerCase(),
                 }
                 : null;
@@ -42,7 +54,6 @@ export function AuthProvider({ children }) {
         return null;
     });
 
-    // ✅ Update axiosClient header whenever token changes
     useEffect(() => {
         if (token) {
             axiosClient.defaults.headers.common["Authorization"] = `Bearer ${token}`;
@@ -51,39 +62,32 @@ export function AuthProvider({ children }) {
         }
     }, [token]);
 
-    // ✅ SỬA LẠI HÀM LOGIN: Nhận email/password, gọi API, rồi mới setToken
     const login = async (email, password) => {
-        // 1. Gọi API lấy token từ Backend
         const res = await authApi.login({ email, password });
-        const newToken = res.data.accessToken; // Lấy accessToken từ response backend
+        const newToken = res.data.accessToken;
 
-        // 2. Lưu token và giải mã user như logic cũ
         setToken(newToken);
         localStorage.setItem("accessToken", newToken);
-        
+
         const decoded = decodeJWT(newToken);
         if (decoded) {
             setUser({
                 id: decoded.userId || decoded.sub,
                 email: decoded.email || decoded.sub,
-                // Fix: Đảm bảo role luôn là chữ thường (backend trả về ORGANIZER -> organizer)
                 role: (decoded.role || decoded.authorities?.[0]?.replace("ROLE_", ""))?.toLowerCase(),
             });
         }
         return res;
     };
 
-    // ✅ Logout clears everything
     const logout = () => {
         setToken(null);
         setUser(null);
         localStorage.removeItem("accessToken");
         delete axiosClient.defaults.headers.common["Authorization"];
-        // Thêm chuyển hướng để reset sạch sẽ
         window.location.href = '/login';
     };
 
-    // ✅ Helpers (Giữ nguyên logic kiểm tra)
     const isAdmin = () => user?.role === "admin";
     const isOrganizer = () => user?.role === "organizer";
 
@@ -96,7 +100,21 @@ export function AuthProvider({ children }) {
     );
 }
 
-// ✅ Safe hook usage wrapper
+/**
+ * useAuth Hook
+ * Custom React hook to access authentication context.
+ * Provides authentication state and functions for login/logout operations.
+ * Returns default values if hook is used outside of AuthProvider.
+ *
+ * @hook
+ * @returns {Object} Auth context with token, user, login, logout, isAdmin, isOrganizer
+ * @returns {string|null} return.token - Current access token for authenticated requests
+ * @returns {Object|null} return.user - Current user object with id, email, and role
+ * @returns {Function} return.login - Function to authenticate user with email and password
+ * @returns {Function} return.logout - Function to clear authentication and redirect to login
+ * @returns {Function} return.isAdmin - Function that returns true if user role is admin
+ * @returns {Function} return.isOrganizer - Function that returns true if user role is organizer
+ */
 export function useAuth() {
     const ctx = useContext(AuthContext);
     if (!ctx) {
@@ -104,8 +122,8 @@ export function useAuth() {
         return {
             token: null,
             user: null,
-            login: () => {},
-            logout: () => {},
+            login: () => { },
+            logout: () => { },
             isAdmin: () => false,
             isOrganizer: () => false,
         };

@@ -1,3 +1,12 @@
+/**
+ * OrganizerEvents Page
+ * Organizer dashboard for managing their volunteer events.
+ * Allows creating, editing, deleting events and viewing registrations.
+ * Displays events in different tabs based on status (all, approved, pending, rejected).
+ *
+ * @component
+ * @returns {JSX.Element} Event management page for event organizers
+ */
 import React, { useEffect, useState } from "react";
 import {
     Alert,
@@ -43,11 +52,10 @@ export default function OrganizerEvents() {
     const [formOpen, setFormOpen] = useState(false);
     const [currentEvent, setCurrentEvent] = useState(null);
 
-    // Tách riêng state Tab để lọc Client-side (giải quyết vụ "Đã kết thúc")
     const [activeTab, setActiveTab] = useState("all");
 
     const [filters, setFilters] = useState({
-        status: "all", // Cái này giữ 'all' để API luôn trả về hết dữ liệu cho mình lọc
+        status: "all",
         search: "",
         category: "all",
         location: "all",
@@ -66,7 +74,6 @@ export default function OrganizerEvents() {
             setError(null);
 
             const params = { ...filters, page: 0, size: 100 };
-            // Luôn xóa status để lấy tất cả về frontend xử lý logic "Completed" theo ngày
             delete params.status;
 
             if (params.category === 'all') delete params.category;
@@ -86,19 +93,16 @@ export default function OrganizerEvents() {
         setFilters((prev) => ({ ...prev, [field]: value }));
     };
 
-    // --- LOGIC MỚI: TÍNH TOÁN TRẠNG THÁI HIỂN THỊ ---
     const getDisplayStatus = (event) => {
         const now = new Date();
         const end = new Date(event.endDate);
 
-        // Nếu đã duyệt VÀ ngày kết thúc đã qua -> Coi như Đã kết thúc (completed)
         if (event.status === 'approved' && end < now) {
             return 'completed';
         }
         return event.status;
     };
 
-    // Lọc danh sách dựa trên Tab đang chọn và trạng thái hiển thị thực tế
     const filteredEvents = activeTab === "all"
         ? events
         : events.filter(e => getDisplayStatus(e) === activeTab);
@@ -167,15 +171,15 @@ export default function OrganizerEvents() {
     const formatDate = (d) => d ? new Date(d).toLocaleDateString('vi-VN') : '';
 
     const getImageUrl = (url) => {
-        if (!url) return "https://placehold.co/50?text=No+Img"; // Ảnh mặc định nếu không có
-        if (url.startsWith("http")) return url; // Nếu là link online
-        return `http://localhost:8080${url}`;  // Nếu là link local
+        if (!url) return "https://placehold.co/50?text=No+Img";
+        if (url.startsWith("http")) return url;
+        return `http://localhost:8080${url}`;
     };
 
     return (
         <Box sx={{ bgcolor: "background.default", minHeight: "calc(100vh - 64px)", py: 4 }}>
             <Container maxWidth="xl">
-                {/* HEADER */}
+                { }
                 <Stack direction="row" justifyContent="space-between" alignItems="center" mb={4}>
                     <Box>
                         <Typography variant="h4" fontWeight="bold" sx={{ color: "primary.main" }}>
@@ -203,9 +207,9 @@ export default function OrganizerEvents() {
                     showStatus={false}
                 />
 
-                {/* TABLE WRAPPER */}
+                { }
                 <Paper elevation={0} sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 3, overflow: 'hidden' }}>
-                    {/* TABS FILTER - Sử dụng activeTab thay vì filters.status */}
+                    { }
                     <Box sx={{ borderBottom: 1, borderColor: 'divider', px: 2, bgcolor: 'grey.50' }}>
                         <Tabs value={activeTab} onChange={(e, v) => setActiveTab(v)} variant="scrollable">
                             <Tab label={language === "vi" ? "Tất cả" : "All"} value="all" sx={{ fontWeight: 600 }} />
@@ -222,7 +226,7 @@ export default function OrganizerEvents() {
                             <Table stickyHeader>
                                 <TableHead>
                                     <TableRow>
-                                        {/* Thêm minWidth để tránh vỡ giao diện */}
+                                        { }
                                         <TableCell sx={{ fontWeight: 'bold', minWidth: 250 }}>Sự kiện</TableCell>
                                         <TableCell sx={{ fontWeight: 'bold', minWidth: 120 }}>Thời gian</TableCell>
                                         <TableCell sx={{ fontWeight: 'bold', minWidth: 120 }}>Trạng thái</TableCell>
@@ -239,7 +243,6 @@ export default function OrganizerEvents() {
                                         </TableRow>
                                     ) : (
                                         filteredEvents.map((row) => {
-                                            // Tính toán trạng thái hiển thị cho từng dòng
                                             const displayStatus = getDisplayStatus(row);
                                             const statusInfo = statusMap[displayStatus] || { label: displayStatus, color: 'default' };
 
@@ -261,7 +264,7 @@ export default function OrganizerEvents() {
                                                                             display: '-webkit-box',
                                                                             overflow: 'hidden',
                                                                             WebkitBoxOrient: 'vertical',
-                                                                            WebkitLineClamp: 2, // Giới hạn 2 dòng
+                                                                            WebkitLineClamp: 2,
                                                                             lineHeight: '1.2em',
                                                                             mb: 0.5
                                                                         }}
@@ -334,7 +337,8 @@ export default function OrganizerEvents() {
                                                         </Stack>
                                                     </TableCell>
                                                 </TableRow>
-                                            )})
+                                            )
+                                        })
                                     )}
                                 </TableBody>
                             </Table>

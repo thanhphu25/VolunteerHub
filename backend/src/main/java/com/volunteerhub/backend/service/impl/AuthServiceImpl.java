@@ -20,8 +20,8 @@ import java.time.ZoneId;
 import java.util.Date;
 
 /**
- * Implementation of IAuthService
- * - register now accepts role from RegisterRequest (volunteer|organizer)
+ * Implementation of IAuthService.
+ * Handles user registration, login, token refresh, and logout with JWT-based authentication.
  */
 @Service
 public class AuthServiceImpl implements IAuthService {

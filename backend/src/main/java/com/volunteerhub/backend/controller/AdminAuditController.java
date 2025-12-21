@@ -18,6 +18,10 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 
+/**
+ * REST controller for administrative audit management.
+ * Provides endpoints for searching and exporting system audit logs.
+ */
 @RestController
 @RequestMapping("/api/admin")
 public class AdminAuditController {
@@ -26,12 +30,30 @@ public class AdminAuditController {
     private final IAuditService auditService;
     private final ObjectMapper objectMapper;
 
-    public AdminAuditController(IAuditQueryService auditQueryService, IAuditService auditService, ObjectMapper objectMapper) {
+    /**
+     * Constructs a new AdminAuditController with required services.
+     * * @param auditQueryService Service for querying audit data.
+     * @param auditService Service for logging audit events.
+     * @param objectMapper Jackson object mapper for JSON processing.
+     */
+    public AdminAuditController(IAuditQueryService auditQueryService, IAuditService auditService,
+            ObjectMapper objectMapper) {
         this.auditQueryService = auditQueryService;
         this.auditService = auditService;
         this.objectMapper = objectMapper;
     }
 
+    /**
+     * Retrieves a paginated list of audit logs based on search filters.
+     * * @param page Zero-based page index.
+     * @param size The size of the page to be returned.
+     * @param action Filter by specific action name (optional).
+     * @param userId Filter by specific user ID (optional).
+     * @param from Start date for the search range (optional).
+     * @param to End date for the search range (optional).
+     * @param auth Current authentication object.
+     * @return A page of AuditResponse objects.
+     */
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/audits")
     public org.springframework.data.domain.Page<com.volunteerhub.backend.dto.AuditResponse> listAudits(
@@ -41,22 +63,36 @@ public class AdminAuditController {
             @RequestParam(required = false) Long userId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
-            Authentication auth
-    ) {
+            Authentication auth) {
         LocalDateTime fromDt = null;
         LocalDateTime toDt = null;
-        if (from != null) fromDt = from.atStartOfDay();
-        if (to != null) toDt = to.atTime(LocalTime.MAX);
+        if (from != null)
+            fromDt = from.atStartOfDay();
+        if (to != null)
+            toDt = to.atTime(LocalTime.MAX);
 
         var pageReq = org.springframework.data.domain.PageRequest.of(page, size);
 
         try {
-            auditService.log(auth, "admin:view_audits", java.util.Map.of("page", page, "size", size, "action", action, "userId", userId));
-        } catch (Exception ignore) {}
+            // Logs the admin's action of viewing audit logs
+            auditService.log(auth, "admin:view_audits",
+                    java.util.Map.of("page", page, "size", size, "action", action, "userId", userId));
+        } catch (Exception ignore) {
+        }
 
         return auditQueryService.search(action, userId, fromDt, toDt, pageReq);
     }
 
+    /**
+     * Exports audit logs in the specified format (CSV or JSON).
+     * * @param format Output format, either "csv" or "json".
+     * @param action Filter by specific action name (optional).
+     * @param userId Filter by specific user ID (optional).
+     * @param from Start date for the export range (optional).
+     * @param to End date for the export range (optional).
+     * @param auth Current authentication object.
+     * @return A ResponseEntity containing the file bytes or error details.
+     */
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/audits/export")
     public ResponseEntity<?> exportAudits(
@@ -65,16 +101,20 @@ public class AdminAuditController {
             @RequestParam(required = false) Long userId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
-            Authentication auth
-    ) {
+            Authentication auth) {
         LocalDateTime fromDt = null;
         LocalDateTime toDt = null;
-        if (from != null) fromDt = from.atStartOfDay();
-        if (to != null) toDt = to.atTime(LocalTime.MAX);
+        if (from != null)
+            fromDt = from.atStartOfDay();
+        if (to != null)
+            toDt = to.atTime(LocalTime.MAX);
 
         try {
-            auditService.log(auth, "admin:export_audits", java.util.Map.of("format", format, "action", action, "userId", userId));
-        } catch (Exception ignore) {}
+            // Logs the admin's action of exporting audit logs
+            auditService.log(auth, "admin:export_audits",
+                    java.util.Map.of("format", format, "action", action, "userId", userId));
+        } catch (Exception ignore) {
+        }
 
         List<AuditResponse> list = auditQueryService.exportList(action, userId, fromDt, toDt);
 
@@ -86,7 +126,7 @@ public class AdminAuditController {
                         .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
                         .contentType(MediaType.APPLICATION_JSON)
                         .body(bytes);
-            } else { // csv by default
+            } else {
                 String csv = generateCsv(list);
                 byte[] bytes = csv.getBytes(StandardCharsets.UTF_8);
                 String filename = "audits.csv";
@@ -96,13 +136,20 @@ public class AdminAuditController {
                         .body(bytes);
             }
         } catch (Exception ex) {
-            return ResponseEntity.status(500).body(java.util.Map.of("error", "Export failed", "details", ex.getMessage()));
+            return ResponseEntity.status(500)
+                    .body(java.util.Map.of("error", "Export failed", "details", ex.getMessage()));
         }
     }
 
+    /**
+     * Escapes characters for CSV format to handle commas, quotes, and newlines.
+     * * @param v Raw string value.
+     * @return CSV-safe escaped string.
+     */
     private String escapeCsv(String v) {
-        if (v == null) return "";
-        String s = v.replace("\"", "\"\""); // escape quotes
+        if (v == null)
+            return "";
+        String s = v.replace("\"", "\"\"");
         if (s.contains(",") || s.contains("\"") || s.contains("\n") || s.contains("\r")) {
             return "\"" + s + "\"";
         } else {
@@ -110,9 +157,13 @@ public class AdminAuditController {
         }
     }
 
+    /**
+     * Converts a list of AuditResponse objects into a CSV string.
+     * * @param list The data list to be converted.
+     * @return A formatted CSV string with headers.
+     */
     private String generateCsv(List<AuditResponse> list) {
         StringBuilder sb = new StringBuilder();
-        // header
         sb.append("id,userId,userEmail,action,details,createdAt\n");
         for (AuditResponse a : list) {
             sb.append(a.getId() == null ? "" : a.getId()).append(",");

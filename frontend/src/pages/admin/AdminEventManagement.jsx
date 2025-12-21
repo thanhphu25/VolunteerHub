@@ -1,3 +1,12 @@
+/**
+ * AdminEventManagement Page
+ * Admin dashboard for managing all volunteer events across the platform.
+ * Allows admins to approve/reject events, view event details, and export event data.
+ * Includes filtering by status, category, location, and date range.
+ *
+ * @component
+ * @returns {JSX.Element} Admin event management page with approval controls
+ */
 import React, { useEffect, useState } from "react";
 import {
   Alert,
@@ -20,6 +29,11 @@ import adminApi from "../../api/adminApi.js";
 import { useLanguage } from "../../context/LanguageContext";
 import EventFilter from "../../components/EventFilter";
 
+/**
+ * Triggers browser download of a blob file
+ * @param {Blob} blob - File blob to download
+ * @param {string} filename - Name for the downloaded file
+ */
 const downloadFile = (blob, filename) => {
   const url = window.URL.createObjectURL(blob);
   const a = document.createElement("a");
@@ -64,7 +78,6 @@ export default function AdminEventManagement() {
 
       const response = await eventApi.getAll(params);
 
-      // ✅ Loại bỏ sự kiện có trạng thái "cancelled"
       const validEvents = (response.data.content || []).filter(
         (e) => e.status !== "cancelled"
       );
@@ -107,9 +120,9 @@ export default function AdminEventManagement() {
       console.error("Error approving event:", err);
       toast.error(
         err.response?.data?.error ||
-          (language === "vi"
-            ? "Không thể duyệt sự kiện."
-            : "Unable to approve event.")
+        (language === "vi"
+          ? "Không thể duyệt sự kiện."
+          : "Unable to approve event.")
       );
     }
   };
@@ -135,9 +148,9 @@ export default function AdminEventManagement() {
       console.error("Error rejecting event:", err);
       toast.error(
         err.response?.data?.error ||
-          (language === "vi"
-            ? "Không thể từ chối sự kiện."
-            : "Unable to reject event.")
+        (language === "vi"
+          ? "Không thể từ chối sự kiện."
+          : "Unable to reject event.")
       );
     }
   };
@@ -163,9 +176,9 @@ export default function AdminEventManagement() {
       console.error("Error deleting event:", err);
       toast.error(
         err.response?.data?.error ||
-          (language === "vi"
-            ? "Không thể xóa sự kiện."
-            : "Unable to delete event.")
+        (language === "vi"
+          ? "Không thể xóa sự kiện."
+          : "Unable to delete event.")
       );
     }
   };
@@ -203,7 +216,6 @@ export default function AdminEventManagement() {
     }
   };
 
-  // ✅ Bỏ tab "Đã hủy"
   const statusTabs = [
     { value: "pending", label: language === "vi" ? "Chờ duyệt" : "Pending" },
     { value: "approved", label: language === "vi" ? "Đã duyệt" : "Approved" },
@@ -310,7 +322,7 @@ export default function AdminEventManagement() {
           </Box>
         </Paper>
 
-        {/* ✅ Lưới hiển thị sự kiện đã cân bằng */}
+        { }
         {loading ? (
           <Box
             display="flex"
@@ -330,9 +342,9 @@ export default function AdminEventManagement() {
           <Box
             display="grid"
             gridTemplateColumns={{
-              xs: "1fr", // 📱 Mobile: 1 cột
-              sm: "1fr 1fr", // 💻 Tablet: 2 cột
-              md: "1fr 1fr 1fr", // 🖥️ Desktop: 3 cột
+              xs: "1fr",
+              sm: "1fr 1fr",
+              md: "1fr 1fr 1fr",
             }}
             gap={{ xs: 2, sm: 3, md: 4 }}
             justifyContent="center"

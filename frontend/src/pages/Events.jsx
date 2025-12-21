@@ -1,3 +1,12 @@
+/**
+ * Events Page
+ * Displays paginated list of volunteer events with advanced filtering and search capabilities.
+ * Allows filtering by category, location, date range, and sorting options.
+ * Shows admin-specific status filtering for event management.
+ *
+ * @component
+ * @returns {JSX.Element} Events listing page with filter controls and event cards
+ */
 import React, { useEffect, useState, useCallback } from "react";
 import EventCard from "../components/EventCard";
 import {
@@ -94,7 +103,7 @@ export default function Events() {
 
   return (
     <Box sx={{ bgcolor: "background.default", minHeight: "100vh", pb: 8 }}>
-      {/* HEADER */}
+      { }
       <Box
         sx={{
           bgcolor: "background.paper",
@@ -152,7 +161,7 @@ export default function Events() {
       </Container>
 
       <Container maxWidth="lg">
-        {/* EVENT GRID */}
+        { }
         {loading ? (
           <Box display="flex" justifyContent="center" alignItems="center" minHeight="40vh">
             <CircularProgress />
@@ -171,15 +180,15 @@ export default function Events() {
           <Box
             display="grid"
             gridTemplateColumns={{
-              xs: "1fr",                // 📱 Mobile: 1 cột
-              sm: "1fr 1fr",            // 💻 Tablet: 2 cột
-              md: "1fr 1fr 1fr",        // 🖥️ Desktop: 3 cột
+              xs: "1fr",
+              sm: "1fr 1fr",
+              md: "1fr 1fr 1fr",
             }}
-            gap={{ xs: 2, sm: 3, md: 4 }} // khoảng cách tùy kích thước
+            gap={{ xs: 2, sm: 3, md: 4 }}
             justifyContent="center"
             sx={{
               width: "100%",
-              alignItems: "stretch",     // các card cao bằng nhau
+              alignItems: "stretch",
             }}
           >
             {events.map((event) => (
@@ -198,7 +207,7 @@ export default function Events() {
           </Box>
         )}
 
-        {/* PAGINATION */}
+        { }
         {!loading && totalPages > 1 && (
           <Box display="flex" justifyContent="center" mt={8}>
             <Pagination

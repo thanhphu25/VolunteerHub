@@ -1,7 +1,8 @@
 package com.volunteerhub.backend.entity;
 
 /**
- * Account status stored in users.status column (ENUM 'active','locked').
+ * Account status for a user.
+ * `active` → usable account; `locked` → restricted access.
  */
 public enum Status {
     active,

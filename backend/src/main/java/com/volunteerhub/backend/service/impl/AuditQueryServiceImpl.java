@@ -15,6 +15,10 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Implementation of IAuditQueryService.
+ * Executes flexible Criteria API queries for audit log filtering and pagination.
+ */
 @Service
 public class AuditQueryServiceImpl implements IAuditQueryService {
 

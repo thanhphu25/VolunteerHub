@@ -1,3 +1,17 @@
+/**
+ * EventFilter Component
+ * Provides comprehensive filtering and search capabilities for event listings.
+ * Allows users to filter by search text, category, location, date range, and sort options.
+ * Includes admin-specific status filtering for event management.
+ *
+ * @component
+ * @param {Object} props - Component props
+ * @param {Object} props.filters - Current filter state containing search, category, location, dates
+ * @param {Function} props.onChange - Callback function triggered when any filter changes
+ * @param {boolean} [props.showStatus=false] - Whether to display event status filter (admin only)
+ * @param {boolean} [props.isAdmin=false] - Whether user is admin to show additional filters
+ * @returns {JSX.Element} Filter UI with search bar, filter button, and optional date range picker
+ */
 import React, { useState } from "react";
 import {
     Box,
@@ -23,8 +37,8 @@ import { vi, enUS } from 'date-fns/locale';
 export default function EventFilter({
     filters,
     onChange,
-    showStatus = false, // Show status dropdown (for Admin/Organizer)
-    isAdmin = false // Special mode 
+    showStatus = false,
+    isAdmin = false
 }) {
     const { t, language } = useLanguage();
     const [anchorEl, setAnchorEl] = useState(null);
@@ -76,7 +90,7 @@ export default function EventFilter({
         <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={language === 'vi' ? vi : enUS}>
             <Box sx={{ mb: 4, display: 'flex', flexDirection: 'column', gap: 2 }}>
 
-                {/* Top Bar: Search & Quick Actions */}
+                { }
                 <Box display="flex" gap={2} flexWrap="wrap">
                     <TextField
                         placeholder={t('events.searchPlaceholder') || (language === 'vi' ? "Tìm kiếm sự kiện..." : "Search events...")}
@@ -93,7 +107,7 @@ export default function EventFilter({
                         size="small"
                     />
 
-                    {/* Toggle Advanced Filter Button */}
+                    { }
                     <Button
                         variant="outlined"
                         startIcon={<FilterListIcon />}
@@ -104,7 +118,7 @@ export default function EventFilter({
                         {language === 'vi' ? 'Bộ lọc' : 'Filters'}
                     </Button>
 
-                    {/* Sort Dropdown (Visible always) */}
+                    { }
                     <TextField
                         select
                         value={filters.sort || 'createdAt,desc'}
@@ -127,7 +141,7 @@ export default function EventFilter({
                     </TextField>
                 </Box>
 
-                {/* Advanced Filter Popover */}
+                { }
                 <Popover
                     id={id}
                     open={open}

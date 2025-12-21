@@ -1,15 +1,24 @@
-// src/context/ThemeContext.jsx
-import React, {createContext, useContext, useMemo, useState} from 'react';
-import {CssBaseline, ThemeProvider} from '@mui/material';
-import {createVolunteerTheme} from '../theme/theme.js'; // Đảm bảo đường dẫn đúng
+import React, { createContext, useContext, useMemo, useState } from 'react';
+import { CssBaseline, ThemeProvider } from '@mui/material';
+import { createVolunteerTheme } from '../theme/theme.js';
 
-// Tạo context với giá trị mặc định (có thể không cần thiết nếu Provider luôn bao bọc)
 const ThemeModeContext = createContext({
-  mode: 'light', // Giá trị mặc định
+  mode: 'light',
   toggleColorMode: () => {
-  }, // Hàm rỗng mặc định
+  },
 });
 
+/**
+ * useThemeMode Hook
+ * Custom React hook to access theme context for theme mode control.
+ * Provides current theme mode and function to toggle between light and dark modes.
+ *
+ * @hook
+ * @throws {Error} Throws error if used outside of ThemeModeProvider
+ * @returns {Object} Theme mode context with mode and toggleColorMode function
+ * @returns {string} return.mode - Current theme mode ('light' or 'dark')
+ * @returns {Function} return.toggleColorMode - Function to toggle between light and dark theme
+ */
 export function useThemeMode() {
   const context = useContext(ThemeModeContext);
   if (!context) {
@@ -18,33 +27,40 @@ export function useThemeMode() {
   return context;
 }
 
-export default function ThemeModeProvider({children}) {
+/**
+ * ThemeModeProvider Component
+ * Provides theme context and Material-UI theme to the entire application.
+ * Manages light/dark mode switching with memoized theme creation.
+ * Applies CssBaseline for consistent styling across browsers.
+ *
+ * @component
+ * @param {Object} props - Component props
+ * @param {JSX.Element} props.children - Child components to provide theme context to
+ * @returns {JSX.Element} ThemeProvider wrapper with theme context and CssBaseline
+ */
+export default function ThemeModeProvider({ children }) {
   const [mode, setMode] = useState('light');
 
-  // Hàm toggle được đặt bên ngoài useMemo vì nó cần setMode
   const toggleColorMode = () => {
     setMode((prevMode) => (prevMode === 'light' ? 'dark' : 'light'));
   };
 
-  // Chỉ tạo lại theme khi mode thay đổi
   const theme = useMemo(() => createVolunteerTheme(mode), [mode]);
 
-  // Tạo context value bao gồm cả mode và hàm toggle
   const contextValue = useMemo(
-      () => ({
-        mode, // <- Cung cấp mode
-        toggleColorMode, // <- Cung cấp hàm toggle
-      }),
-      [mode] // Chỉ tạo lại value khi mode thay đổi
+    () => ({
+      mode,
+      toggleColorMode,
+    }),
+    [mode]
   );
 
   return (
-      // Truyền contextValue mới vào Provider
-      <ThemeModeContext.Provider value={contextValue}>
-        <ThemeProvider theme={theme}>
-          <CssBaseline/>
-          {children}
-        </ThemeProvider>
-      </ThemeModeContext.Provider>
+    <ThemeModeContext.Provider value={contextValue}>
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        {children}
+      </ThemeProvider>
+    </ThemeModeContext.Provider>
   );
 }

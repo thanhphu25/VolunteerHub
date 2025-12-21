@@ -8,9 +8,16 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.Optional;
 import java.util.List;
 
+/**
+ * Repository for managing post "like" reactions.
+ * Supports checking like status, counting likes, and managing like records per post and user.
+ */
 public interface PostLikeRepository extends JpaRepository<PostLikeEntity, Long> {
     Optional<PostLikeEntity> findByPostAndUser(PostEntity post, UserEntity user);
+
     List<PostLikeEntity> findByPost(PostEntity post);
+
     long countByPost(PostEntity post);
+
     void deleteByPostAndUser(PostEntity post, UserEntity user);
 }

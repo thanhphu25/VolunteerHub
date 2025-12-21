@@ -29,6 +29,10 @@ import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.Optional;
 
+/**
+ * Controller for handling specialized post operations involving file uploads.
+ * Manages user avatars and event discussion posts that include images.
+ */
 @RestController
 @RequestMapping("/api")
 public class PostUploadController {
@@ -43,13 +47,16 @@ public class PostUploadController {
     private final PostMapper postMapper;
     private final RegistrationRepository registrationRepository;
 
+    /**
+     * Constructs the PostUploadController with necessary storage, validation, and repository services.
+     */
     public PostUploadController(StorageService storageService,
-                                FileValidationService fileValidationService,
-                                EventRepository eventRepository,
-                                UserRepository userRepository,
-                                PostRepository postRepository,
-                                PostMapper postMapper,
-                                RegistrationRepository registrationRepository) {
+            FileValidationService fileValidationService,
+            EventRepository eventRepository,
+            UserRepository userRepository,
+            PostRepository postRepository,
+            PostMapper postMapper,
+            RegistrationRepository registrationRepository) {
         this.storageService = storageService;
         this.fileValidationService = fileValidationService;
         this.eventRepository = eventRepository;
@@ -59,13 +66,17 @@ public class PostUploadController {
         this.registrationRepository = registrationRepository;
     }
 
-    // ------------------------
-    // Upload avatar endpoint
-    // ------------------------
+    /**
+     * Uploads and updates the avatar for the currently authenticated user.
+     * Validates the file as an image before storing it and updating the user record.
+     * * @param authentication The current user's authentication context.
+     * @param file The image file to be used as an avatar.
+     * @return ResponseEntity containing the new avatar URL or error details.
+     */
     @PreAuthorize("isAuthenticated()")
     @PostMapping("/me/avatar")
     public ResponseEntity<?> uploadAvatar(org.springframework.security.core.Authentication authentication,
-                                          @RequestPart("file") MultipartFile file) {
+            @RequestPart("file") MultipartFile file) {
         Long userId = extractUserIdFromAuth(authentication);
         if (userId == null) {
             return ResponseEntity.status(403).body(Map.of("error", "Cannot determine user id"));
@@ -76,7 +87,6 @@ public class PostUploadController {
             return ResponseEntity.status(404).body(Map.of("error", "User not found"));
         }
 
-        // validate + save
         try {
             fileValidationService.validateImage(file);
             String url = storageService.store(file);
@@ -95,41 +105,46 @@ public class PostUploadController {
         }
     }
 
-    // ------------------------
-    // Create post with optional image
-    // ------------------------
+    /**
+     * Creates a discussion post for an event, optionally including an image.
+     * Only approved event participants, organizers, or admins are allowed to post.
+     * * @param eventId The ID of the event.
+     * @param content The text content of the post.
+     * @param file Optional image file attached to the post.
+     * @param authentication The current user's authentication context.
+     * @return ResponseEntity containing the created post details or error details.
+     */
     @PreAuthorize("isAuthenticated()")
     @PostMapping("/events/{eventId}/posts-img")
     public ResponseEntity<?> createPostWithImage(@PathVariable Long eventId,
-                                                 @RequestPart("content") @NotBlank String content,
-                                                 @RequestPart(value = "file", required = false) MultipartFile file,
-                                                 org.springframework.security.core.Authentication authentication) {
-        // validate event exists
+            @RequestPart("content") @NotBlank String content,
+            @RequestPart(value = "file", required = false) MultipartFile file,
+            org.springframework.security.core.Authentication authentication) {
         Optional<EventEntity> eventOpt = eventRepository.findById(eventId);
         if (eventOpt.isEmpty()) {
             return ResponseEntity.status(404).body(Map.of("error", "Event not found"));
         }
         EventEntity event = eventOpt.get();
 
-        // validate event is not deleted
         if (Boolean.TRUE.equals(event.getIsDeleted())) {
             return ResponseEntity.status(404).body(Map.of("error", "Event not found"));
         }
 
-        // validate event status is approved
+        // Posting is restricted to approved events
         if (event.getStatus() == null || event.getStatus() != EventStatus.approved) {
             return ResponseEntity.status(403).body(Map.of("error", "Event must be approved to open posts"));
         }
 
-        // determine user id from authentication principal
         Long userId = extractUserIdFromAuth(authentication);
-        if (userId == null) return ResponseEntity.status(403).body(Map.of("error", "Cannot determine user id"));
+        if (userId == null)
+            return ResponseEntity.status(403).body(Map.of("error", "Cannot determine user id"));
 
         Optional<UserEntity> userOpt = userRepository.findById(userId);
-        if (userOpt.isEmpty()) return ResponseEntity.status(404).body(Map.of("error", "User not found"));
+        if (userOpt.isEmpty())
+            return ResponseEntity.status(404).body(Map.of("error", "User not found"));
         UserEntity user = userOpt.get();
 
-        // validate user is participant or staff (admin, organizer, or approved volunteer)
+        // Check if user has permission to post in this event's channel
         if (!isParticipantOrStaff(user, event)) {
             return ResponseEntity.status(403).body(Map.of("error", "Not allowed to post on this event"));
         }
@@ -150,12 +165,10 @@ public class PostUploadController {
             return ResponseEntity.status(500).body(Map.of("error", "Upload failed", "details", ex.getMessage()));
         }
 
-        // build DTO
         PostCreateRequest dto = new PostCreateRequest();
         dto.setContent(content);
         dto.setImageUrl(imageUrl);
 
-        // map DTO -> entity (mapper ignores event/user)
         PostEntity post = postMapper.toEntity(dto);
 
         post.setEvent(event);
@@ -167,31 +180,47 @@ public class PostUploadController {
         return ResponseEntity.ok(resp);
     }
 
-    // helper to extract user id from Authentication.principal
+    /**
+     * Extracts the User ID from the Authentication object.
+     * Uses reflection to attempt finding a 'getId' method on the principal,
+     * or parses the authentication name if it is numeric.
+     * * @param authentication The current authentication context.
+     * @return The User ID as a Long, or null if it cannot be determined.
+     */
     private Long extractUserIdFromAuth(org.springframework.security.core.Authentication authentication) {
-        if (authentication == null) return null;
+        if (authentication == null)
+            return null;
         try {
             Object principal = authentication.getPrincipal();
             try {
                 Method m = principal.getClass().getMethod("getId");
                 Object idv = m.invoke(principal);
-                if (idv instanceof Number) return ((Number) idv).longValue();
-            } catch (Throwable ignored) {}
-            // fallback: parse authentication.getName()
+                if (idv instanceof Number)
+                    return ((Number) idv).longValue();
+            } catch (Throwable ignored) {
+            }
             String name = authentication.getName();
             if (name != null && name.matches("\\d+")) {
                 return Long.parseLong(name);
             }
-        } catch (Throwable ignored) {}
+        } catch (Throwable ignored) {
+        }
         return null;
     }
 
-    // Check if user is allowed to post on event (admin, organizer, or approved volunteer)
+    /**
+     * Determines if a user is allowed to post in an event discussion.
+     * Permission is granted if the user is an admin, the event organizer, 
+     * or a volunteer with an approved registration.
+     * * @param user The user attempting to post.
+     * @param event The target event.
+     * @return true if permitted, false otherwise.
+     */
     private boolean isParticipantOrStaff(UserEntity user, EventEntity event) {
-        // admin or organizer of event allowed
-        if (user.getRole() != null && "admin".equalsIgnoreCase(user.getRole().name())) return true;
-        if (event.getOrganizer() != null && event.getOrganizer().getId().equals(user.getId())) return true;
-        // check approved registration
+        if (user.getRole() != null && "admin".equalsIgnoreCase(user.getRole().name()))
+            return true;
+        if (event.getOrganizer() != null && event.getOrganizer().getId().equals(user.getId()))
+            return true;
         var regOpt = registrationRepository.findByEventAndVolunteer(event, user);
         if (regOpt.isPresent()) {
             var r = regOpt.get();

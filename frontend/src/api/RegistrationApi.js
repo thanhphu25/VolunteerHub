@@ -1,94 +1,95 @@
-// src/api/registrationApi.js
 import axiosClient from './axiosClient';
 
+/**
+ * Registration API service module.
+ * Manages volunteer event registrations, approvals, rejections, and attendance tracking.
+ */
 const registrationApi = {
   /**
-   * Volunteer registers for an event.
-   * @param {number|string} eventId - The ID of the event.
-   * @param {object} data - Optional data, e.g., { note: 'My registration note' }.
-   * @returns Promise<AxiosResponse<any>>
+   * Register a volunteer for an event.
+   * @param {number|string} eventId - The ID of the event
+   * @param {object} [data={}] - Optional registration data (e.g., note)
+   * @returns {Promise<AxiosResponse>} Registration response
    */
   register: (eventId, data = {}) => {
     return axiosClient.post(`/events/${eventId}/register`, data);
   },
 
   /**
-   * Volunteer cancels their registration.
-   * @param {number|string} registrationId - The ID of the registration record.
-   * @param {number|string} eventId - (Required by backend route structure) The ID of the event.
-   * @returns Promise<AxiosResponse<any>>
+   * Cancel a volunteer's event registration.
+   * @param {number|string} eventId - The ID of the event
+   * @param {number|string} registrationId - The ID of the registration record
+   * @returns {Promise<AxiosResponse>} Cancellation response
    */
   cancel: (eventId, registrationId) => {
-    // Backend endpoint seems to require eventId in the path as well
     return axiosClient.post(
-        `/events/${eventId}/registrations/${registrationId}/cancel`);
+      `/events/${eventId}/registrations/${registrationId}/cancel`);
   },
 
   /**
-   * Get registrations for the currently logged-in volunteer.
-   * @returns Promise<AxiosResponse<any>>
+   * Get all registrations for the current volunteer.
+   * @returns {Promise<AxiosResponse>} List of volunteer registrations
    */
   getMyRegistrations: () => {
     return axiosClient.get('/me/registrations');
   },
 
   /**
-   * Get volunteer's registration for a specific event.
-   * @param {number|string} eventId - The ID of the event.
-   * @returns Promise<AxiosResponse<any>>
+   * Get the current volunteer's registration for a specific event.
+   * @param {number|string} eventId - The ID of the event
+   * @returns {Promise<AxiosResponse>} Registration details
    */
   getMyRegistrationForEvent: (eventId) => {
     return axiosClient.get(`/events/${eventId}/my-registration`);
   },
 
   /**
-   * Organizer/Admin gets registrations for a specific event.
-   * @param {number|string} eventId - The ID of the event.
-   * @returns Promise<AxiosResponse<any>>
+   * Get all registrations for an event (organizer/admin only).
+   * @param {number|string} eventId - The ID of the event
+   * @returns {Promise<AxiosResponse>} List of registrations for the event
    */
   getRegistrationsForEvent: (eventId) => {
     return axiosClient.get(`/events/${eventId}/registrations`);
   },
 
   /**
-   * Organizer/Admin approves a registration.
-   * @param {number|string} eventId
-   * @param {number|string} registrationId
-   * @returns Promise<AxiosResponse<any>>
+   * Approve a volunteer's registration (organizer/admin only).
+   * @param {number|string} eventId - The ID of the event
+   * @param {number|string} registrationId - The ID of the registration
+   * @returns {Promise<AxiosResponse>} Approval response
    */
   approve: (eventId, registrationId) => {
     return axiosClient.post(
-        `/events/${eventId}/registrations/${registrationId}/approve`);
+      `/events/${eventId}/registrations/${registrationId}/approve`);
   },
 
   /**
-   * Organizer/Admin rejects a registration.
-   * @param {number|string} eventId
-   * @param {number|string} registrationId
-   * @returns Promise<AxiosResponse<any>>
+   * Reject a volunteer's registration (organizer/admin only).
+   * @param {number|string} eventId - The ID of the event
+   * @param {number|string} registrationId - The ID of the registration
+   * @returns {Promise<AxiosResponse>} Rejection response
    */
   reject: (eventId, registrationId) => {
     return axiosClient.post(
-        `/events/${eventId}/registrations/${registrationId}/reject`);
+      `/events/${eventId}/registrations/${registrationId}/reject`);
   },
 
   /**
-   * Organizer/Admin marks a registration as completed (attended/absent).
-   * @param {number|string} eventId
-   * @param {number|string} registrationId
-   * @param {boolean} present - Whether the volunteer was present.
-   * @param {string} [note] - Optional completion note.
-   * @returns Promise<AxiosResponse<any>>
+   * Mark a registration as completed with attendance status (organizer/admin only).
+   * @param {number|string} eventId - The ID of the event
+   * @param {number|string} registrationId - The ID of the registration
+   * @param {boolean} present - Whether the volunteer attended
+   * @param {string} [note=''] - Optional completion notes
+   * @returns {Promise<AxiosResponse>} Completion response
    */
   markCompleted: (eventId, registrationId, present, note = '') => {
-    // Backend uses query parameters for 'present' and 'note'
     const params = new URLSearchParams();
     params.append('present', present);
     if (note) {
       params.append('note', note);
     }
     return axiosClient.post(
-        `/events/${eventId}/registrations/${registrationId}/complete?${params.toString()}`);
+      `/events/${eventId}/registrations/${registrationId}/complete?${params.toString()}`);
   }
 
 };

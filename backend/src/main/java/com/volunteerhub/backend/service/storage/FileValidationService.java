@@ -3,12 +3,9 @@ package com.volunteerhub.backend.service.storage;
 import org.springframework.web.multipart.MultipartFile;
 
 /**
- * Service để validate file upload trước khi lưu.
+ * Service interface for validating file uploads.
+ * Enforces file type, size, and format constraints.
  */
 public interface FileValidationService {
-    /**
-     * Validate file as an image according to configured rules.
-     * Throws com.volunteerhub.backend.exception.FileValidationException on failure.
-     */
     void validateImage(MultipartFile file);
 }

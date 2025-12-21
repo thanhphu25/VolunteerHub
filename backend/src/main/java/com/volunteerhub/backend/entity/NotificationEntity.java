@@ -13,13 +13,16 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @NoArgsConstructor
+/**
+ * Represents a user notification including type, title, message,
+ * optional payload (JSON), deep link, read state, and creation time.
+ */
 public class NotificationEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // recipient
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private UserEntity user;
@@ -48,6 +51,7 @@ public class NotificationEntity {
     @PrePersist
     public void prePersist() {
         this.createdAt = LocalDateTime.now();
-        if (this.isRead == null) this.isRead = false;
+        if (this.isRead == null)
+            this.isRead = false;
     }
 }

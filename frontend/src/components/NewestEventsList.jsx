@@ -1,3 +1,14 @@
+/**
+ * NewestEventsList Component
+ * Displays a scrollable list of the most recently created or updated events.
+ * Shows event image, name, organizer, and relative time since creation/update.
+ * Navigates to event details page on click.
+ *
+ * @component
+ * @param {Object} props - Component props
+ * @param {Array<Object>} props.events - Array of event objects to display
+ * @returns {JSX.Element} Scrollable list of newest events with activity indicators
+ */
 import React from 'react';
 import { Box, Typography, List, ListItem, ListItemButton, ListItemAvatar, ListItemText, Avatar, Chip, Paper } from '@mui/material';
 import { useNavigate } from 'react-router-dom';

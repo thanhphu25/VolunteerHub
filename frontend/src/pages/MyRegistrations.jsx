@@ -1,6 +1,14 @@
-// src/pages/MyRegistrations.jsx
-import React, {useCallback, useEffect, useState} from "react";
-import {Link as RouterLink} from "react-router-dom";
+/**
+ * MyRegistrations Page
+ * Displays list of all volunteer event registrations with their status.
+ * Allows volunteers to cancel registrations and view event details.
+ * Shows registration status with color-coded chips for different states.
+ *
+ * @component
+ * @returns {JSX.Element} Volunteer registrations list page
+ */
+import React, { useCallback, useEffect, useState } from "react";
+import { Link as RouterLink } from "react-router-dom";
 import {
     Alert,
     Box,
@@ -16,10 +24,10 @@ import {
     Tooltip,
     Typography,
 } from "@mui/material";
-import {Cancel as CancelIcon} from "@mui/icons-material";
+import { Cancel as CancelIcon } from "@mui/icons-material";
 import registrationApi from "../api/registrationApi";
-import {toast} from "react-toastify";
-import {useAuth} from "../context/AuthContext";
+import { toast } from "react-toastify";
+import { useAuth } from "../context/AuthContext";
 
 const statusLabels = {
     pending: "Chờ duyệt",
@@ -36,6 +44,11 @@ const statusColors = {
     completed: "info",
 };
 
+/**
+ * Formats a date string to Vietnamese locale date-time format
+ * @param {string} dateString - Date string to format
+ * @returns {string} Formatted date-time string or "N/A" if invalid
+ */
 const formatDate = (dateString) => {
     if (!dateString) {
         return "N/A";
@@ -52,7 +65,7 @@ export default function MyRegistrations() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [cancellingId, setCancellingId] = useState(null);
-    const {user} = useAuth();
+    const { user } = useAuth();
 
     const fetchMyRegistrations = useCallback(async () => {
         try {
@@ -102,7 +115,7 @@ export default function MyRegistrations() {
             await registrationApi.cancel(eventId, registrationId);
             toast.success("Hủy đăng ký thành công!");
             setRegistrations(prev =>
-                prev.map(reg => reg.id === registrationId ? {...reg, status: 'cancelled'} : reg)
+                prev.map(reg => reg.id === registrationId ? { ...reg, status: 'cancelled' } : reg)
             );
         } catch (err) {
             console.error("Lỗi khi hủy đăng ký:", err);
@@ -116,7 +129,7 @@ export default function MyRegistrations() {
         return (
             <Container>
                 <Box display="flex" justifyContent="center" alignItems="center" minHeight="50vh">
-                    <CircularProgress/>
+                    <CircularProgress />
                 </Box>
             </Container>
         );
@@ -124,14 +137,14 @@ export default function MyRegistrations() {
 
     if (error) {
         return (
-            <Container sx={{py: 4}}>
+            <Container sx={{ py: 4 }}>
                 <Alert severity="error">{error}</Alert>
             </Container>
         );
     }
 
     return (
-        <Container maxWidth="md" sx={{py: 4}}>
+        <Container maxWidth="md" sx={{ py: 4 }}>
             <Typography variant="h4" component="h1" gutterBottom>
                 Sự kiện đã đăng ký
             </Typography>
@@ -153,40 +166,40 @@ export default function MyRegistrations() {
                                             primary={
                                                 <Typography component="span" variant="h6">
                                                     <RouterLink to={`/events/${reg.eventId}`}
-                                                                style={{
-                                                                    textDecoration: 'none',
-                                                                    color: '#1976d2',
-                                                                    fontWeight: 'bold'
-                                                                }}>
+                                                        style={{
+                                                            textDecoration: 'none',
+                                                            color: '#1976d2',
+                                                            fontWeight: 'bold'
+                                                        }}>
                                                         {reg.eventName || `Sự kiện #${reg.eventId}`}
                                                     </RouterLink>
                                                 </Typography>
                                             }
                                             secondary={
                                                 <>
-                                                    <Typography sx={{display: 'block', mt: 0.5}} component="span" variant="body2" color="text.primary">
+                                                    <Typography sx={{ display: 'block', mt: 0.5 }} component="span" variant="body2" color="text.primary">
                                                         Ngày đăng ký: {formatDate(reg.registeredAt)}
                                                     </Typography>
 
                                                     {reg.approvedAt && reg.status === 'approved' && (
-                                                        <Typography sx={{display: 'block'}} component="span" variant="caption" color="text.secondary">
+                                                        <Typography sx={{ display: 'block' }} component="span" variant="caption" color="text.secondary">
                                                             Ngày duyệt: {formatDate(reg.approvedAt)}
                                                         </Typography>
                                                     )}
 
                                                     {reg.completedAt && reg.status === 'completed' && (
-                                                        <Typography sx={{display: 'block'}} component="span" variant="caption" color="text.secondary">
+                                                        <Typography sx={{ display: 'block' }} component="span" variant="caption" color="text.secondary">
                                                             Ngày hoàn thành: {formatDate(reg.completedAt)}
                                                         </Typography>
                                                     )}
 
                                                     {reg.cancelledAt && reg.status === 'cancelled' && (
-                                                        <Typography sx={{display: 'block'}} component="span" variant="caption" color="text.secondary">
+                                                        <Typography sx={{ display: 'block' }} component="span" variant="caption" color="text.secondary">
                                                             Ngày hủy: {formatDate(reg.cancelledAt)}
                                                         </Typography>
                                                     )}
 
-                                                    {/* --- HIỂN THỊ GHI CHÚ CỦA TÌNH NGUYỆN VIÊN --- */}
+                                                    {}
                                                     {reg.note && (
                                                         <Typography
                                                             sx={{ display: 'block', fontStyle: 'italic', mt: 0.5 }}
@@ -198,7 +211,7 @@ export default function MyRegistrations() {
                                                         </Typography>
                                                     )}
 
-                                                    {/* --- ✅ HIỂN THỊ PHẢN HỒI TỪ BTC (MỚI) --- */}
+                                                    {}
                                                     {reg.completionNote && (
                                                         <Box sx={{ mt: 1, p: 1, bgcolor: '#f0f7ff', borderRadius: 1, borderLeft: '4px solid #1976d2' }}>
                                                             <Typography component="div" variant="body2" color="primary.main" fontWeight="bold">
@@ -209,36 +222,36 @@ export default function MyRegistrations() {
                                                             </Typography>
                                                         </Box>
                                                     )}
-                                                    {/* ----------------------------------------- */}
+                                                    {}
                                                 </>
                                             }
                                         />
-                                        <Box sx={{textAlign: 'right', ml: 2, minWidth: '100px'}}>
+                                        <Box sx={{ textAlign: 'right', ml: 2, minWidth: '100px' }}>
                                             <Chip
                                                 label={statusLabels[reg.status] || reg.status}
                                                 color={statusColors[reg.status] || "default"}
                                                 size="small"
-                                                sx={{mb: 1}}
+                                                sx={{ mb: 1 }}
                                             />
                                             {canCancel && (
                                                 <Tooltip title="Hủy đăng ký">
-                                <span>
-                                  <IconButton
-                                      edge="end"
-                                      aria-label="hủy đăng ký"
-                                      onClick={() => handleCancelRegistration(reg.eventId, reg.id)}
-                                      disabled={cancellingId === reg.id}
-                                      color="error"
-                                      size="small"
-                                  >
-                                    {cancellingId === reg.id ? <CircularProgress size={20} color="inherit"/> : <CancelIcon/>}
-                                    </IconButton>
-                                </span>
+                                                    <span>
+                                                        <IconButton
+                                                            edge="end"
+                                                            aria-label="hủy đăng ký"
+                                                            onClick={() => handleCancelRegistration(reg.eventId, reg.id)}
+                                                            disabled={cancellingId === reg.id}
+                                                            color="error"
+                                                            size="small"
+                                                        >
+                                                            {cancellingId === reg.id ? <CircularProgress size={20} color="inherit" /> : <CancelIcon />}
+                                                        </IconButton>
+                                                    </span>
                                                 </Tooltip>
                                             )}
                                         </Box>
                                     </ListItem>
-                                    {index < registrations.length - 1 && <Divider component="li"/>}
+                                    {index < registrations.length - 1 && <Divider component="li" />}
                                 </React.Fragment>
                             );
                         })}

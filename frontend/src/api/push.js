@@ -1,4 +1,13 @@
-// src/utils/push.js
+/**
+ * Push notification utility module.
+ * Provides Web Push API subscription and unsubscription functionality.
+ */
+
+/**
+ * Convert base64 VAPID public key to Uint8Array for Push API.
+ * @param {string} base64String - Base64 encoded VAPID public key
+ * @returns {Uint8Array} Decoded key as byte array
+ */
 export function urlBase64ToUint8Array(base64String) {
     const padding = '='.repeat((4 - base64String.length % 4) % 4);
     const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
@@ -11,9 +20,12 @@ export function urlBase64ToUint8Array(base64String) {
 }
 
 /**
- * registerServiceWorkerAndSubscribe - register SW, request permission, subscribe and send subscription to backend
- * @param {String} token - bearer token for API authentication
- * @param {String} vapidPublicKey - (optional) if not passed will fetch from server
+ * Register Service Worker, request notification permission, and subscribe to push notifications.
+ * Sends subscription data to the backend for future push delivery.
+ * @param {string} token - Bearer token for API authentication
+ * @param {string} [vapidPublicKey] - VAPID public key; fetched from server if not provided
+ * @returns {Promise<PushSubscription>} The registered push subscription
+ * @throws {Error} If Service Worker, Push API not supported, or subscription fails
  */
 export async function registerAndSubscribe(token, vapidPublicKey) {
     if (!('serviceWorker' in navigator)) {
@@ -23,30 +35,25 @@ export async function registerAndSubscribe(token, vapidPublicKey) {
         throw new Error('Push API not supported');
     }
 
-    // register sw (path relative to root)
     const reg = await navigator.serviceWorker.register('/sw.js');
     console.log('Service Worker registered', reg);
 
-    // ask permission
     const permission = await Notification.requestPermission();
     if (permission !== 'granted') {
         throw new Error('Notification permission not granted');
     }
 
-    // get public key from server if not provided
     if (!vapidPublicKey) {
         const res = await fetch('/api/push/vapidPublicKey');
         const j = await res.json();
         vapidPublicKey = j.publicKey;
     }
 
-    // subscribe
     const sub = await reg.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: urlBase64ToUint8Array(vapidPublicKey)
     });
 
-    // send subscription to backend
     const payload = {
         endpoint: sub.endpoint,
         keysJson: JSON.stringify(sub.toJSON().keys)
@@ -69,7 +76,9 @@ export async function registerAndSubscribe(token, vapidPublicKey) {
 }
 
 /**
- * unsubscribePush - unregister on server and client
+ * Unsubscribe from push notifications on both client and server.
+ * @param {string} token - Bearer token for API authentication
+ * @returns {Promise<void>}
  */
 export async function unsubscribePush(token) {
     const reg = await navigator.serviceWorker.getRegistration();
@@ -78,7 +87,6 @@ export async function unsubscribePush(token) {
     const sub = await reg.pushManager.getSubscription();
     if (!sub) return;
 
-    // remove on server
     await fetch('/api/push/unsubscribe', {
         method: 'POST',
         headers: {

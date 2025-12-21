@@ -9,18 +9,20 @@ import lombok.Setter;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "push_subscriptions",
-        indexes = {@Index(name = "idx_push_user", columnList = "user_id")})
+@Table(name = "push_subscriptions", indexes = { @Index(name = "idx_push_user", columnList = "user_id") })
 @Getter
 @Setter
 @NoArgsConstructor
+/**
+ * Stores a Web Push subscription for a user, including endpoint
+ * and associated key material serialized as JSON.
+ */
 public class PushSubscriptionEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // owner
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private UserEntity user;

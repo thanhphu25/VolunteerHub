@@ -1,4 +1,12 @@
-// src/pages/EventDetail.jsx
+/**
+ * EventDetail Page
+ * Displays comprehensive event information including description, schedule, location,
+ * volunteer statistics, and discussion board for event communications.
+ * Allows users to register/unregister for events and follow/unfollow event organizers.
+ *
+ * @component
+ * @returns {JSX.Element} Event details page with full event information and actions
+ */
 import React, { useEffect, useState } from "react";
 import { Link as RouterLink, useNavigate, useParams } from "react-router-dom";
 import {
@@ -198,16 +206,12 @@ export default function EventDetail() {
         <Container maxWidth="lg" sx={{ py: 4 }}>
             <Paper elevation={3} sx={{ p: { xs: 2, md: 4 }, borderRadius: 3 }}>
 
-                {/* 1. HÌNH ẢNH */}
+                { }
                 {event.imageUrl && (
                     <Box sx={{ display: "flex", justifyContent: "center", mb: 4 }}>
                         <CardMedia
                             component="img"
-                            // --- SỬA DÒNG NÀY ---
-                            // Kiểm tra: Nếu là link online (http...) thì giữ nguyên
-                            // Nếu là link local (/uploads...) thì thêm localhost:8080 vào trước
                             image={event.imageUrl.startsWith('http') ? event.imageUrl : `http://localhost:8080${event.imageUrl}`}
-                            // --------------------
 
                             alt={event.name}
                             sx={{
@@ -218,7 +222,6 @@ export default function EventDetail() {
                                 boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
                                 bgcolor: "#f5f5f5",
                             }}
-                            // Thêm xử lý lỗi nếu ảnh không tải được
                             onError={(e) => {
                                 e.target.onerror = null;
                                 e.target.src = "https://placehold.co/600x400?text=No+Image";
@@ -227,11 +230,11 @@ export default function EventDetail() {
                     </Box>
                 )}
 
-                {/* 2. TIÊU ĐỀ & TRẠNG THÁI */}
+                { }
                 <Box sx={{ mb: 3 }}>
                     <Stack direction="row" spacing={1} sx={{ mb: 1 }}>
 
-                        {/* LOGIC HIỂN THỊ CHIP TRẠNG THÁI MỚI */}
+                        { }
                         {(() => {
                             const isEnded = event.endDate && new Date(event.endDate) < new Date();
                             const displayStatus = (event.status === 'approved' && isEnded) ? 'completed' : event.status;
@@ -253,7 +256,7 @@ export default function EventDetail() {
                     </Typography>
                 </Box>
 
-                {/* 3. THÔNG TIN GRID */}
+                { }
                 <Grid container spacing={3} sx={{ mb: 4, p: 2, bgcolor: "#f8f9fa", borderRadius: 2 }}>
                     <Grid item xs={12} md={6} lg={4}>
                         <Stack direction="row" spacing={2} alignItems="center">
@@ -304,7 +307,7 @@ export default function EventDetail() {
 
                 <Divider sx={{ my: 4 }} />
 
-                {/* 4. MÔ TẢ & YÊU CẦU */}
+                { }
                 <Grid container spacing={5}>
                     <Grid item xs={12} md={8}>
                         <Typography variant="h5" fontWeight="bold" gutterBottom sx={{ borderLeft: "4px solid #00bfa5", pl: 2, mb: 2 }}>Mô tả sự kiện</Typography>
@@ -332,7 +335,7 @@ export default function EventDetail() {
                     </Grid>
                 </Grid>
 
-                {/* 5. LOGIC NÚT ĐĂNG KÝ */}
+                { }
                 {isVolunteer && (
                     <Box sx={{ mt: 6, textAlign: 'center' }}>
                         {registration ? (
@@ -350,12 +353,12 @@ export default function EventDetail() {
                                         disabled
                                         startIcon={<CheckCircleIcon />}
                                         sx={{
-                                            bgcolor: "success.main", // Màu nền xanh lá
-                                            color: "white",          // Màu chữ trắng
-                                            "&.Mui-disabled": {      // QUAN TRỌNG: Ghi đè màu mặc định của disabled
+                                            bgcolor: "success.main",
+                                            color: "white",
+                                            "&.Mui-disabled": {
                                                 bgcolor: "success.main",
                                                 color: "white",
-                                                opacity: 0.9           // Giảm độ mờ một chút nếu muốn
+                                                opacity: 0.9
                                             }
                                         }}
                                     >
@@ -368,7 +371,7 @@ export default function EventDetail() {
                                         size="large"
                                         disabled
                                         sx={{
-                                            bgcolor: "error.main", // Màu nền đỏ
+                                            bgcolor: "error.main",
                                             color: "white",
                                             "&.Mui-disabled": {
                                                 bgcolor: "error.main",
@@ -386,7 +389,7 @@ export default function EventDetail() {
                                     </Button>
                                 )}
 
-                                {/* PHẢN HỒI TỪ BTC */}
+                                { }
                                 {(registration.status === 'completed' || registration.status === 'rejected') && (registration.completionNote || registration.organizerNote) && (
                                     <Box sx={{ mt: 2, width: '100%', maxWidth: 600 }}>
                                         <Alert severity={registration.status === 'completed' ? "success" : "error"} variant="outlined" sx={{ borderRadius: 2, textAlign: 'left' }}>
@@ -436,7 +439,7 @@ export default function EventDetail() {
                     </Stack>
                 )}
 
-                {/* LOGIC HIỂN THỊ THẢO LUẬN */}
+                { }
                 {(event.status === 'approved' || (event.status === 'approved' && eventEnded)) && (
                     <EventDiscussion eventId={eventId} event={event} registration={registration} />
                 )}
@@ -446,7 +449,7 @@ export default function EventDetail() {
                 </Box>
             </Paper>
 
-            {/* DIALOG TỪ CHỐI */}
+            { }
             <Dialog open={rejectDialogOpen} onClose={() => setRejectDialogOpen(false)} fullWidth maxWidth="sm">
                 <DialogTitle>Từ chối sự kiện</DialogTitle>
                 <DialogContent dividers>
@@ -469,13 +472,12 @@ export default function EventDetail() {
     );
 }
 
-// Định nghĩa màu và nhãn cho trạng thái
 const statusColors = {
     pending: "warning",
     approved: "success",
     rejected: "error",
     cancelled: "default",
-    completed: "info" // Đã đổi sang màu xanh dương (info) cho nổi bật hơn màu xám
+    completed: "info"
 };
 
 const statusLabels = {
@@ -483,5 +485,5 @@ const statusLabels = {
     approved: "Sẵn sàng",
     rejected: "Bị từ chối",
     cancelled: "Đã hủy",
-    completed: "Đã kết thúc" // Đổi label thành Đã kết thúc
+    completed: "Đã kết thúc"
 };

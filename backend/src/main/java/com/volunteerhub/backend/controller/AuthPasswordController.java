@@ -16,6 +16,10 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Map;
 
+/**
+ * Controller for managing password-related security actions and email verification.
+ * Handles forgot password requests, password resetting, and email confirmation workflows.
+ */
 @RestController
 @RequestMapping("/api/auth")
 public class AuthPasswordController {
@@ -25,14 +29,23 @@ public class AuthPasswordController {
     private final EmailService emailService;
     private final PasswordEncoder passwordEncoder;
 
-    // configuration: how long tokens valid
-    private static final Duration PASSWORD_RESET_TTL = Duration.ofMinutes(60); // 1 hour
-    private static final Duration EMAIL_VERIFY_TTL = Duration.ofDays(7); // 7 days
+    /** Time-to-live for password reset tokens (60 minutes) */
+    private static final Duration PASSWORD_RESET_TTL = Duration.ofMinutes(60);
+    
+    /** Time-to-live for email verification tokens (7 days) */
+    private static final Duration EMAIL_VERIFY_TTL = Duration.ofDays(7);
 
+    /**
+     * Constructs the AuthPasswordController with necessary repositories and services.
+     * @param userRepository Repository for user data access.
+     * @param tokenService Service for managing verification tokens.
+     * @param emailService Service for sending notification and verification emails.
+     * @param passwordEncoder Component for secure password hashing.
+     */
     public AuthPasswordController(UserRepository userRepository,
-                                  VerificationTokenService tokenService,
-                                  EmailService emailService,
-                                  PasswordEncoder passwordEncoder) {
+            VerificationTokenService tokenService,
+            EmailService emailService,
+            PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.tokenService = tokenService;
         this.emailService = emailService;
@@ -40,30 +53,36 @@ public class AuthPasswordController {
     }
 
     /**
-     * Request password reset - will send an email with a token link if user exists.
-     * Body: { "email": "user@example.com" }
+     * Initiates the "Forgot Password" process.
+     * Generates a unique reset token and sends an email with a reset link if the user exists.
+     * @param req Request body containing the user's email and the frontend callback URL.
+     * @return ResponseEntity with a generic success message to prevent email enumeration attacks.
      */
     @PostMapping("/forgot-password")
     public ResponseEntity<?> forgotPassword(@Valid @RequestBody ForgotPasswordRequest req) {
         String email = req.getEmail().trim().toLowerCase();
         var userOpt = userRepository.findByEmail(email);
-        // For security: always respond 200 OK (avoid user enumeration), but only create token if user exists
         if (userOpt.isPresent()) {
             UserEntity user = userOpt.get();
-            var token = tokenService.createToken(user.getId(), VerificationTokenEntity.TokenType.password_reset, PASSWORD_RESET_TTL);
-            // send email (dev: logs). Link example (frontend): https://your-frontend/reset-password?token=...
-            String resetLink = String.format("%s?token=%s", req.getFrontendResetUrl() == null ? "https://frontend/reset-password" : req.getFrontendResetUrl(), token.getToken());
-            String body = "Bạn (hoặc ai đó) đã yêu cầu đặt lại mật khẩu. Nếu bạn muốn đặt lại, hãy mở liên kết sau:\n\n" +
-                    resetLink + "\n\n" +
-                    "Liên kết này có hiệu lực trong " + PASSWORD_RESET_TTL.toMinutes() + " phút. Nếu bạn không yêu cầu, hãy bỏ qua email này.";
-            emailService.sendEmail(user.getEmail(), "Yêu cầu đặt lại mật khẩu - VolunteerHub", body);
+            var token = tokenService.createToken(user.getId(), VerificationTokenEntity.TokenType.password_reset,
+                    PASSWORD_RESET_TTL);
+            String resetLink = String.format("%s?token=%s",
+                    req.getFrontendResetUrl() == null ? "https://frontend/reset-password" : req.getFrontendResetUrl(),
+                    token.getToken());
+            String body = "You (or someone else) requested a password reset. If you wish to proceed, click the link below:\n\n"
+                    + resetLink + "\n\n" +
+                    "This link is valid for " + PASSWORD_RESET_TTL.toMinutes()
+                    + " minutes. If you did not request this, please ignore this email.";
+            emailService.sendEmail(user.getEmail(), "Password Reset Request - VolunteerHub", body);
         }
         return ResponseEntity.ok(Map.of("message", "If the email exists, a reset link has been sent."));
     }
 
     /**
-     * Reset password using token:
-     * Body: { "token": "...", "newPassword": "..." }
+     * Resets a user's password using a valid reset token.
+     * Validates token existence, type, usage status, and expiration before updating the password.
+     * @param req Request body containing the reset token and the new password.
+     * @return ResponseEntity indicating success or specific validation errors (400).
      */
     @PostMapping("/reset-password")
     public ResponseEntity<?> resetPassword(@Valid @RequestBody ResetPasswordRequest req) {
@@ -87,22 +106,19 @@ public class AuthPasswordController {
             return ResponseEntity.status(400).body(Map.of("error", "User not found"));
         }
         UserEntity user = userOpt.get();
-        // update password
         user.setPasswordHash(passwordEncoder.encode(req.getNewPassword()));
         userRepository.save(user);
 
-        // mark token used
         tokenService.markUsed(token);
-
-        // optionally: invalidate all refresh tokens for this user (if you implemented refresh tokens)
-        // ... implement if you have refreshTokens table.
 
         return ResponseEntity.ok(Map.of("message", "Password reset successful"));
     }
 
     /**
-     * Verify email via GET token param
-     * GET /api/auth/verify-email?token=...
+     * Verifies a user's email address using a verification token.
+     * Marks the user's email as verified and records the verification timestamp.
+     * @param tokenStr The unique verification token string from the URL.
+     * @return ResponseEntity indicating successful verification or validation errors (400).
      */
     @GetMapping("/verify-email")
     public ResponseEntity<?> verifyEmail(@RequestParam("token") String tokenStr) {

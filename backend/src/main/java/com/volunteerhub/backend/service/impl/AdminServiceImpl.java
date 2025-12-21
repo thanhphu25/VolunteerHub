@@ -19,6 +19,10 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Implementation of IAdminService.
+ * Provides administrative operations: user management, locking, role changes, and data export.
+ */
 @Service
 public class AdminServiceImpl implements IAdminService {
 

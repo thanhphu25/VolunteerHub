@@ -5,6 +5,11 @@ import com.volunteerhub.backend.entity.PostLikeEntity;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
+/**
+ * Mapper interface for converting post like-related objects.
+ * Transforms between {@link PostLikeEntity} and {@link PostLikeResponse}
+ * using MapStruct for compile-time type-safe mapping.
+ */
 @Mapper(componentModel = "spring")
 public interface PostLikeMapper {
 

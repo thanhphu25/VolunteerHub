@@ -4,25 +4,61 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 
 /**
- * Request body for sending verification email.
- * If 'email' is absent and caller is authenticated, server will use authenticated user's email.
+ * Data Transfer Object for requesting a verification email.
+ * This DTO is used to initiate the account verification process by sending 
+ * a secure link to the user's registered email address.
  */
 public class SendVerifyEmailRequest {
 
+    /**
+     * The email address to which the verification link will be sent.
+     * Must be a valid email format.
+     */
     @Email
     private String email;
 
     /**
-     * Optional: frontend URL to include in the verification link (e.g. https://app.example.com/verify-email).
-     * If absent, server uses a default placeholder.
+     * The base URL of the frontend application where the user will be redirected 
+     * after clicking the verification link in their email. This allows the 
+     * backend to construct a valid redirection URL.
      */
     private String frontendVerifyUrl;
 
-    public SendVerifyEmailRequest() {}
+    /**
+     * Default no-args constructor for JSON deserialization.
+     */
+    public SendVerifyEmailRequest() {
+    }
 
-    public String getEmail() { return email; }
-    public void setEmail(String email) { this.email = email; }
+    /**
+     * Gets the recipient email address.
+     * @return the email address string.
+     */
+    public String getEmail() {
+        return email;
+    }
 
-    public String getFrontendVerifyUrl() { return frontendVerifyUrl; }
-    public void setFrontendVerifyUrl(String frontendVerifyUrl) { this.frontendVerifyUrl = frontendVerifyUrl; }
+    /**
+     * Sets the recipient email address.
+     * @param email the email address to verify.
+     */
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    /**
+     * Gets the frontend verification redirection URL.
+     * @return the base URL for the verification landing page.
+     */
+    public String getFrontendVerifyUrl() {
+        return frontendVerifyUrl;
+    }
+
+    /**
+     * Sets the frontend verification redirection URL.
+     * @param frontendVerifyUrl the URL provided by the client application.
+     */
+    public void setFrontendVerifyUrl(String frontendVerifyUrl) {
+        this.frontendVerifyUrl = frontendVerifyUrl;
+    }
 }

@@ -7,10 +7,18 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.Optional;
 import java.util.List;
 
+/**
+ * Repository for managing Web Push subscriptions.
+ * Supports subscription queries by user, endpoint, and user ID.
+ */
 public interface PushSubscriptionRepository extends JpaRepository<PushSubscriptionEntity, Long> {
     Optional<PushSubscriptionEntity> findByUserAndEndpoint(UserEntity user, String endpoint);
+
     List<PushSubscriptionEntity> findByUser(UserEntity user);
+
     List<PushSubscriptionEntity> findByEndpoint(String endpoint);
+
     List<PushSubscriptionEntity> findByUserId(Long userId);
+
     void deleteByUserAndEndpoint(UserEntity user, String endpoint);
 }

@@ -1,3 +1,17 @@
+/**
+ * ImageUploader Component
+ * Provides image upload functionality with preview capability.
+ * Supports direct URL input or file upload from user's device.
+ * Displays image preview and validates file type before upload.
+ *
+ * @component
+ * @param {Object} props - Component props
+ * @param {string} props.label - Label text for the image uploader
+ * @param {string} [props.value] - Current image URL value
+ * @param {Function} props.onChange - Callback function when image URL changes
+ * @param {string} [props.placeholder] - Placeholder text for URL input field
+ * @returns {JSX.Element} Image upload interface with preview
+ */
 import React, { useState } from 'react';
 import {
     Box, TextField, Button, CircularProgress,
@@ -6,18 +20,15 @@ import {
 import { CloudUpload as CloudUploadIcon, Image as ImageIcon } from '@mui/icons-material';
 import axiosClient from '../api/axiosClient';
 
-// Cấu hình URL Backend để hiển thị ảnh local
 const BACKEND_URL = 'http://localhost:8080';
 
 export default function ImageUploader({ label, value, onChange, placeholder }) {
     const [uploading, setUploading] = useState(false);
 
-    // Xử lý khi chọn file từ máy
     const handleFileSelect = async (e) => {
         const file = e.target.files[0];
         if (!file) return;
 
-        // Validate ảnh
         if (!file.type.startsWith('image/')) {
             alert('Vui lòng chọn file ảnh!');
             return;
@@ -28,13 +39,11 @@ export default function ImageUploader({ label, value, onChange, placeholder }) {
         formData.append('file', file);
 
         try {
-            // Gọi API Backend vừa tạo
             const res = await axiosClient.post('/upload', formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
 
             if (res.data && res.data.url) {
-                // Upload xong -> Tự động điền URL vào ô input
                 onChange(res.data.url);
             }
         } catch (err) {
@@ -42,16 +51,14 @@ export default function ImageUploader({ label, value, onChange, placeholder }) {
             alert('Lỗi upload ảnh: ' + (err.response?.data?.error || 'Lỗi server'));
         } finally {
             setUploading(false);
-            // Reset input file để chọn lại file cũ được nếu muốn
             e.target.value = null;
         }
     };
 
-    // Hàm hiển thị ảnh preview
     const getPreviewUrl = (url) => {
         if (!url) return "";
-        if (url.startsWith('http')) return url; // Ảnh online
-        return `${BACKEND_URL}${url}`;          // Ảnh local
+        if (url.startsWith('http')) return url;
+        return `${BACKEND_URL}${url}`;
     };
 
     return (
@@ -61,7 +68,7 @@ export default function ImageUploader({ label, value, onChange, placeholder }) {
             </Typography>
 
             <Stack direction="row" spacing={1} alignItems="flex-start">
-                {/* 1. Ô NHẬP URL (Co giãn) */}
+                { }
                 <TextField
                     fullWidth
                     size="small"
@@ -78,7 +85,7 @@ export default function ImageUploader({ label, value, onChange, placeholder }) {
                     }}
                 />
 
-                {/* 2. NÚT UPLOAD (Bên cạnh) */}
+                { }
                 <Box>
                     <input
                         accept="image/*"
@@ -91,9 +98,9 @@ export default function ImageUploader({ label, value, onChange, placeholder }) {
                         <Button
                             variant="contained"
                             component="span"
-                            startIcon={uploading ? <CircularProgress size={20} color="inherit"/> : <CloudUploadIcon />}
+                            startIcon={uploading ? <CircularProgress size={20} color="inherit" /> : <CloudUploadIcon />}
                             disabled={uploading}
-                            sx={{ whiteSpace: 'nowrap', height: '40px' }} // Chiều cao bằng TextField size small
+                            sx={{ whiteSpace: 'nowrap', height: '40px' }}
                         >
                             {uploading ? 'Đang tải...' : 'Tải lên'}
                         </Button>
@@ -101,7 +108,7 @@ export default function ImageUploader({ label, value, onChange, placeholder }) {
                 </Box>
             </Stack>
 
-            {/* 3. VÙNG XEM TRƯỚC (Preview) */}
+            { }
             {value && (
                 <Box
                     sx={{
@@ -114,7 +121,7 @@ export default function ImageUploader({ label, value, onChange, placeholder }) {
                         position: 'relative'
                     }}
                 >
-                    <Typography variant="caption" sx={{position: 'absolute', top: 5, left: 10, color: '#999'}}>
+                    <Typography variant="caption" sx={{ position: 'absolute', top: 5, left: 10, color: '#999' }}>
                         Xem trước
                     </Typography>
                     <img

@@ -1,7 +1,7 @@
 package com.volunteerhub.backend.config;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties; // Thêm import này
-import com.fasterxml.jackson.annotation.JsonProperty;       // Thêm import này
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -19,6 +19,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Component responsible for initializing the database with sample data on application startup.
+ * It reads data from JSON files located in 'src/main/resources/data' and populates
+ * users, events, registrations, posts, comments, likes, and follows.
+ */
 @Component
 public class DataInitializer implements CommandLineRunner {
 
@@ -32,18 +37,23 @@ public class DataInitializer implements CommandLineRunner {
     private final PasswordEncoder passwordEncoder;
     private final ObjectMapper mapper;
 
+    // Temporary maps to maintain relationships between JSON IDs and generated Database IDs
     private final Map<Long, UserEntity> userMap = new HashMap<>();
     private final Map<Long, EventEntity> eventMap = new HashMap<>();
     private final Map<Long, PostEntity> postMap = new HashMap<>();
 
+    /**
+     * Constructs the DataInitializer with all required repositories.
+     * Initializes the Jackson ObjectMapper with JavaTimeModule to handle LocalDateTime fields.
+     */
     public DataInitializer(UserRepository userRepository,
-                           EventRepository eventRepository,
-                           RegistrationRepository registrationRepository,
-                           PostRepository postRepository,
-                           PostCommentRepository postCommentRepository,
-                           PostLikeRepository postLikeRepository,
-                           OrganizerFollowRepository organizerFollowRepository,
-                           PasswordEncoder passwordEncoder) {
+            EventRepository eventRepository,
+            RegistrationRepository registrationRepository,
+            PostRepository postRepository,
+            PostCommentRepository postCommentRepository,
+            PostLikeRepository postLikeRepository,
+            OrganizerFollowRepository organizerFollowRepository,
+            PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.eventRepository = eventRepository;
         this.registrationRepository = registrationRepository;
@@ -56,114 +66,50 @@ public class DataInitializer implements CommandLineRunner {
         this.mapper.registerModule(new JavaTimeModule());
     }
 
+    /**
+     * Executes the data seeding logic if the database is currently empty.
+     * Processes JSON files in a specific order to satisfy foreign key constraints.
+     * @param args Command line arguments.
+     * @throws Exception If file reading or database persistence fails.
+     */
     @Override
     @Transactional
     public void run(String... args) throws Exception {
-        // Chỉ nạp khi bảng User trống
         if (userRepository.count() == 0) {
-            System.out.println("Bắt đầu nạp dữ liệu mẫu (Có reset mật khẩu)...");
+            System.out.println("Starting sample data loading (with password reset)...");
 
-            // 1. Nạp Users
+            // 1. Seed Users
             try (InputStream inputStream = getClass().getResourceAsStream("/data/users.json")) {
                 if (inputStream == null) {
-                    System.out.println("Không tìm thấy file users.json!");
+                    System.out.println("users.json not found!");
                     return;
                 }
-
-                // --- THAY ĐỔI Ở ĐÂY: Dùng UserJsonDto thay vì UserEntity trực tiếp ---
-                List<UserJsonDto> userDtos = mapper.readValue(inputStream, new TypeReference<List<UserJsonDto>>() {});
+                List<UserJsonDto> userDtos = mapper.readValue(inputStream, new TypeReference<List<UserJsonDto>>() {
+                });
 
                 for (UserJsonDto dto : userDtos) {
                     UserEntity user = new UserEntity();
-
-                    // Copy dữ liệu từ DTO sang Entity thủ công
-                    user.setFullName(dto.getFullName());
-                    user.setEmail(dto.getEmail());
-                    user.setPhone(dto.getPhone());
-
-                    // Xử lý avatarUrl từ DTO
-                    user.setAvatarUrl(dto.getAvatarUrl());
-
-                    // Set các trường mặc định hoặc logic riêng
-                    user.setPasswordHash(passwordEncoder.encode("password123"));
-
-                    // Xử lý Role (Giả sử Role trong Entity là String hoặc Enum khớp với JSON)
-                    // Nếu Role là Enum, bạn cần user.setRole(RoleEnum.valueOf(dto.getRole()));
-                    // Ở đây tôi để mặc định gán thẳng string nếu Entity dùng String,
-                    // hoặc bạn tự điều chỉnh nếu dùng Enum.
-                    try {
-                        // Nếu Role trong Entity là Enum, hãy uncomment dòng dưới và sửa cho khớp
-                        // user.setRole(UserEntity.Role.valueOf(dto.getRole().toUpperCase()));
-
-                        // Nếu Role là String:
-                        // user.setRole(dto.getRole());
-
-                        // TẠM THỜI: Tôi giả định cơ chế map cũ của bạn hoạt động,
-                        // nhưng vì tôi không thấy file UserEntity, tôi sẽ dùng cách an toàn nhất:
-                        // Bạn hãy kiểm tra file UserEntity của bạn, nếu Role là Enum thì phải parse.
-                        // Dưới đây là ví dụ gán tạm nếu bạn dùng Enum UserRole:
-                         /* if (dto.getRole() != null) {
-                            user.setRole(UserRole.valueOf(dto.getRole().toUpperCase()));
-                         }
-                         */
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-
-                    // Vì tôi không thấy class UserEntity, tôi sẽ dùng cách Mapper để copy các field trùng tên
-                    // sau đó ghi đè avatarUrl. Đây là cách 'lười' nhưng hiệu quả nếu field khớp nhau:
-                    // Tuy nhiên, để code chạy chắc chắn 100%, tôi khuyên dùng set thủ công như trên.
-                    // Dưới đây là code set thủ công tiếp tục cho các field cơ bản:
-
-                    // Lưu ý: Đoạn này bạn cần điều chỉnh setRole/setStatus theo đúng kiểu dữ liệu trong UserEntity của bạn
-                    // Ví dụ nếu Status là String:
-                    // user.setStatus(dto.getStatus());
-
-                    // --- QUAN TRỌNG: CÁCH AN TOÀN NHẤT ĐỂ COPY MÀ KHÔNG CẦN BIẾT RÕ ENTITY ---
-                    // Chúng ta dùng lại mapper để convert ngược từ DTO sang Entity,
-                    // nhưng trước đó phải set avatarUrl vào đúng chỗ
-
-                    UserEntity tempUser = new UserEntity();
-                    tempUser.setFullName(dto.getFullName());
-                    tempUser.setEmail(dto.getEmail());
-                    tempUser.setPhone(dto.getPhone());
-                    tempUser.setAvatarUrl(dto.getAvatarUrl()); // Đã lấy được từ JSON
-                    tempUser.setPasswordHash(passwordEncoder.encode("password123"));
-
-                    // Map Role và Status thủ công tùy vào kiểu dữ liệu của bạn
-                    // Ví dụ giả định:
-                    // tempUser.setRole(dto.getRole());
-                    // tempUser.setStatus(dto.getStatus());
-
-                    // Vì không thấy UserEntity, tôi sẽ dùng cách hack này:
-                    // Convert DTO -> JSON String -> UserEntity.
-                    // Nhưng UserEntity không có @JsonProperty("avatar_url"), nên ta set tay.
-
-                    // === CHỐT PHƯƠNG ÁN: COPY THỦ CÔNG CÁC TRƯỜNG CẦN THIẾT ===
-                    // Bạn hãy đảm bảo UserEntity có các hàm set tương ứng
-
-                    // 1. Ánh xạ các trường cơ bản
-                    // (Sử dụng ObjectMapper để convert phần chung, bỏ qua lỗi)
+                    // Mapping fields and encoding default password
                     ObjectMapper tempMapper = new ObjectMapper();
                     tempMapper.configure(com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
                     String dtoJson = mapper.writeValueAsString(dto);
                     user = tempMapper.readValue(dtoJson, UserEntity.class);
 
-                    // 2. Set lại cái quan trọng nhất: Avatar và Password
-                    user.setId(null); // Đảm bảo tạo mới
+                    user.setId(null);
                     user.setAvatarUrl(dto.getAvatarUrl());
                     user.setPasswordHash(passwordEncoder.encode("password123"));
 
                     UserEntity savedUser = userRepository.save(user);
                     userMap.put(dto.getId(), savedUser);
                 }
-                System.out.println("Đã nạp " + userMap.size() + " users (Mật khẩu: password123).");
+                System.out.println("Loaded " + userMap.size() + " users (Password: password123).");
             }
 
-            // 2. Nạp Events
+            // 2. Seed Events
             try (InputStream inputStream = getClass().getResourceAsStream("/data/events.json")) {
                 if (inputStream != null) {
-                    List<EventJsonDto> eventDtos = mapper.readValue(inputStream, new TypeReference<List<EventJsonDto>>() {});
+                    List<EventJsonDto> eventDtos = mapper.readValue(inputStream, new TypeReference<List<EventJsonDto>>() {
+                    });
                     for (EventJsonDto dto : eventDtos) {
                         EventEntity event = new EventEntity();
                         event.setName(dto.getName());
@@ -189,14 +135,15 @@ public class DataInitializer implements CommandLineRunner {
                             eventMap.put(dto.getId(), savedEvent);
                         }
                     }
-                    System.out.println("Đã nạp " + eventMap.size() + " events.");
+                    System.out.println("Loaded " + eventMap.size() + " events.");
                 }
             }
 
-            // 3. Nạp Registrations
+            // 3. Seed Registrations
             try (InputStream inputStream = getClass().getResourceAsStream("/data/registrations.json")) {
                 if (inputStream != null) {
-                    List<RegistrationJsonDto> regDtos = mapper.readValue(inputStream, new TypeReference<List<RegistrationJsonDto>>() {});
+                    List<RegistrationJsonDto> regDtos = mapper.readValue(inputStream, new TypeReference<List<RegistrationJsonDto>>() {
+                    });
                     int count = 0;
                     for (RegistrationJsonDto dto : regDtos) {
                         RegistrationEntity reg = new RegistrationEntity();
@@ -215,14 +162,15 @@ public class DataInitializer implements CommandLineRunner {
                             count++;
                         }
                     }
-                    System.out.println("Đã nạp " + count + " registrations.");
+                    System.out.println("Loaded " + count + " registrations.");
                 }
             }
 
-            // 4. Nạp Posts
+            // 4. Seed Posts (Discussion Channel)
             try (InputStream inputStream = getClass().getResourceAsStream("/data/posts.json")) {
                 if (inputStream != null) {
-                    List<PostJsonDto> dtos = mapper.readValue(inputStream, new TypeReference<List<PostJsonDto>>() {});
+                    List<PostJsonDto> dtos = mapper.readValue(inputStream, new TypeReference<List<PostJsonDto>>() {
+                    });
                     long tempPostIdCounter = 1;
                     for (PostJsonDto dto : dtos) {
                         PostEntity post = new PostEntity();
@@ -240,14 +188,15 @@ public class DataInitializer implements CommandLineRunner {
                             postMap.put(tempPostIdCounter++, savedPost);
                         }
                     }
-                    System.out.println("Đã nạp " + postMap.size() + " posts.");
+                    System.out.println("Loaded " + postMap.size() + " posts.");
                 }
             }
 
-            // 5. Nạp Comments
+            // 5. Seed Comments on Posts
             try (InputStream inputStream = getClass().getResourceAsStream("/data/comments.json")) {
                 if (inputStream != null) {
-                    List<CommentJsonDto> dtos = mapper.readValue(inputStream, new TypeReference<List<CommentJsonDto>>() {});
+                    List<CommentJsonDto> dtos = mapper.readValue(inputStream, new TypeReference<List<CommentJsonDto>>() {
+                    });
                     for (CommentJsonDto dto : dtos) {
                         PostCommentEntity comment = new PostCommentEntity();
                         comment.setContent(dto.getContent());
@@ -262,14 +211,15 @@ public class DataInitializer implements CommandLineRunner {
                             postRepository.save(post);
                         }
                     }
-                    System.out.println("Đã nạp comments.");
+                    System.out.println("Loaded comments.");
                 }
             }
 
-            // 6. Nạp Likes
+            // 6. Seed Likes on Posts
             try (InputStream inputStream = getClass().getResourceAsStream("/data/likes.json")) {
                 if (inputStream != null) {
-                    List<LikeJsonDto> dtos = mapper.readValue(inputStream, new TypeReference<List<LikeJsonDto>>() {});
+                    List<LikeJsonDto> dtos = mapper.readValue(inputStream, new TypeReference<List<LikeJsonDto>>() {
+                    });
                     for (LikeJsonDto dto : dtos) {
                         PostLikeEntity like = new PostLikeEntity();
                         PostEntity post = postMap.get(dto.getPostId());
@@ -285,14 +235,15 @@ public class DataInitializer implements CommandLineRunner {
                             }
                         }
                     }
-                    System.out.println("Đã nạp likes.");
+                    System.out.println("Loaded likes.");
                 }
             }
 
-            // 7. Nạp Follows
+            // 7. Seed Follow Relationships
             try (InputStream inputStream = getClass().getResourceAsStream("/data/follows.json")) {
                 if (inputStream != null) {
-                    List<FollowJsonDto> dtos = mapper.readValue(inputStream, new TypeReference<List<FollowJsonDto>>() {});
+                    List<FollowJsonDto> dtos = mapper.readValue(inputStream, new TypeReference<List<FollowJsonDto>>() {
+                    });
                     for (FollowJsonDto dto : dtos) {
                         OrganizerFollowEntity follow = new OrganizerFollowEntity();
                         UserEntity organizer = userMap.get(dto.getOrganizerId());
@@ -303,19 +254,18 @@ public class DataInitializer implements CommandLineRunner {
                             organizerFollowRepository.save(follow);
                         }
                     }
-                    System.out.println("Đã nạp follows.");
+                    System.out.println("Loaded follows.");
                 }
             }
 
-            System.out.println("Hoàn tất nạp dữ liệu mẫu!");
+            System.out.println("Sample data initialization complete!");
         }
     }
 
-    // --- Inner DTOs ---
+    /** Data Transfer Objects for JSON Deserialization */
 
-    // 1. Thêm Class DTO mới này để hứng dữ liệu User từ JSON
     @Data
-    @JsonIgnoreProperties(ignoreUnknown = true) // Bỏ qua các trường thừa nếu có
+    @JsonIgnoreProperties(ignoreUnknown = true)
     static class UserJsonDto {
         private Long id;
         private String fullName;
@@ -323,16 +273,58 @@ public class DataInitializer implements CommandLineRunner {
         private String phone;
         private String role;
         private String status;
-
-        // Đây là chìa khóa: Ánh xạ "avatar_url" từ JSON vào biến avatarUrl
         @JsonProperty("avatar_url")
         private String avatarUrl;
     }
 
-    @Data static class EventJsonDto { private Long id; private Long organizerId; private String name; private String category; private String location; private String description; private LocalDateTime startDate; private LocalDateTime endDate; private Integer maxVolunteers; private Integer currentVolunteers; private String status; private String imageUrl; }
-    @Data static class RegistrationJsonDto { private Long eventId; private Long volunteerId; private String status; private String note; }
-    @Data static class PostJsonDto { private Long eventId; private Long userId; private String content; private String imageUrl; }
-    @Data static class CommentJsonDto { private Long postId; private Long userId; private String content; }
-    @Data static class LikeJsonDto { private Long postId; private Long userId; }
-    @Data static class FollowJsonDto { private Long organizerId; private Long followerId; }
+    @Data
+    static class EventJsonDto {
+        private Long id;
+        private Long organizerId;
+        private String name;
+        private String category;
+        private String location;
+        private String description;
+        private LocalDateTime startDate;
+        private LocalDateTime endDate;
+        private Integer maxVolunteers;
+        private Integer currentVolunteers;
+        private String status;
+        private String imageUrl;
+    }
+
+    @Data
+    static class RegistrationJsonDto {
+        private Long eventId;
+        private Long volunteerId;
+        private String status;
+        private String note;
+    }
+
+    @Data
+    static class PostJsonDto {
+        private Long eventId;
+        private Long userId;
+        private String content;
+        private String imageUrl;
+    }
+
+    @Data
+    static class CommentJsonDto {
+        private Long postId;
+        private Long userId;
+        private String content;
+    }
+
+    @Data
+    static class LikeJsonDto {
+        private Long postId;
+        private Long userId;
+    }
+
+    @Data
+    static class FollowJsonDto {
+        private Long organizerId;
+        private Long followerId;
+    }
 }

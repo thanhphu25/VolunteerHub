@@ -13,6 +13,11 @@ import org.springframework.stereotype.Repository;
 import java.time.LocalDateTime;
 import java.util.List;
 
+/**
+ * Repository for querying and managing volunteer events.
+ * Supports filtering by status, category, location, dates, organizer,
+ * and comprehensive full-text search with pagination.
+ */
 @Repository
 public interface EventRepository extends JpaRepository<EventEntity, Long> {
         Page<EventEntity> findByStatus(EventStatus status, Pageable pageable);
@@ -38,7 +43,6 @@ public interface EventRepository extends JpaRepository<EventEntity, Long> {
 
         long countByIsDeletedTrue();
 
-        // Enhanced filtering methods
         Page<EventEntity> findByCategoryContainingIgnoreCaseAndIsDeletedFalse(String category, Pageable pageable);
 
         Page<EventEntity> findByLocationContainingIgnoreCaseAndIsDeletedFalse(String location, Pageable pageable);
@@ -49,7 +53,6 @@ public interface EventRepository extends JpaRepository<EventEntity, Long> {
         Page<EventEntity> findByEndDateBetweenAndIsDeletedFalse(LocalDateTime startDate, LocalDateTime endDate,
                         Pageable pageable);
 
-        // Combined filtering with status
         Page<EventEntity> findByStatusAndCategoryContainingIgnoreCaseAndIsDeletedFalse(EventStatus status,
                         String category, Pageable pageable);
 
@@ -62,7 +65,6 @@ public interface EventRepository extends JpaRepository<EventEntity, Long> {
         Page<EventEntity> findByStatusAndEndDateBetweenAndIsDeletedFalse(EventStatus status, LocalDateTime startDate,
                         LocalDateTime endDate, Pageable pageable);
 
-        // Complex filtering with custom query
         @Query("SELECT e FROM EventEntity e WHERE e.isDeleted = false " +
                         "AND (:status IS NULL OR e.status = :status) " +
                         "AND (:category IS NULL OR LOWER(e.category) LIKE LOWER(CONCAT('%', :category, '%'))) " +
@@ -131,9 +133,6 @@ public interface EventRepository extends JpaRepository<EventEntity, Long> {
         @Query("SELECT COUNT(e) FROM EventEntity e WHERE (e.isDeleted = false OR e.isDeleted IS NULL) AND e.startDate <= :moment AND e.endDate >= :moment")
         long countActiveOngoing(@Param("moment") LocalDateTime moment);
 
-        // --- NEW: Trending Events Query ---
-        // Logic: Điểm = (Đăng ký * 3) + (Tổng Comment * 2) + (Tổng Like * 1)
-        // Chỉ lấy sự kiện đã duyệt (approved) và chưa bị xóa
         @Query("SELECT e FROM EventEntity e " +
                         "LEFT JOIN PostEntity p ON p.event = e " +
                         "WHERE e.status = com.volunteerhub.backend.entity.EventStatus.approved " +

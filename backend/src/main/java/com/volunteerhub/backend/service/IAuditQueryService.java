@@ -7,11 +7,12 @@ import org.springframework.data.domain.Pageable;
 import java.time.LocalDateTime;
 import java.util.List;
 
+/**
+ * Service interface for querying and exporting audit logs.
+ * Supports filtering and pagination for audit trail retrieval.
+ */
 public interface IAuditQueryService {
     Page<AuditResponse> search(String action, Long userId, LocalDateTime from, LocalDateTime to, Pageable pageable);
 
-    /**
-     * Return all matching audit entries (unpaged) for export purposes.
-     */
     List<AuditResponse> exportList(String action, Long userId, LocalDateTime from, LocalDateTime to);
 }

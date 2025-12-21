@@ -1,13 +1,24 @@
+/**
+ * HeroSlider Component
+ * Displays an auto-rotating carousel of hero slides on the home page.
+ * Features images, titles, subtitles, and call-to-action buttons.
+ * Responsive with mobile-optimized controls and animations.
+ *
+ * @component
+ * @returns {JSX.Element} Full-width hero carousel with volunteer-themed slides
+ */
 import React from 'react';
 import Slider from "react-slick";
 import { Box, Typography, Button, Container, Stack, useTheme, useMediaQuery } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 
-// Import CSS bắt buộc của thư viện react-slick
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 
-// 1. DỮ LIỆU 5 SLIDE ẢNH CHUẨN TÌNH NGUYỆN
+/**
+ * Array of hero slide content with images, titles, and subtitles
+ * @type {Array<Object>}
+ */
 const slides = [
     {
         id: 1,
@@ -46,19 +57,18 @@ export default function HeroSlider() {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
-    // 2. CẤU HÌNH SLIDER
     const settings = {
-        dots: true,                // Hiện 5 dấu chấm chuyển slide
-        infinite: true,            // Lặp vô tận
-        speed: 1000,               // Tốc độ chuyển cảnh
+        dots: true,
+        infinite: true,
+        speed: 1000,
         slidesToShow: 1,
         slidesToScroll: 1,
-        autoplay: true,            // Tự động chạy
-        autoplaySpeed: 5000,       // 5 giây đổi ảnh 1 lần
-        pauseOnHover: false,       // KHÔNG dừng khi di chuột vào
-        pauseOnFocus: false,       // KHÔNG dừng khi người dùng click vào nút/chấm
-        fade: true,                // Hiệu ứng mờ dần (Fade)
-        arrows: !isMobile,         // Hiện mũi tên trên PC
+        autoplay: true,
+        autoplaySpeed: 5000,
+        pauseOnHover: false,
+        pauseOnFocus: false,
+        fade: true,
+        arrows: !isMobile,
         appendDots: dots => (
             <Box sx={{ position: "absolute", bottom: "25px", width: "100%" }}>
                 <ul style={{ margin: "0px", padding: "0px" }}> {dots} </ul>
@@ -72,14 +82,13 @@ export default function HeroSlider() {
                 width: '100%',
                 overflow: 'hidden',
                 bgcolor: 'black',
-                // Tùy chỉnh màu sắc và kích thước cho 5 dấu chấm (Dots)
                 "& .slick-dots li button:before": {
                     fontSize: "12px",
                     color: "white",
                     opacity: 0.4,
                 },
                 "& .slick-dots li.slick-active button:before": {
-                    color: "#00bfa5", // Màu xanh nhấn khi slide đang được chọn
+                    color: "#00bfa5",
                     opacity: 1,
                     fontSize: "14px",
                 }
@@ -89,19 +98,19 @@ export default function HeroSlider() {
                 {slides.map((slide) => (
                     <Box key={slide.id} sx={{ outline: 'none', position: 'relative' }}>
 
-                        {/* 3. PHẦN KHUNG CHỨA ẢNH - Tỉ lệ 21:9 */}
+                        { }
                         <Box
                             sx={{
                                 width: '100%',
-                                aspectRatio: { xs: '16/9', md: '21/9' }, // Tỉ lệ vàng để không làm mất nội dung
+                                aspectRatio: { xs: '16/9', md: '21/9' },
                                 minHeight: { xs: '350px', md: 'auto' },
                                 backgroundImage: `url(${slide.image})`,
                                 backgroundSize: 'cover',
-                                backgroundPosition: 'center 15%', // Giữ lấy phần trên của ảnh (mặt người)
+                                backgroundPosition: 'center 15%',
                                 position: 'relative',
                             }}
                         >
-                            {/* Lớp phủ tối Gradient */}
+                            { }
                             <Box
                                 sx={{
                                     position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
@@ -109,7 +118,7 @@ export default function HeroSlider() {
                                 }}
                             />
 
-                            {/* 4. NỘI DUNG CHỮ & NÚT BẤM CHUYỂN TRANG */}
+                            { }
                             <Container
                                 sx={{
                                     height: '100%',
@@ -145,7 +154,7 @@ export default function HeroSlider() {
                                     <Button
                                         variant="contained"
                                         size={isMobile ? "small" : "large"}
-                                        onClick={() => navigate("/events")} // Chuyển sang trang sự kiện
+                                        onClick={() => navigate("/events")}
                                         sx={{
                                             bgcolor: '#00bfa5',
                                             '&:hover': { bgcolor: '#008e7a' },
@@ -160,9 +169,9 @@ export default function HeroSlider() {
                                         variant="outlined"
                                         size={isMobile ? "small" : "large"}
                                         sx={{
-                                            backgroundColor: 'rgba(255, 255, 255, 0.65)', // White with 80% opacity
+                                            backgroundColor: 'rgba(255, 255, 255, 0.65)',
                                             '&:hover': {
-                                                backgroundColor: 'rgba(255, 255, 255, 1)', // Optional: 100% opacity on hover
+                                                backgroundColor: 'rgba(255, 255, 255, 1)',
                                             },
                                         }}
                                         onClick={() => {

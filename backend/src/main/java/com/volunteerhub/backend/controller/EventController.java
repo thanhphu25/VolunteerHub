@@ -22,6 +22,10 @@ import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Controller for managing volunteer events.
+ * Provides endpoints for creating, searching, updating, and managing the lifecycle of events.
+ */
 @RestController
 @RequestMapping("/api/events")
 public class EventController {
@@ -29,43 +33,36 @@ public class EventController {
     private static final Logger logger = LoggerFactory.getLogger(EventController.class);
     private final IEventService svc;
 
+    /**
+     * Constructs the EventController with the event service.
+     * @param svc Service handling business logic for events.
+     */
     public EventController(IEventService svc) {
         this.svc = svc;
     }
 
     /**
-     * Parse a date string that may be either a full datetime (ISO-8601) or
-     * date-only.
-     * For date-only strings, converts to start of day for startDate or end of day
-     * for endDate.
-     * * @param dateStr The date string to parse
-     * 
-     * @param isEndDate If true, date-only strings are converted to end of day; if
-     *                  false, start of day
-     * @return Parsed LocalDateTime
-     * @throws DateTimeParseException if the string cannot be parsed as either
-     *                                format
+     * Parses various date-time string formats into a LocalDateTime object.
+     * Supports ISO Zoned, Local, and Date-only formats.
+     * @param dateStr The date-time string to parse.
+     * @param isEndDate If true and only a date is provided, sets time to the end of the day.
+     * @return Parsed LocalDateTime or null if input is blank.
+     * @throws DateTimeParseException if the format is not recognized.
      */
     private LocalDateTime parseFlexibleDateTime(String dateStr, boolean isEndDate) {
         if (dateStr == null || dateStr.isBlank()) {
             return null;
         }
         try {
-            // Try parsing as ZonedDateTime (ISO-8601 with timezone, e.g.,
-            // 2023-10-27T10:00:00.000Z)
             return java.time.ZonedDateTime.parse(dateStr).toLocalDateTime();
         } catch (DateTimeParseException e0) {
             try {
-                // Try parsing as full LocalDateTime (ISO-8601 without timezone)
                 return LocalDateTime.parse(dateStr);
             } catch (DateTimeParseException e1) {
                 try {
-                    // If that fails, try parsing as LocalDate (date-only)
                     LocalDate date = LocalDate.parse(dateStr);
-                    // Convert to LocalDateTime: start of day for startDate, end of day for endDate
                     return isEndDate ? date.atTime(LocalTime.MAX) : date.atStartOfDay();
                 } catch (DateTimeParseException e2) {
-                    // If all fail, throw with a helpful message
                     throw new DateTimeParseException(
                             "Date string must be in ISO-8601 format (e.g., '2025-11-18T10:30:00.000Z', '2025-11-18T10:30:00' or '2025-11-18')",
                             dateStr, 0, e2);
@@ -74,6 +71,12 @@ public class EventController {
         }
     }
 
+    /**
+     * Creates a new event. Accessible by Organizers and Admins.
+     * @param req The event creation details.
+     * @param auth Current authentication context.
+     * @return Created event details or error status.
+     */
     @PreAuthorize("hasAnyRole('ORGANIZER','ADMIN')")
     @PostMapping
     public ResponseEntity<?> createEvent(@Valid @RequestBody EventCreateRequest req, Authentication auth) {
@@ -87,6 +90,21 @@ public class EventController {
         }
     }
 
+    /**
+     * Lists events with comprehensive filtering and sorting options.
+     * @param status Filter by event status (e.g., APPROVED, PENDING).
+     * @param category Filter by event category.
+     * @param location Filter by event location.
+     * @param search Search keyword for title or description.
+     * @param organizerName Filter by the name of the organizer.
+     * @param startDate Filter events starting after this date.
+     * @param endDate Filter events starting before this date.
+     * @param timeStatus Filter by time relevance (e.g., UPCOMING, PAST).
+     * @param page Page index (default 0).
+     * @param size Page size (default 10).
+     * @param sort Sort criteria (e.g., "popularity", "recent_activity", or "field,dir").
+     * @return A paginated list of event responses.
+     */
     @GetMapping
     public ResponseEntity<?> listEvents(
             @RequestParam Optional<String> status,
@@ -101,7 +119,6 @@ public class EventController {
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) String sort) {
         try {
-            // Check if any advanced filters are provided
             boolean hasAdvancedFilters = category.isPresent() || location.isPresent() ||
                     search.isPresent() || organizerName.isPresent() ||
                     startDate.isPresent() || endDate.isPresent() ||
@@ -121,15 +138,11 @@ public class EventController {
                         sortObj = Sort.by(org.springframework.data.domain.Sort.Direction.fromString(dir), prop);
                     }
                 }
-            } else {
-                // Default if no sort provided? Frontend usually sends createdAt,desc.
-                // If not, we fall back to defaults or unsorted.
             }
 
             PageRequest pageRequest = PageRequest.of(page, size, sortObj);
 
             if (hasAdvancedFilters) {
-                // Use advanced filtering
                 LocalDateTime startDateTime = null;
                 LocalDateTime endDateTime = null;
 
@@ -148,7 +161,6 @@ public class EventController {
                         pageRequest);
                 return ResponseEntity.ok(p);
             } else {
-                // Use simple filtering (backward compatibility)
                 Page<EventResponse> p = svc.listEvents(status, timeStatus, pageRequest);
                 return ResponseEntity.ok(p);
             }
@@ -158,6 +170,11 @@ public class EventController {
         }
     }
 
+    /**
+     * Retrieves a list of trending events.
+     * @param limit Number of events to retrieve (default 5).
+     * @return List of trending event responses.
+     */
     @GetMapping("/trending")
     public ResponseEntity<?> getTrendingEvents(@RequestParam(defaultValue = "5") int limit) {
         try {
@@ -169,6 +186,11 @@ public class EventController {
         }
     }
 
+    /**
+     * Retrieves detailed information about a specific event.
+     * @param id The ID of the event.
+     * @return Event details or 404 if not found.
+     */
     @GetMapping("/{id}")
     public ResponseEntity<?> getEvent(@PathVariable Long id) {
         try {
@@ -179,6 +201,13 @@ public class EventController {
         }
     }
 
+    /**
+     * Updates an existing event. Checks for permissions before updating.
+     * @param id The ID of the event to update.
+     * @param req The updated event details.
+     * @param auth Current authentication context.
+     * @return Updated event details.
+     */
     @PreAuthorize("hasAnyRole('ORGANIZER','ADMIN')")
     @PutMapping("/{id}")
     public ResponseEntity<?> updateEvent(@PathVariable Long id, @Valid @RequestBody EventCreateRequest req,
@@ -195,6 +224,12 @@ public class EventController {
         }
     }
 
+    /**
+     * Approves a pending event. Admin role required.
+     * @param id ID of the event to approve.
+     * @param auth Current authentication context.
+     * @return Approved event details.
+     */
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/{id}/approve")
     public ResponseEntity<?> approveEvent(@PathVariable Long id, Authentication auth) {
@@ -208,6 +243,13 @@ public class EventController {
         }
     }
 
+    /**
+     * Rejects a pending event with a reason. Admin role required.
+     * @param id ID of the event to reject.
+     * @param request Contains the rejection reason.
+     * @param auth Current authentication context.
+     * @return Rejected event details.
+     */
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/{id}/reject")
     public ResponseEntity<?> rejectEvent(@PathVariable Long id,
@@ -223,6 +265,12 @@ public class EventController {
         }
     }
 
+    /**
+     * Cancels an event. Can be performed by the organizer or an admin.
+     * @param id ID of the event to cancel.
+     * @param auth Current authentication context.
+     * @return Cancelled event details.
+     */
     @PreAuthorize("hasAnyRole('ORGANIZER','ADMIN')")
     @PostMapping("/{id}/cancel")
     public ResponseEntity<?> cancelEvent(@PathVariable Long id, Authentication auth) {
@@ -238,6 +286,12 @@ public class EventController {
         }
     }
 
+    /**
+     * Deletes an event from the system.
+     * @param id ID of the event to delete.
+     * @param auth Current authentication context.
+     * @return 204 No Content on success.
+     */
     @PreAuthorize("hasAnyRole('ORGANIZER','ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteEvent(@PathVariable Long id, Authentication auth) {
@@ -253,6 +307,19 @@ public class EventController {
         }
     }
 
+    /**
+     * Retrieves events created/managed by the currently authenticated organizer.
+     * @param status Optional status filter.
+     * @param category Optional category filter.
+     * @param location Optional location filter.
+     * @param search Optional keyword search.
+     * @param startDate Optional start date filter.
+     * @param endDate Optional end date filter.
+     * @param page Page index.
+     * @param size Page size.
+     * @param auth Current authentication context.
+     * @return Paginated list of events belonging to the organizer.
+     */
     @PreAuthorize("hasAnyRole('ORGANIZER','ADMIN')")
     @GetMapping("/my-events")
     public ResponseEntity<?> getMyEvents(

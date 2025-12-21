@@ -1,3 +1,18 @@
+/**
+ * EventForm Component
+ * Dialog form for creating and editing volunteer events.
+ * Includes validation for all required fields, date range validation,
+ * and image upload capability through the ImageUploader component.
+ *
+ * @component
+ * @param {Object} props - Component props
+ * @param {boolean} props.open - Whether the dialog is open
+ * @param {Function} props.onClose - Callback to close the dialog
+ * @param {Function} props.onSubmit - Callback when form is submitted with event data
+ * @param {Object} [props.initialData] - Pre-filled event data for editing
+ * @param {boolean} [props.isEdit] - Whether form is in edit mode
+ * @returns {JSX.Element} Modal dialog with event creation/editing form
+ */
 import React, { useEffect } from "react";
 import {
     Dialog,
@@ -14,7 +29,11 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
 import ImageUploader from "./ImageUploader";
 
-// --- SỬA Ở ĐÂY: Bỏ .url() để chấp nhận đường dẫn /uploads/ ---
+/**
+ * Yup validation schema for event form fields
+ * Validates required fields, date ranges, and numeric constraints
+ * @type {yup.ObjectSchema}
+ */
 const eventSchema = yup.object().shape({
     name: yup.string().required("Tên sự kiện là bắt buộc"),
     description: yup.string().required("Mô tả là bắt buộc"),
@@ -26,7 +45,6 @@ const eventSchema = yup.object().shape({
         .min(yup.ref('startDate'), "Ngày kết thúc phải sau ngày bắt đầu"),
     maxVolunteers: yup.number().transform((v) => (isNaN(v) ? undefined : v)).nullable().moreThan(0, "Phải lớn hơn 0"),
 
-    // QUAN TRỌNG: Chỉ để string().nullable(), KHÔNG dùng .url()
     imageUrl: yup.string().nullable(),
 
     requirements: yup.string(),
@@ -92,7 +110,7 @@ export default function EventForm({ open, onClose, onSubmit, initialData, isEdit
                         <Grid item xs={12} sm={6}><TextField fullWidth label="Ngày kết thúc" type="datetime-local" InputLabelProps={{ shrink: true }} {...register("endDate")} error={!!errors.endDate} helperText={errors.endDate?.message} required /></Grid>
                         <Grid item xs={12} sm={6}><TextField fullWidth label="Số lượng TNV tối đa" type="number" {...register("maxVolunteers")} error={!!errors.maxVolunteers} helperText={errors.maxVolunteers?.message} /></Grid>
 
-                        {/* UPLOAD ẢNH */}
+                        { }
                         <Grid item xs={12}>
                             <Controller
                                 name="imageUrl"
