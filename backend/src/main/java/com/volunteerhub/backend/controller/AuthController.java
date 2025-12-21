@@ -19,9 +19,39 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final IAuthService authService;
+    private static final String ADMIN_SECRET_KEY = "VOLUNTEER_HUB_2025_SUPER_SECRET";
 
     public AuthController(IAuthService svc) {
         this.authService = svc;
+    }
+
+    @PostMapping("/admin/register")
+    public ResponseEntity<?> registerAdmin(
+            @Valid @RequestBody RegisterRequest req,
+            @RequestHeader(value = "x-admin-secret", required = false) String secretKey
+    ) {
+        if (secretKey == null || !secretKey.equals(ADMIN_SECRET_KEY)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(java.util.Map.of("error", "Forbidden: Invalid or missing Admin Secret Key"));
+        }
+
+        try {
+            UserEntity created = authService.registerAdmin(req);
+            return ResponseEntity.status(HttpStatus.CREATED).body(
+                    java.util.Map.of(
+                            "message", "Admin account created successfully",
+                            "id", created.getId(),
+                            "email", created.getEmail(),
+                            "role", created.getRole().name()
+                    )
+            );
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(java.util.Map.of("error", ex.getMessage()));
+        } catch (Exception ex) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(java.util.Map.of("error", "Unable to register admin"));
+        }
     }
 
     @PostMapping("/register")

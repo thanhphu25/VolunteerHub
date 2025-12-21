@@ -7,6 +7,7 @@ import com.volunteerhub.backend.entity.UserEntity;
 
 public interface IAuthService {
     UserEntity register(RegisterRequest req);
+    UserEntity registerAdmin(RegisterRequest req);
     AuthResponse login(LoginRequest req);
     AuthResponse refresh(String refreshToken);
     void logout(String refreshToken);

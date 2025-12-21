@@ -76,6 +76,25 @@ public class AuthServiceImpl implements IAuthService {
 
     @Override
     @Transactional
+    public UserEntity registerAdmin(RegisterRequest req) {
+        if (userRepository.existsByEmail(req.getEmail())) {
+            throw new IllegalArgumentException("Email already in use");
+        }
+
+        UserEntity u = new UserEntity();
+        u.setEmail(req.getEmail().toLowerCase().trim());
+        u.setPasswordHash(passwordEncoder.encode(req.getPassword()));
+        u.setFullName(req.getFullName());
+        u.setPhone(req.getPhone());
+
+        u.setRole(Role.admin);
+
+
+        return userRepository.save(u);
+    }
+
+    @Override
+    @Transactional
     public AuthResponse login(LoginRequest req) {
         var token = new UsernamePasswordAuthenticationToken(req.getEmail(), req.getPassword());
         authenticationManager.authenticate(token);
