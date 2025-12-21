@@ -74,10 +74,10 @@ export default function Login() {
   };
 
   return (
-    <Box sx={{ display: 'flex', minHeight: '100vh', width: '100vw', overflow: 'hidden' }}>
+    <Box sx={{ display: 'flex', height: { md: 'calc(100vh - 64px)', xs: 'auto' }, minHeight: { xs: '100vh', md: '0' }, width: '100vw', overflow: 'hidden' }}>
       <CssBaseline />
 
-      {}
+      { }
       {!isMobile && (
         <Box
           sx={{
@@ -119,18 +119,19 @@ export default function Login() {
         </Box>
       )}
 
-      {}
+      { }
       <Box
         sx={{
           width: { xs: '100%', md: '480px' },
           display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center',
           bgcolor: 'background.paper', p: 4,
           boxShadow: { md: '-4px 0 20px rgba(0,0,0,0.1)' },
-          zIndex: 2
+          zIndex: 2,
+          overflowY: 'auto'
         }}
       >
         <Box sx={{ width: '100%', maxWidth: 400 }}>
-          <Box mb={4} textAlign="center">
+          <Box mb={3} textAlign="center">
             <Typography variant="h4" fontWeight="800" color="primary" gutterBottom>Đăng Nhập</Typography>
             <Typography variant="body1" color="text.secondary">
               Nhập thông tin chi tiết để truy cập tài khoản
@@ -138,7 +139,7 @@ export default function Login() {
           </Box>
 
           <form onSubmit={handleSubmit(onLoginSubmit)}>
-            <Stack spacing={3}>
+            <Stack spacing={2.5}>
               <TextField
                 fullWidth
                 label="Email"
@@ -197,7 +198,7 @@ export default function Login() {
             </Stack>
           </form>
 
-          <Box mt={4} textAlign="center">
+          <Box mt={3} textAlign="center">
             <Typography variant="body2" color="text.secondary">
               Chưa có tài khoản? <Link component={RouterLink} to="/register" fontWeight="bold" underline="hover">Đăng ký ngay</Link>
             </Typography>
