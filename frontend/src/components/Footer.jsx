@@ -10,7 +10,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { useTheme } from "@mui/material";
-import logo from "../assets/logo.jpg";
+import logo from "../assets/logo-removebg.png";
 
 /**
  * Footer component displaying application branding and navigation links
