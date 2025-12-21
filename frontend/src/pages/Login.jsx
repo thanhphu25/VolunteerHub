@@ -22,7 +22,7 @@ import { toast } from "react-toastify";
 import {
   Visibility, VisibilityOff, EmailOutlined, LockOutlined
 } from "@mui/icons-material";
-import heroImg from "../assets/hero.jpg";
+import heroImg from "../assets/hero.png";
 
 /**
  * Yup validation schema for login form fields

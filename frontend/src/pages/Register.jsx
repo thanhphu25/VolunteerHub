@@ -23,7 +23,7 @@ import {
   Visibility, VisibilityOff, PersonOutline, EmailOutlined,
   PhoneOutlined, LockOutlined, VolunteerActivism
 } from "@mui/icons-material";
-import heroImg from "../assets/hero.jpg";
+import heroImg from "../assets/hero.png";
 
 /**
  * Yup validation schema for registration form fields
